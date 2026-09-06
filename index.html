@@ -620,6 +620,7 @@
             <div class="leg-actions">
               <button class="btn btn-primary btn-sm" id="addLegBtn" onclick="addLeg()">+ Add Stop</button>
               <button class="btn btn-blue btn-sm" id="addReturnBtn" onclick="addReturnLeg()">+ Plan Return to HQ</button>
+              <button class="btn btn-warning btn-sm" onclick="addReturnOnlyLeg()">+ Return Only (Overnight)</button>
               <button class="btn btn-success btn-sm" onclick="saveDayJourney()">Save Day's Journey</button>
               <button class="btn btn-outline btn-sm" onclick="cancelForm()">Cancel</button>
             </div>
@@ -1024,12 +1025,12 @@
         </div>
         <div class="data-card-body">
           <p style="font-size:0.9rem;margin-bottom:16px;color:var(--muted);">
-            Export all master data (offices, staff, villages, settings) as a JSON file for backup.
-            Import a previously exported file to restore or transfer data to another device.
+            Export ALL app data (Tour Diary, TA Bill, Inspection Drafts, Signature, Master Data) as a single JSON file.
+            Save it to Google Drive for safekeeping. Import to restore on any device.
           </p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
-            <button class="btn-sm btn-export" onclick="exportData()">Export All Data (JSON)</button>
-            <button class="btn-sm btn-save" onclick="document.getElementById('importFile').click()">Import Data (JSON)</button>
+            <button class="btn-sm btn-export" onclick="exportData()">💾 Full Backup (All Data)</button>
+            <button class="btn-sm btn-save" onclick="document.getElementById('importFile').click()">📥 Restore from Backup</button>
             <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
             <button class="btn-sm btn-del" onclick="resetData()">Reset to Original</button>
           </div>
@@ -1489,14 +1490,32 @@
   // --- Backup / Restore ---
   window.exportData=function(){
     var d=ensureData();
-    var exportObj={masterData:d,taData:localStorage.getItem('ta_tour_data')?JSON.parse(localStorage.getItem('ta_tour_data')):null,exportDate:new Date().toISOString(),appVersion:'2.0'};
+    // Collect ALL localStorage keys for full backup
+    var allStorage={};
+    for(var i=0;i<localStorage.length;i++){
+      var key=localStorage.key(i);
+      var val=localStorage.getItem(key);
+      // Try to parse JSON values, otherwise keep as string
+      try{allStorage[key]=JSON.parse(val);}catch(e){allStorage[key]=val;}
+    }
+    var exportObj={
+      masterData:d,
+      taData:localStorage.getItem('ta_tour_data')?JSON.parse(localStorage.getItem('ta_tour_data')):null,
+      allStorage:allStorage,
+      exportDate:new Date().toISOString(),
+      appVersion:'7.1',
+      backupType:'full'
+    };
     var blob=new Blob([JSON.stringify(exportObj,null,2)],{type:'application/json'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download='SDI_Bairiya_Backup_'+new Date().toISOString().slice(0,10)+'.json';
+    var now=new Date();
+    var stamp=now.getFullYear()+'-'+pad2(now.getMonth()+1)+'-'+pad2(now.getDate())+'_'+pad2(now.getHours())+'-'+pad2(now.getMinutes());
+    a.download='SDI_Bairiya_Backup_'+stamp+'.json';
     document.body.appendChild(a);a.click();document.body.removeChild(a);
-    showToast('Data exported!');
+    showToast('Full backup downloaded! (TA + Inspection + Master Data)');
   };
+  function pad2(n){return n<10?'0'+n:''+n;};
   window.importData=function(event){
     var file=event.target.files[0];
     if(!file)return;
@@ -1504,16 +1523,53 @@
     reader.onload=function(e){
       try{
         var imported=JSON.parse(e.target.result);
-        if(!imported.masterData){alert('Invalid backup file: no masterData found.');return;}
-        if(!confirm('This will REPLACE all current master data with the imported data. Continue?'))return;
-        saveData(imported.masterData);
+        if(!imported.masterData && !imported.allStorage){
+          alert('Invalid backup file: no data found.');
+          return;
+        }
+        var msg='This will RESTORE all data from the backup file:\n';
+        msg+='\n- Master Data (offices, staff, villages)';
+        msg+='\n- TA/Tour Diary data';
+        if(imported.allStorage){
+          var inspCount=0;
+          for(var k in imported.allStorage){
+            if(k.indexOf('insp_draft_')===0)inspCount++;
+          }
+          if(inspCount>0)msg+='\n- Inspection drafts ('+inspCount+' BOs)';
+          msg+='\n- Signature data (if any)';
+        }
+        msg+='\n\nCurrent data will be REPLACED. Continue?';
+        if(!confirm(msg))return;
+
+        // Restore master data
+        if(imported.masterData){
+          saveData(imported.masterData);
+        }
+
+        // Restore allStorage (includes TA data, inspection drafts, signature)
+        if(imported.allStorage){
+          for(var key in imported.allStorage){
+            if(!imported.allStorage.hasOwnProperty(key))continue;
+            var val=imported.allStorage[key];
+            if(typeof val==='object'){
+              localStorage.setItem(key,JSON.stringify(val));
+            } else {
+              localStorage.setItem(key,String(val));
+            }
+          }
+        } else {
+          // Old format backup — restore TA data only
+          if(imported.taData){
+            localStorage.setItem('ta_tour_data',JSON.stringify(imported.taData));
+          }
+        }
+
         syncAllOffices();
         syncMasterData();
-        if(imported.taData){
-          localStorage.setItem('ta_tour_data',JSON.stringify(imported.taData));
-        }
         renderAll();
-        showToast('Data imported successfully!');
+        showToast('Data restored! Reload the app to see inspection drafts.');
+        // Auto reload after 1.5 seconds
+        setTimeout(function(){window.location.reload();},1500);
       }catch(err){
         alert('Error reading file: '+err.message);
       }
@@ -1858,13 +1914,13 @@ function addReturnLeg(){
   // Distance for return = HQ dist of the office we're returning from
   // If office is known, auto-fill; otherwise leave blank for manual entry
   var retDist=getOfficeDist(fromName);
-  currentLegs.push({from:fromName,to:HQ_NAME,departure:'',arrival:'',mode:'Motorcycle',dist:retDist!==null?retDist:'',purposeType:'',customPurpose:'',isReturn:true,speed:randomSpeed(),knownTime:'arr',distAutoCalc:retDist!==null,isCustom:false});
+  currentLegs.push({from:fromName,to:HQ_NAME,departure:'',arrival:'',mode:'Motorcycle',dist:retDist!==null?retDist:'',purposeType:'',customPurpose:'',isReturn:true,speed:randomSpeed(),knownTime:'arr',distAutoCalc:retDist!==null,isCustom:false,returnDayOffset:0});
   renderLegs();document.getElementById('addReturnBtn').disabled=true;
   // Show info message
   var info=document.getElementById('jfInfo');
   if(info){
     if(retDist!==null){
-      info.textContent='Enter your arrival time at HQ on the Return leg — the app will auto-calculate when to leave each office.';
+      info.textContent='Enter your arrival time at HQ on the Return leg. If returning next day, check the Next Day box on the return leg.';
     } else {
       info.textContent='Enter distance and arrival time at HQ on the Return leg — the app will auto-calculate when to leave each office.';
     }
@@ -1895,7 +1951,7 @@ function renderLegs(){
     var fromHTML='<div class="lf"><label>From</label><input type="text" value="'+esc(leg.from)+'" readonly></div>';
     // To field
     var toHTML;
-    if(isRet){toHTML='<div class="lf"><label>To</label><input type="text" value="'+esc(leg.to)+'" readonly></div>';}
+    if(isRet){var ndChk=leg.returnDayOffset?' checked':'';toHTML='<div class="lf"><label>To</label><input type="text" value="'+esc(leg.to)+'" readonly></div><div class="lf" style="min-width:100px;"><label>&nbsp;</label><label style="display:flex;align-items:center;gap:4px;font-size:0.8rem;cursor:pointer;"><input type="checkbox" id="legRetNextDay_'+idx+'"'+ndChk+' onchange="onRetDayChange('+idx+')"> Next Day</label></div>';}
     else if(leg.isCustom){toHTML='<div class="lf"><label>To (Custom Place)</label><input type="text" id="legTo_'+idx+'" value="'+esc(leg.to)+'" placeholder="Enter office/place name" onchange="onCustomOfficeChange('+idx+')"><button class="btn btn-sm btn-secondary" onclick="switchToDropdown('+idx+')" style="margin-left:4px;font-size:0.75rem;padding:2px 6px;" title="Switch back to list">&#8634;</button></div>';}
     else{toHTML='<div class="lf"><label>To (Office)</label><select id="legTo_'+idx+'" onchange="onLegOfficeChange('+idx+')">'+buildOfficeDDL()+'</select></div>';}
     // Departure
@@ -2008,6 +2064,40 @@ function switchToDropdown(idx){
   currentLegs[idx].dist='';
   currentLegs[idx].distAutoCalc=false;
   renderLegs();
+}
+
+function onRetDayChange(idx){
+  var chk=document.getElementById('legRetNextDay_'+idx);
+  if(!chk)return;
+  currentLegs[idx].returnDayOffset=chk.checked?1:0;
+  autoSave();
+}
+
+function addReturnOnlyLeg(){
+  // For overnight stays: add ONLY a return leg (no outward)
+  // User selects the date they're RETURNING on (e.g., 23 Aug)
+  // They enter where they're returning from and arrival time at HQ
+  if(currentLegs.length>0){
+    if(!confirm('This will clear current legs and start a return-only journey. Continue?'))return;
+  }
+  currentLegs=[];
+  // Find the last journey's destination to pre-fill "from"
+  var lastJ=journeys.length>0?journeys[journeys.length-1]:null;
+  var fromName='';
+  if(lastJ&&lastJ.legs.length>0){
+    // Find the last outward destination
+    for(var i=lastJ.legs.length-1;i>=0;i--){
+      if(!lastJ.legs[i].isReturn){fromName=lastJ.legs[i].to;break;}
+    }
+  }
+  if(!fromName)fromName=''; // leave blank for manual entry
+  var retDist=fromName?getOfficeDist(fromName):null;
+  currentLegs.push({from:fromName,to:HQ_NAME,departure:'',arrival:'',mode:'Motorcycle',dist:retDist!==null?retDist:'',purposeType:'',customPurpose:'',isReturn:true,speed:randomSpeed(),knownTime:'arr',distAutoCalc:retDist!==null,isCustom:!fromName,returnDayOffset:0});
+  renderLegs();
+  document.getElementById('addReturnBtn').disabled=true;
+  var info=document.getElementById('jfInfo');
+  if(info){info.textContent='Return-only journey: Enter where you are returning FROM (if not pre-filled), distance, and arrival time at HQ.';info.style.display='block';}
+  recalcTimesV2();
 }
 
 function onLegModeChange(idx){
@@ -2172,12 +2262,13 @@ function saveDayJourney(){
   var err=document.getElementById('jfError');
   if(!selectedDate){err.textContent='Select a date.';err.classList.add('show');return;}
   if(currentLegs.length===0){err.textContent='Add at least one leg.';err.classList.add('show');return;}
+  var hasOutward=false;
   for(var i=0;i<currentLegs.length;i++){
     var l=currentLegs[i];
     if(!l.to){err.textContent='Leg '+(i+1)+': select an office.';err.classList.add('show');return;}
     if(!l.dist&&l.dist!==0){err.textContent='Leg '+(i+1)+': enter distance.';err.classList.add('show');return;}
     if(!l.departure&&!l.arrival){err.textContent='Leg '+(i+1)+': enter departure or arrival time.';err.classList.add('show');return;}
-    if(!l.isReturn&&!l.purposeType){err.textContent='Leg '+(i+1)+': select a purpose.';err.classList.add('show');return;}
+    if(!l.isReturn){hasOutward=true;if(!l.purposeType){err.textContent='Leg '+(i+1)+': select a purpose.';err.classList.add('show');return;}}
   }
   err.classList.remove('show');
 
@@ -2192,9 +2283,11 @@ function saveDayJourney(){
     if(!firstDep&&l.departure)firstDep=l.departure;
     lastArr=l.arrival||lastArr;
 
-    var depDT=l.departure?y+'-'+pad2(mi+1)+'-'+pad2(dayNum)+'T'+l.departure+':00':'';
+    var legDay=dayNum;
+    if(l.isReturn&&l.returnDayOffset)legDay=Math.min(dayNum+l.returnDayOffset,getDaysInMonth());
+    var depDT=l.departure?y+'-'+pad2(mi+1)+'-'+pad2(legDay)+'T'+l.departure+':00':'';
     var arrDT='';
-    if(l.arrival){var arrMin=timeToMin(l.arrival);var depMin=l.departure?timeToMin(l.departure):0;var arrDay=dayNum;if(depMin&&arrMin<depMin)arrDay=dayNum+1;arrDT=y+'-'+pad2(mi+1)+'-'+pad2(Math.min(arrDay,getDaysInMonth()))+'T'+l.arrival+':00';}
+    if(l.arrival){var arrMin=timeToMin(l.arrival);var depMin=l.departure?timeToMin(l.departure):0;var arrDay=legDay;if(depMin&&arrMin<depMin)arrDay=legDay+1;arrDT=y+'-'+pad2(mi+1)+'-'+pad2(Math.min(arrDay,getDaysInMonth()))+'T'+l.arrival+':00';}
     var purpose=l.isReturn?'':buildPurpose(l.purposeType,l.to,l.customPurpose);
     if(purpose&&!l.isReturn)outwardPurposes.push({office:l.to,purpose:purpose,purposeType:l.purposeType});
 
@@ -2204,21 +2297,71 @@ function saveDayJourney(){
   // Build combined purpose for the outward leg (first row in table)
   // e.g., "Visited Dalan Chhapra SO for Aadhar camp and Karan Chhapra SO regarding enquiry"
   // OR "Carried out visit of Majhaua SO and then proceeded to Haldi SO for PLI enquiry and returned to HQ"
-  journey.purpose=buildCombinedPurpose(outwardPurposes);
+  if(hasOutward){
+    journey.purpose=buildCombinedPurpose(outwardPurposes);
+    journey.workLogEntry=buildWorkLogEntry(outwardPurposes);
+  } else {
+    var retFrom='';
+    for(var i=0;i<currentLegs.length;i++){if(currentLegs[i].isReturn){retFrom=currentLegs[i].from;break;}}
+    journey.purpose='Returned to HQ from '+retFrom;
+    journey.workLogEntry='Returned to HQ from '+retFrom;
+  }
 
-  // Build work log entry
-  journey.workLogEntry=buildWorkLogEntry(outwardPurposes);
-
-  journey.dist=totalDist;journey.office=firstOffice;
+  journey.dist=totalDist;
+  journey.office=hasOutward?firstOffice:(function(){for(var i=0;i<currentLegs.length;i++){if(currentLegs[i].isReturn)return currentLegs[i].from;}return'';})();
   journey.depTime=firstDep||'';journey.retTime=lastArr||'';
   if(firstDep)journey.depDT=y+'-'+pad2(mi+1)+'-'+pad2(dayNum)+'T'+firstDep+':00';
-  if(lastArr){var lastArrMin=timeToMin(lastArr);var firstDepMin=firstDep?timeToMin(firstDep):0;var retDay=dayNum;if(firstDepMin&&lastArrMin<firstDepMin)retDay=dayNum+1;journey.retDT=y+'-'+pad2(mi+1)+'-'+pad2(Math.min(retDay,getDaysInMonth()))+'T'+lastArr+':00';}
+  if(lastArr){var lastArrMin=timeToMin(lastArr);var firstDepMin=firstDep?timeToMin(firstDep):0;
+    var retDay=dayNum;var hasRetOff=false;
+    currentLegs.forEach(function(l){if(l.isReturn&&l.returnDayOffset)hasRetOff=true;});
+    if(hasRetOff)retDay=Math.min(dayNum+1,getDaysInMonth());
+    else if(firstDepMin&&lastArrMin<firstDepMin)retDay=dayNum+1;
+    journey.retDT=y+'-'+pad2(mi+1)+'-'+pad2(Math.min(retDay,getDaysInMonth()))+'T'+lastArr+':00';}
 
   // DA calculation
+  // DA rules: DA is admissible if office visited is >8km from HQ
+  // For same-day journeys: DA based on time difference (dep→ret)
+  // For overnight journeys (return next day): each day gets DA separately
+  //   - Day 1 (outward): full day DA=1 if office >8km (stayed overnight away from HQ)
+  //   - Day 2 (return-only): DA=1 if still away from HQ for >12hrs that day
+  if(!hasOutward){
+    // Return-only journey (e.g., 23 Aug returning from overnight stay)
+    // The officer was away from HQ — check if the return-from office is >8km
+    var retFromOffice='';
+    for(var i=0;i<currentLegs.length;i++){if(currentLegs[i].isReturn){retFromOffice=currentLegs[i].from;break;}}
+    var retOd=getOfficeDist(retFromOffice);
+    var retDmd=parseFloat(document.getElementById('daMinDist').value)||8;
+    if(retOd!==null&&retOd<=retDmd){
+      journey.da=0; // office within 8km, no DA
+    } else if(firstDep&&lastArr){
+      // Was away from HQ — calculate time away that day
+      var depMinR=timeToMin(firstDep),retMinR=timeToMin(lastArr);
+      var diffHrsR=retMinR>depMinR?(retMinR-depMinR)/60:(retMinR+1440-depMinR)/60;
+      if(diffHrsR<6)journey.da=0.3;else if(diffHrsR<=12)journey.da=0.7;else journey.da=1;
+    } else {
+      journey.da=1; // stayed away overnight, full day DA
+    }
+  }
+  else{
   var od=getOfficeDist(firstOffice);var dmd=parseFloat(document.getElementById('daMinDist').value)||8;
   if(od!==null&&od<=dmd)journey.da=0;
-  else if(firstDep&&lastArr){var depMin2=timeToMin(firstDep),retMin2=timeToMin(lastArr);var diffHrs=retMin2>depMin2?(retMin2-depMin2)/60:(retMin2+1440-depMin2)/60;if(diffHrs<6)journey.da=0.3;else if(diffHrs<=12)journey.da=0.7;else if(diffHrs<=24)journey.da=1;else{var nd=Math.floor(diffHrs/24),rem=diffHrs%24;journey.da=nd+(rem<6?0.3:rem<=12?0.7:1);}}
+  else{
+    // Check if this is an overnight journey (return leg has returnDayOffset)
+    var hasOvernight=false;
+    currentLegs.forEach(function(l){if(l.isReturn&&l.returnDayOffset)hasOvernight=true;});
+    if(hasOvernight){
+      // Overnight journey: officer stayed away from HQ
+      // Day 1 (outward day): full DA = 1 (was away from HQ all day)
+      journey.da=1;
+    } else if(firstDep&&lastArr){
+      // Same-day journey: calculate based on time difference
+      var depMin2=timeToMin(firstDep),retMin2=timeToMin(lastArr);var diffHrs=retMin2>depMin2?(retMin2-depMin2)/60:(retMin2+1440-depMin2)/60;if(diffHrs<6)journey.da=0.3;else if(diffHrs<=12)journey.da=0.7;else if(diffHrs<=24)journey.da=1;else{var nd=Math.floor(diffHrs/24),rem=diffHrs%24;journey.da=nd+(rem<6?0.3:rem<=12?0.7:1);}
+    }
+  }
+  }
 
+
+  
   var existingIdx=journeys.findIndex(function(j){return j.date===selectedDate;});
   if(existingIdx>=0){
     var oldJ=journeys[existingIdx];
