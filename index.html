@@ -639,11 +639,14 @@
     </div>
   </div>
 
-  <div class="card"><div class="card-title">Holidays <button class="btn btn-outline btn-sm" onclick="toggleHolidayEditor()" style="float:right;">Edit Holidays</button></div>
+  <div class="card"><div class="card-title">Holidays & Public Holidays <button class="btn btn-outline btn-sm" onclick="toggleHolidayEditor()" style="float:right;">Add / Edit Holidays</button></div>
+    <div style="font-size:0.82rem;color:#666;margin-bottom:8px;">DOP holidays are pre-loaded. Add any missing public holidays here — they will appear on the calendar, work log, Tour Diary and TA Bill reports.</div>
     <div id="holidayDisplay"></div>
-    <div id="holidayEditor" style="display:none;margin-top:10px;">
-      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
-        <input type="date" id="holDate"><input type="text" id="holName" placeholder="Holiday name" style="flex:1;min-width:150px;padding:5px 8px;border:1px solid #ccc;border-radius:4px;"><button class="btn btn-primary btn-sm" onclick="addHoliday()">Add</button>
+    <div id="holidayEditor" style="display:none;margin-top:10px;border-top:1px solid #eee;padding-top:10px;">
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:end;">
+        <div class="form-group" style="min-width:130px;"><label>Date</label><input type="date" id="holDate"></div>
+        <div class="form-group" style="flex:1;min-width:150px;"><label>Holiday Name</label><input type="text" id="holName" placeholder="e.g. Holi, Chhath Puja, etc." style="padding:5px 8px;border:1px solid #ccc;border-radius:4px;"></div>
+        <button class="btn btn-primary btn-sm" onclick="addHoliday()" style="height:34px;">Add Holiday</button>
       </div>
       <div id="holidayListEdit"></div>
     </div>
@@ -2623,17 +2626,67 @@ function deleteLeaveType(t){leaves=leaves.filter(function(l){return l.type!==t;}
 function renderHolidayDisplay(){
   var mi=getMonthIdx(),y=getYear();
   var monthHols=Object.keys(holidays).filter(function(k){return k.endsWith('.'+y)&&parseInt(k.split('.')[1])===mi+1;});
+  var yearHols=Object.keys(holidays).filter(function(k){return k.endsWith('.'+y);});
   var div=document.getElementById('holidayDisplay');
-  if(!monthHols.length){div.innerHTML='<span style="color:#999;font-style:italic;">No holidays for this month.</span>';return;}
-  var h='<div class="holiday-list">';monthHols.sort().forEach(function(k){h+='<span class="holiday-chip">'+k+': '+holidays[k]+'</span>';});h+='</div>';div.innerHTML=h;
+  if(!monthHols.length){
+    div.innerHTML='<span style="color:#999;font-style:italic;">No holidays this month.</span>'+(yearHols.length?' <span style="color:#666;font-size:0.8rem;">('+yearHols.length+' total in '+y+')</span>':'');
+    return;
+  }
+  var h='<div class="holiday-list">';
+  if(yearHols.length>monthHols.length)h+='<div style="font-size:0.78rem;color:#666;margin-bottom:4px;">'+monthHols.length+' this month, '+yearHols.length+' total in '+y+'</div>';
+  monthHols.sort().forEach(function(k){h+='<span class="holiday-chip">'+k+': '+holidays[k]+'</span>';});
+  h+='</div>';div.innerHTML=h;
 }
-function toggleHolidayEditor(){var ed=document.getElementById('holidayEditor');ed.style.display=ed.style.display==='none'?'block':'none';if(ed.style.display==='block')renderHolidayEditList();}
-function addHoliday(){var d=document.getElementById('holDate').value,n=document.getElementById('holName').value;if(!d||!n){alert('Enter both date and name.');return;}var p=d.split('-');var ds=p[2]+'.'+p[1]+'.'+p[0];holidays[ds]=n;document.getElementById('holDate').value='';document.getElementById('holName').value='';renderHolidayEditList();renderCalendar();renderHolidayDisplay();autoSave();}
-function deleteHoliday(ds){delete holidays[ds];renderHolidayEditList();renderCalendar();renderHolidayDisplay();autoSave();}
+function toggleHolidayEditor(){
+  var ed=document.getElementById('holidayEditor');
+  ed.style.display=ed.style.display==='none'?'block':'none';
+  if(ed.style.display==='block'){
+    renderHolidayEditList();
+    // Focus on the date input for convenience
+    var holDateInput=document.getElementById('holDate');
+    if(holDateInput)holDateInput.focus();
+  }
+}
+function addHoliday(){
+  var d=document.getElementById('holDate').value,n=document.getElementById('holName').value;
+  if(!d||!n){alert('Please enter both date and holiday name.');return;}
+  var p=d.split('-');var ds=p[2]+'.'+p[1]+'.'+p[0];
+  if(holidays[ds]){
+    if(!confirm('A holiday already exists for '+ds+': '+holidays[ds]+'\n\nDo you want to REPLACE it with: '+n+'?'))return;
+  }
+  holidays[ds]=n;
+  document.getElementById('holDate').value='';
+  document.getElementById('holName').value='';
+  renderHolidayEditList();renderCalendar();renderHolidayDisplay();autoSave();
+  // Update work log to reflect the new holiday
+  generateWorkLogFromJourneys();
+}
+function deleteHoliday(ds){
+  if(!confirm('Delete holiday: '+ds+' ('+holidays[ds]+')?\n\nClick OK to remove.'))return;
+  delete holidays[ds];
+  renderHolidayEditList();renderCalendar();renderHolidayDisplay();autoSave();
+  generateWorkLogFromJourneys();
+}
 function renderHolidayEditList(){
-  var mi=getMonthIdx(),y=getYear();var monthHols=Object.keys(holidays).filter(function(k){return k.endsWith('.'+y)&&parseInt(k.split('.')[1])===mi+1;});
-  var h='';monthHols.sort().forEach(function(k){h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:#fff5f5;border:1px solid #ffcdd2;border-radius:4px;margin-bottom:4px;"><span><b>'+k+'</b>: '+holidays[k]+'</span><button class="btn btn-danger btn-sm" onclick="deleteHoliday(\''+k+'\')">Remove</button></div>';});
-  if(!monthHols.length)h='<span style="color:#999;">No holidays for this month.</span>';
+  var y=getYear();
+  // Show ALL holidays for the selected year (not just current month)
+  var yearHols=Object.keys(holidays).filter(function(k){return k.endsWith('.'+y);});
+  yearHols.sort();
+  var h='';
+  if(yearHols.length){
+    h+='<div style="font-size:0.78rem;color:#666;margin-bottom:6px;">All holidays for '+y+' (click Remove to delete):</div>';
+    yearHols.forEach(function(k){
+      var monthNum=parseInt(k.split('.')[1]);
+      var monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      var monthLabel=monthNames[monthNum-1]||'?';
+      var isCurrentMonth=monthNum===getMonthIdx()+1;
+      var bg=isCurrentMonth?'#fff5f5':'#f9f9f9';
+      var bd=isCurrentMonth?'#ffcdd2':'#e0e0e0';
+      h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:'+bg+';border:1px solid '+bd+';border-radius:4px;margin-bottom:4px;"><span><b>'+k+'</b> ('+monthLabel+'): '+holidays[k]+'</span><button class="btn btn-danger btn-sm" onclick="deleteHoliday(\''+k+'\')">Remove</button></div>';
+    });
+  } else {
+    h+='<span style="color:#999;">No holidays defined for '+y+'.</span>';
+  }
   document.getElementById('holidayListEdit').innerHTML=h;
 }
 
