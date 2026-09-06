@@ -118,6 +118,8 @@
   .journey-list th{background:var(--navy);color:white;padding:6px 8px;text-align:left;font-size:0.78rem;}
   .journey-list td{padding:5px 8px;border-bottom:1px solid #eee;}.journey-list tr:hover{background:#faf8f3;}
   .jl-del{cursor:pointer;color:#dc3545;font-weight:bold;background:none;border:none;font-size:0.9rem;}
+  .jl-edit{background:#1a73e8;color:white;border:none;border-radius:3px;width:22px;height:22px;cursor:pointer;font-size:0.8rem;display:inline-flex;align-items:center;justify-content:center;margin-right:2px;}
+  .jl-edit:hover{background:#1557b0;}
 
   .wl-table{width:100%;border-collapse:collapse;font-size:0.85rem;}
   .wl-table th{background:var(--navy);color:white;padding:8px;text-align:left;}
@@ -1874,7 +1876,7 @@ function renderCalendar(){
       cls+=selectedDate===ds?'selected':'';
       var sunCls=dn===0?' cal-day-sun':'';
       // Leave days and holidays: no click to start journey
-      var clickAttr=lv?'':(isHol?'':(hasJ?'':'onclick="selectDate(\''+ds+'\')"'));
+      var clickAttr=lv?'':(isHol?'':('onclick="selectDate(\''+ds+'\')"'));
       var cellStyle=lv?'cursor:default;':(isHol?'cursor:default;':'');
       h+='<td class="'+cls+'" '+clickAttr+(cellStyle?' style="'+cellStyle+'"':'')+'><span class="cal-day-num'+sunCls+'">'+day+'</span>';
       if(hasJ)h+='<div class="cal-badge">journey</div>';
@@ -1892,10 +1894,74 @@ function selectDate(ds){
   var lv=getLeaveForDate(ds);
   if(lv){alert(ds+' is marked as '+lv.label+'. No journey can be planned on a leave day.\n\nRemove the leave first if you want to plan a journey on this date.');return;}
   if(holidays[ds]){if(!confirm('Warning: '+ds+' is a holiday ('+holidays[ds]+'). Are you sure you want to add a journey on this day?'))return;}
+  var existingIdx=journeys.findIndex(function(j){return j.date===ds;});
+  if(existingIdx>=0){
+    if(!confirm('A journey already exists for '+ds+'.\n\nDo you want to EDIT/MODIFY this existing journey?\n\nClick OK to load the journey for editing, Cancel to do nothing.')){return;}
+    loadJourneyForEdit(existingIdx);
+    return;
+  }
   selectedDate=ds;renderCalendar();currentLegs=[];addLeg();showForm(ds);
 }
 
 function showForm(ds){document.getElementById('journeyForm').style.display='block';document.getElementById('placeholderMsg').style.display='none';document.getElementById('jfTitle').textContent='Build journey for '+ds;renderLegs();}
+
+function loadJourneyForEdit(idx){
+  var j=journeys[idx];
+  if(!j)return;
+  selectedDate=j.date;
+  renderCalendar();
+  currentLegs=[];
+  // Reverse-map saved legs back to currentLegs format for editing
+  j.legs.forEach(function(l){
+    var pt='';
+    var cp='';
+    if(l.purpose){
+      for(var key in purposeTemplates){
+        var tpl=purposeTemplates[key];
+        var test=tpl.replace('{office}','(.+?)').replace('{office_type}','(BO|SO)?').trim();
+        try{
+          var re=new RegExp('^'+test+'$','i');
+          if(re.test(l.purpose.trim())){pt=key;break;}
+        }catch(e){}
+      }
+      if(!pt){pt='custom';cp=l.purpose;}
+    }
+    var depTime=l.departure?l.departure.split('T')[1].substring(0,5):'';
+    var arrTime=l.arrival?l.arrival.split('T')[1].substring(0,5):'';
+    var offInList=allOffices.some(function(o){return o.name===l.to;});
+    var isCustom=false;
+    if(!l.isReturn&&!offInList&&l.to){isCustom=true;}
+    var hasOvernight=l.isReturn&&j.legs.some(function(x){return x.isReturn;})&&j.da===1&&j.legs.length>1&&!j.legs[0].isReturn;
+    currentLegs.push({
+      from:l.from,
+      to:l.to,
+      departure:depTime,
+      arrival:arrTime,
+      mode:l.mode||'Motorcycle',
+      dist:l.dist,
+      purposeType:pt,
+      customPurpose:cp,
+      isReturn:l.isReturn,
+      speed:randomSpeed(),
+      isCustom:isCustom,
+      returnDayOffset:0
+    });
+  });
+  // Check for overnight: if return leg arrival is on next day vs departure
+  currentLegs.forEach(function(l){
+    if(l.isReturn){
+      var savedLeg=j.legs.find(function(x){return x.isReturn;});
+      if(savedLeg&&savedLeg.arrival&&savedLeg.departure){
+        var depDate=savedLeg.departure.split('T')[0];
+        var arrDate=savedLeg.arrival.split('T')[0];
+        if(depDate!==arrDate){l.returnDayOffset=1;}
+      }
+    }
+  });
+  showForm(j.date);
+  document.getElementById('jfTitle').textContent='EDITING journey for '+j.date+' (modify and Save to update)';
+  document.getElementById('addReturnBtn').disabled=currentLegs.some(function(l){return l.isReturn;});
+}
 function cancelForm(){document.getElementById('journeyForm').style.display='none';document.getElementById('placeholderMsg').style.display='block';selectedDate=null;currentLegs=[];renderCalendar();}
 
 // ============================================================
@@ -2366,7 +2432,7 @@ function saveDayJourney(){
   if(existingIdx>=0){
     var oldJ=journeys[existingIdx];
     var oldDesc=oldJ.office+(oldJ.purpose?' ('+oldJ.purpose.substring(0,60)+(oldJ.purpose.length>60?'...':'')+')':'');
-    if(!confirm('A journey already exists for '+selectedDate+':\n'+oldDesc+'\n\nDo you want to OVERWRITE it with the new journey?\n\nClick OK to overwrite, Cancel to keep the existing journey.')){cancelForm();return;}
+    if(!confirm('WARNING: A journey already exists for '+selectedDate+':\n'+oldDesc+'\n\nAre you sure you want to REPLACE/MODIFY this existing journey?\n\nClick OK to save the modified journey, Cancel to keep the existing one.')){cancelForm();return;}
     journeys.splice(existingIdx,1);
   }
   journeys.push(journey);journeys.sort(function(a,b){return a.date.localeCompare(b.date);});
@@ -2400,6 +2466,12 @@ function buildWorkLogEntry(outwardPurposes){
 }
 
 function deleteJourney(idx){journeys.splice(idx,1);autoSave();renderCalendar();renderJourneyList();updateSummary();}
+function editJourney(idx){
+  var j=journeys[idx];
+  if(!j)return;
+  if(!confirm('You are about to EDIT the journey for '+j.date+'.\n\nCurrent route: '+j.legs.map(function(l){return l.to;}).join(' -> ')+'\n\nYou can modify the journey details and save to update it.\n\nClick OK to load the journey for editing, Cancel to abort.')){return;}
+  loadJourneyForEdit(idx);
+}
 
 function renderJourneyList(){
   var wrap=document.getElementById('journeyListWrap'),body=document.getElementById('journeyListBody');
@@ -2408,7 +2480,7 @@ function renderJourneyList(){
   journeys.forEach(function(j,i){
     var route=j.legs.map(function(l){return l.to;}).join(' -> ');
     var tr=document.createElement('tr');
-    tr.innerHTML='<td>'+j.date+'</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(route)+'</td><td>'+j.depTime+'</td><td>'+j.retTime+'</td><td>'+j.dist+'</td><td>'+j.da.toFixed(1)+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(j.workLogEntry)+'">'+esc(j.workLogEntry)+'</td><td><button class="jl-del" onclick="deleteJourney('+i+')">X</button></td>';
+    tr.innerHTML='<td>'+j.date+'</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(route)+'</td><td>'+j.depTime+'</td><td>'+j.retTime+'</td><td>'+j.dist+'</td><td>'+j.da.toFixed(1)+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(j.workLogEntry)+'">'+esc(j.workLogEntry)+'</td><td><button class="jl-edit" onclick="editJourney('+i+')" title="Edit/Modify this journey">&#9998;</button> <button class="jl-del" onclick="deleteJourney('+i+')">X</button></td>';
     body.appendChild(tr);
   });
 }
@@ -5422,6 +5494,7 @@ const MASTER_DATA = {"BO30403125001": {"bo_id": "BO30403125001", "facility_id": 
       console.warn("PWA: Service Worker registration failed", err);
     });
   }
+
 
   // Reload when new SW takes control
   if (navigator.serviceWorker) {
