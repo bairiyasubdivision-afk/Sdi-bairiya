@@ -1503,7 +1503,7 @@
       taData:localStorage.getItem('ta_tour_data')?JSON.parse(localStorage.getItem('ta_tour_data')):null,
       allStorage:allStorage,
       exportDate:new Date().toISOString(),
-      appVersion:'7.1',
+      appVersion:'7.3',
       backupType:'full'
     };
     var blob=new Blob([JSON.stringify(exportObj,null,2)],{type:'application/json'});
@@ -5339,14 +5339,13 @@ const MASTER_DATA = {"BO30403125001": {"bo_id": "BO30403125001", "facility_id": 
 
   // --- Service Worker as blob (for offline caching) ---
   var swCode = `
-    var CACHE_NAME = "sdi-bairiya-v7";
+    var CACHE_NAME = "sdi-bairiya-v8";
     var CDN_URL = "https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js";
 
     self.addEventListener("install", function(e) {
       self.skipWaiting();
       e.waitUntil(
         caches.open(CACHE_NAME).then(function(cache) {
-          // Try to cache the CDN library; if it fails, app still works (loaded on-demand)
           return cache.addAll([CDN_URL]).catch(function() {});
         })
       );
@@ -5356,18 +5355,21 @@ const MASTER_DATA = {"BO30403125001": {"bo_id": "BO30403125001", "facility_id": 
       e.waitUntil(
         caches.keys().then(function(names) {
           return Promise.all(
-            names.filter(function(n) { return n !== CACHE_NAME; })
-                 .map(function(n) { return caches.delete(n); })
+            names.map(function(n) { return caches.delete(n); })
           );
         })
       );
       self.clients.claim();
     });
 
+    self.addEventListener("message", function(e) {
+      if (e.data === "skipWaiting") self.skipWaiting();
+    });
+
     self.addEventListener("fetch", function(e) {
       var url = e.request.url;
 
-      // Cache-first for CDN library
+      // Cache-first for CDN library only
       if (url.indexOf("cdn.jsdelivr.net") >= 0) {
         e.respondWith(
           caches.match(e.request).then(function(cached) {
@@ -5382,19 +5384,18 @@ const MASTER_DATA = {"BO30403125001": {"bo_id": "BO30403125001", "facility_id": 
         return;
       }
 
-      // For same-origin requests, try cache first, then network
+      // NETWORK-FIRST for same-origin: always fetch latest from network
       e.respondWith(
-        caches.match(e.request).then(function(cached) {
-          if (cached) return cached;
-          return fetch(e.request).then(function(resp) {
-            if (resp && resp.status === 200 && e.request.method === "GET") {
-              var clone = resp.clone();
-              caches.open(CACHE_NAME).then(function(c) { c.put(e.request, clone); });
-            }
-            return resp;
-          }).catch(function() {
-            // If both cache and network fail, return cached page
-            return caches.match("./");
+        fetch(e.request).then(function(resp) {
+          if (resp && resp.status === 200 && e.request.method === "GET") {
+            var clone = resp.clone();
+            caches.open(CACHE_NAME).then(function(c) { c.put(e.request, clone); });
+          }
+          return resp;
+        }).catch(function() {
+          // Offline fallback: serve from cache
+          return caches.match(e.request).then(function(cached) {
+            return cached || caches.match("./");
           });
         })
       );
@@ -5406,8 +5407,26 @@ const MASTER_DATA = {"BO30403125001": {"bo_id": "BO30403125001", "facility_id": 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register(swURL).then(function(reg) {
       console.log("PWA: Service Worker registered", reg.scope);
+      if (reg.waiting) { reg.waiting.postMessage("skipWaiting"); }
+      reg.addEventListener("updatefound", function() {
+        var newWorker = reg.installing;
+        if (newWorker) {
+          newWorker.addEventListener("statechange", function() {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              newWorker.postMessage("skipWaiting");
+            }
+          });
+        }
+      });
     }).catch(function(err) {
       console.warn("PWA: Service Worker registration failed", err);
+    });
+  }
+
+  // Reload when new SW takes control
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.addEventListener("controllerchange", function() {
+      window.location.reload();
     });
   }
 
