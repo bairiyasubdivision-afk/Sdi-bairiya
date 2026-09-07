@@ -55,8 +55,31 @@
   .btn:disabled{opacity:0.5;cursor:not-allowed;}
 
   .cal-wrap{display:flex;gap:20px;flex-wrap:wrap;}
-  .cal-left{flex:0 0 380px;max-width:380px;}
-  .cal-right{flex:1 1 400px;min-width:350px;}
+  .cal-left{flex:0 0 380px;max-width:380px;min-width:280px;}
+  .cal-right{flex:1 1 400px;min-width:300px;}
+  @media(max-width:768px){
+    .cal-left{flex:1 1 100%;max-width:100%;min-width:0;}
+    .cal-right{flex:1 1 100%;min-width:0;}
+    .calendar{font-size:0.72rem;}
+    .calendar th{padding:4px 1px;font-size:0.62rem;}
+    .calendar td{height:42px;}
+    .cal-day-num{font-size:0.68rem;}
+    .cal-badge{font-size:0.5rem;margin-top:10px;}
+    .cal-hol-badge{font-size:0.45rem;margin-top:10px;}
+    .cal-leave-badge{font-size:0.45rem;margin-top:10px;}
+    .holiday-legend{font-size:0.65rem;gap:8px;}
+  }
+  @media(max-width:480px){
+    .calendar{font-size:0.65rem;}
+    .calendar th{padding:3px 1px;font-size:0.55rem;}
+    .calendar td{height:36px;}
+    .cal-day-num{font-size:0.6rem;}
+    .cal-badge{font-size:0.45rem;margin-top:8px;}
+    .cal-hol-badge{font-size:0.4rem;margin-top:8px;}
+    .cal-leave-badge{font-size:0.4rem;margin-top:8px;}
+    .cal-leave-label{display:none;}
+    .holiday-legend{font-size:0.6rem;gap:6px;}
+  }
   .calendar{width:100%;border-collapse:collapse;font-size:0.82rem;table-layout:fixed;}
   .calendar th{background:var(--navy);color:white;padding:7px 2px;text-align:center;font-weight:600;font-size:0.72rem;letter-spacing:0.5px;}
   .calendar td{border:1px solid #e8e5e0;padding:0;text-align:center;height:52px;vertical-align:top;cursor:pointer;position:relative;transition:background 0.15s,box-shadow 0.15s;overflow:hidden;}
@@ -632,8 +655,12 @@
         </div>
         <div id="placeholderMsg" style="color:#999;font-style:italic;padding:20px;text-align:center;">Click a date on the calendar to start planning a journey.</div>
         <div class="journey-list" id="journeyListWrap" style="display:none;">
-          <h4 style="color:var(--navy);margin:15px 0 8px;font-size:0.95rem;">Saved Journeys</h4>
-          <table><thead><tr><th>Date</th><th>Route</th><th>Dep</th><th>Ret HQ</th><th>Km</th><th>DA</th><th>Work Log Entry</th><th></th></tr></thead><tbody id="journeyListBody"></tbody></table>
+          <h4 class="card-title collapsible" onclick="toggleCard(this)" style="color:var(--navy);margin:10px 0 8px;font-size:0.95rem;border-bottom:2px solid var(--red);padding-bottom:6px;cursor:pointer;">Saved Journeys <span class="collapse-icon">▼</span></h4>
+          <div class="card-body" style="display:none;">
+            <div style="overflow-x:auto;">
+              <table style="width:100%;font-size:0.8rem;"><thead><tr><th>Date</th><th>Route</th><th>Dep</th><th>Ret HQ</th><th>Km</th><th>DA</th><th>Work Log Entry</th><th></th></tr></thead><tbody id="journeyListBody"></tbody></table>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1206,6 +1233,8 @@
       if(!search)return true;
       return o.name.toLowerCase().indexOf(search)>=0||o.type.toLowerCase().indexOf(search)>=0||String(o.dist).indexOf(search)>=0;
     });
+    var typeOrder={SO:0,BO:1,Office:2,Other:3};
+    offices.sort(function(a,b){return (typeOrder[a.type]||9)-(typeOrder[b.type]||9)||a.name.localeCompare(b.name);});
     var h='<table><thead><tr><th>#</th><th>Office Name</th><th>Type</th><th>Distance (km)</th><th>Actions</th></tr></thead><tbody>';
     offices.forEach(function(o,i){
       var idx=d.offices.indexOf(o);
@@ -1612,7 +1641,7 @@
     var d=ensureData();
     if(typeof allOffices!=='undefined'){
       allOffices.length=0;
-      d.offices.forEach(function(o){allOffices.push({name:o.name,dist:o.dist,type:o.type});});
+      d.offices.forEach(function(o){allOffices.push({name:o.name,dist:o.dist,type:o.type,name_hi:o.name_hi||''});});
     }
     if(typeof buildOfficeOptions==='function')buildOfficeOptions();
   }
@@ -1834,7 +1863,7 @@ var purposeTemplates={
 };
 function officeTypeLabel(n){var o=allOffices.find(function(x){return x.name===n;});if(!o)return'';if(o.type==='BO')return'BO';if(o.type==='SO')return'SO';return'';}
 function buildPurpose(pt,off,custom){if(pt==='custom'||!pt)return custom||'';var tpl=purposeTemplates[pt];if(!tpl)return custom||'';return tpl.replace('{office}',off).replace('{office_type}',officeTypeLabel(off)).trim();}
-function buildOfficeDDL(){var h='<option value="">-- Select --</option>';var g={"SO":"Sub Post Offices","BO":"Branch Offices","Office":"Other Offices","Other":"Other Locations"};var o=["SO","BO","Office","Other"];for(var i=0;i<o.length;i++){var t=o[i],os=allOffices.filter(function(x){return x.type===t;});if(!os.length)continue;h+='<optgroup label="'+g[t]+'">';for(var j=0;j<os.length;j++){var nm=os[j].name;var hi=os[j].name_hi||'';h+='<option value="'+nm+'">'+nm+' ('+os[j].dist+' km)'+(hi?' — '+hi:'')+'</option>';}h+='</optgroup>';}h+='<option value="__custom">Custom...</option>';return h;}
+function buildOfficeDDL(){var h='<option value="">-- Select --</option>';var g={"SO":"Sub Post Offices","BO":"Branch Offices","Office":"Other Offices","Other":"Other Locations"};var o=["SO","BO","Office","Other"];for(var i=0;i<o.length;i++){var t=o[i],os=allOffices.filter(function(x){return x.type===t;});if(!os.length)continue;os.sort(function(a,b){return a.name.localeCompare(b.name);});h+='<optgroup label="'+g[t]+'">';for(var j=0;j<os.length;j++){var nm=os[j].name;var hi=os[j].name_hi||'';h+='<option value="'+nm+'">'+nm+' ('+os[j].dist+' km)'+(hi?' — '+hi:'')+'</option>';}h+='</optgroup>';}h+='<option value="__custom">Custom...</option>';return h;}
 function getOfficeDist(n){if(n===HQ_NAME)return 0;for(var i=0;i<allOffices.length;i++)if(allOffices[i].name===n)return allOffices[i].dist;return null;}
 
 // ============================================================
@@ -2180,6 +2209,39 @@ function onLegDistChange(idx){
   currentLegs[idx].dist=parseFloat(distEl.value)||0;
   currentLegs[idx].distAutoCalc=false;
   autoCalcTimes(idx);
+  // If custom office on first outward leg or return leg, offer to save HQ distance
+  var leg=currentLegs[idx];
+  if(leg.isCustom&&leg.to&&leg.dist>0){
+    var isFirstOutward=(idx===0&&!leg.isReturn);
+    var isReturnLeg=leg.isReturn;
+    // Only save for first outward (HQ→office) or return (office→HQ)
+    // NOT for intermediate legs (office→office) — those distances are not HQ distances
+    if(isFirstOutward||isReturnLeg){
+      // Check if office already exists in allOffices
+      var existing=allOffices.find(function(o){return o.name.toLowerCase()===leg.to.toLowerCase();});
+      if(!existing){
+        // Offer to save after a brief delay so user can see the distance was entered
+        setTimeout(function(){
+          if(!confirm('Save "'+leg.to+'" with '+leg.dist+' km distance from HQ for future use?\n\nThis will appear in the office dropdown next time.\n\nClick OK to save, Cancel to skip.'))return;
+          // Add to master data
+          if(typeof ensureData==='function'){
+            var d=ensureData();
+            d.offices.push({name:leg.to,dist:leg.dist,type:'Other'});
+            var typeOrder={SO:0,BO:1,Office:2,Other:3};
+            d.offices.sort(function(a,b){return (typeOrder[a.type]||9)-(typeOrder[b.type]||9)||a.name.localeCompare(b.name);});
+            if(typeof saveData==='function')saveData(d);
+          }
+          // Also add to allOffices array directly for immediate use
+          allOffices.push({name:leg.to,dist:leg.dist,type:'Other',name_hi:''});
+          // Re-render legs to show the office in dropdown now
+          if(typeof renderLegs==='function')renderLegs();
+          // Show confirmation
+          if(typeof showToast==='function')showToast('"'+leg.to+'" saved! Will appear in dropdown next time.');
+          else alert('"'+leg.to+'" saved for future use!');
+        },100);
+      }
+    }
+  }
 }
 
 function onCustomPurposeChange(idx){
@@ -2478,12 +2540,29 @@ function editJourney(idx){
 
 function renderJourneyList(){
   var wrap=document.getElementById('journeyListWrap'),body=document.getElementById('journeyListBody');
-  if(!journeys.length){wrap.style.display='none';return;}
+  var mi=getMonthIdx(),y=getYear();
+  // Filter journeys to only show those for the selected month/year
+  var monthJourneys=journeys.filter(function(j){
+    var parts=j.date.split('.');
+    return parseInt(parts[1])===mi+1 && parseInt(parts[2])===y;
+  });
+  // Use the global index for edit/delete operations
+  if(!monthJourneys.length){
+    if(journeys.length){
+      wrap.style.display='block';
+      body.innerHTML='<tr><td colspan="8" style="text-align:center;color:#999;padding:10px;">No journeys for this month. Journeys exist for other months.</td></tr>';
+    } else {
+      wrap.style.display='none';
+    }
+    return;
+  }
   wrap.style.display='block';body.innerHTML='';
-  journeys.forEach(function(j,i){
+  monthJourneys.forEach(function(j){
+    // Find the global index for edit/delete
+    var globalIdx=journeys.indexOf(j);
     var route=j.legs.map(function(l){return l.to;}).join(' -> ');
     var tr=document.createElement('tr');
-    tr.innerHTML='<td>'+j.date+'</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(route)+'</td><td>'+j.depTime+'</td><td>'+j.retTime+'</td><td>'+j.dist+'</td><td>'+j.da.toFixed(1)+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(j.workLogEntry)+'">'+esc(j.workLogEntry)+'</td><td><button class="jl-edit" onclick="editJourney('+i+')" title="Edit/Modify this journey">&#9998;</button> <button class="jl-del" onclick="deleteJourney('+i+')">X</button></td>';
+    tr.innerHTML='<td>'+j.date+'</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(route)+'</td><td>'+j.depTime+'</td><td>'+j.retTime+'</td><td>'+j.dist+'</td><td>'+j.da.toFixed(1)+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(j.workLogEntry)+'">'+esc(j.workLogEntry)+'</td><td><button class="jl-edit" onclick="editJourney('+globalIdx+')" title="Edit/Modify this journey">&#9998;</button> <button class="jl-del" onclick="deleteJourney('+globalIdx+')">X</button></td>';
     body.appendChild(tr);
   });
 }
@@ -2538,7 +2617,7 @@ function generateWorkLogFromJourneys(){
   }
 }
 
-function onMonthChange(){renderCalendar();generateWorkLog();updateSummary();renderLeaveList();autoSave();}
+function onMonthChange(){renderCalendar();renderJourneyList();generateWorkLog();updateSummary();renderLeaveList();autoSave();}
 
 // ============================================================
 // LEAVE MANAGEMENT
