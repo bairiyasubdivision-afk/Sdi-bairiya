@@ -849,9 +849,9 @@
     <p class="note" style="margin-top:0;">प्रत्येक योजना से 06 पासबुक — प्रत्येक श्रेणी टैप करके खोलें और भरें।</p>
     <div id="passbookSections"></div>
     <details class="passbook-scheme" id="sb46Section" style="margin-top:12px;border:1px solid #ffcdd2;border-radius:8px;padding:8px 12px;background:#fff5f5;">
-      <summary style="cursor:pointer;font-weight:600;color:#dc3545;">📋 SB-46 नोटिस (प्रश्न 36 के उत्तर का भाग) — पासबुक भौतिक रूप से सत्यापित नहीं हो सकी</summary>
+      <summary style="cursor:pointer;font-weight:600;color:#dc3545;">📋 SB-46 (प्रश्न 36 के उत्तर का भाग) — भौतिक पासबुक सत्यापन नहीं हो सकी</summary>
       <div style="margin-top:8px;">
-        <p class="note" style="margin:0 0 8px;font-size:0.8rem;">यदि 6 पासबुक का भौतिक सत्यापन नहीं हो सका, तो 6 पासबुक पूरे करने हेतु इन खातों के लिए SB-46 नोटिस जारी किए जाते हैं। यह जानकारी प्रश्न 36 के उत्तर में रिपोर्ट का भाग होगी।</p>
+        <p class="note" style="margin:0 0 8px;font-size:0.8rem;">यदि 6 पासबुक का भौतिक सत्यापन नहीं हो सका, तो 6 पासबुक पूरी करने हेतु इन खातों के लिए SB-46 नोटिस जारी किए जाते हैं। रिपोर्ट में ये खाते उसी पासबुक तालिका (Q36) में दिखेंगे, खाता संख्या के बाद <strong>(SB-46)</strong> चिह्नित। SB-46 नोटिस फॉर्म रिपोर्ट के अंत में अलग पृष्ठों पर बनेंगे, जिन्हें जमाकर्ताओं को भेजा जाएगा।</p>
         <div id="sb46Entries"></div>
         <button type="button" class="btn btn-secondary" id="sb46AddBtn" style="margin-top:8px;font-size:0.8rem;padding:4px 10px;">+ खाता जोड़ें</button>
       </div>
@@ -926,15 +926,6 @@
       <button class="btn" id="markDoneBtn" type="button" style="padding:8px 16px;font-size:0.85rem;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;">✅ निरीक्षण पूर्ण (Mark Done)</button>
     </div>
     <div style="font-size:0.8rem;color:#888;margin-top:4px;">निरीक्षण पूर्ण चिह्नित करने पर यह BO सूची में नीचे चला जाएगा। लंबित BOs ऊपर दिखेंगे।</div>
-  </div>
-
-  <div class="card">
-    <h2>ℹ️ ध्यान दें</h2>
-    <p class="note">
-      यह टूल हेडर, स्थापना, गांव, डिवाइस और उपरोक्त संख्यात्मक फ़ील्ड को स्वतः भरता है।
-      शेष विवरणात्मक भाग (धारा A–K, प्रश्न 1–58) टेम्पलेट का मानक पाठ है — आप उसे Word/WPS Office
-      में खोलकर आवश्यकतानुसार संपादित करें।
-    </p>
   </div>
 
 </main>
@@ -3205,6 +3196,125 @@ function replaceParagraphFullText(doc, bodyEl, matchFullText, newFullText) {
   return false;
 }
 
+// ---------------------------------------------------------------------------
+// SB-46 notice paragraphs builder — appends notices as raw OOXML to the
+// report body, each on a separate page (page break before each notice).
+// Used during IR report generation so SB-46 notices come as part of the
+// same .docx file, after the main inspection report content.
+// ---------------------------------------------------------------------------
+
+function makeSB46Para(doc, text, opts) {
+  opts = opts || {};
+  var p = doc.createElementNS(W_NS, "w:p");
+  // paragraph properties
+  var pPr = doc.createElementNS(W_NS, "w:pPr");
+  if (opts.align) {
+    var jc = doc.createElementNS(W_NS, "w:jc");
+    jc.setAttribute("w:val", opts.align);
+    pPr.appendChild(jc);
+  }
+  if (opts.spacingAfter != null) {
+    var sp = doc.createElementNS(W_NS, "w:spacing");
+    sp.setAttribute("w:after", String(opts.spacingAfter));
+    pPr.appendChild(sp);
+  }
+  p.appendChild(pPr);
+  // run
+  var r = doc.createElementNS(W_NS, "w:r");
+  var rPr = doc.createElementNS(W_NS, "w:rPr");
+  if (opts.bold) {
+    var b = doc.createElementNS(W_NS, "w:b"); rPr.appendChild(b);
+  }
+  if (opts.italics) {
+    var i = doc.createElementNS(W_NS, "w:i"); rPr.appendChild(i);
+  }
+  if (opts.size) {
+    var sz = doc.createElementNS(W_NS, "w:sz");
+    sz.setAttribute("w:val", String(opts.size));
+    rPr.appendChild(sz);
+  }
+  if (opts.color) {
+    var col = doc.createElementNS(W_NS, "w:color");
+    col.setAttribute("w:val", opts.color);
+    rPr.appendChild(col);
+  }
+  var fonts = doc.createElementNS(W_NS, "w:rFonts");
+  fonts.setAttribute("w:ascii", "Devanagari");
+  fonts.setAttribute("w:hAnsi", "Devanagari");
+  rPr.appendChild(fonts);
+  r.appendChild(rPr);
+  var t = doc.createElementNS(W_NS, "w:t");
+  t.setAttribute("xml:space", "preserve");
+  t.textContent = text || "";
+  r.appendChild(t);
+  p.appendChild(r);
+  return p;
+}
+
+function makeSB46PageBreak(doc) {
+  var p = doc.createElementNS(W_NS, "w:p");
+  var r = doc.createElementNS(W_NS, "w:r");
+  var br = doc.createElementNS(W_NS, "w:br");
+  br.setAttribute("w:type", "page");
+  r.appendChild(br);
+  p.appendChild(r);
+  return p;
+}
+
+function appendSB46NoticesToReport(doc, bodyEl, sb46Data, bo, inspDateDisplay, refNo) {
+  if (!sb46Data || !sb46Data.length) return;
+  // Find the final w:sectPr (section properties) — SB-46 paras go before it
+  var sectPr = null;
+  var children = bodyEl.childNodes;
+  for (var ci = children.length - 1; ci >= 0; ci--) {
+    if (children[ci].nodeType === 1 && children[ci].localName === "sectPr") {
+      sectPr = children[ci];
+      break;
+    }
+  }
+  var boName = bo ? (bo.bo_name_hi || bo.bo_name_en_raw || "") : "";
+  for (var ai = 0; ai < sb46Data.length; ai++) {
+    var entry = sb46Data[ai];
+    var balNum = Math.floor(parseFloat(entry.balance) || 0);
+    var balWords = (typeof numberToWordsHindi === "function") ? numberToWordsHindi(balNum) : String(balNum);
+
+    // Page break before each notice
+    bodyEl.insertBefore(makeSB46PageBreak(doc), sectPr);
+
+    // --- Part 1: Intimation ---
+    bodyEl.insertBefore(makeSB46Para(doc, "SB-46", { bold: true, size: 28, align: "center", spacingAfter: 60 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u092d\u093e\u0930\u0924 \u0938\u0930\u0915\u093e\u0930, \u0921\u093e\u0915 \u0935\u093f\u092d\u093e\u0917", { bold: true, size: 24, align: "center", spacingAfter: 40 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u091c\u092e\u093e\u0915\u0930\u094d\u0924\u093e \u0915\u094b \u0916\u093e\u0924\u0947 \u092e\u0947\u0902 \u091c\u092e\u093e \u0930\u093e\u0936\u093f \u0915\u0940 \u0938\u0942\u091a\u0928\u093e \u090f\u0935\u0902 \u0909\u0938\u0915\u0940 \u092a\u093e\u0935\u0924\u0940", { bold: true, size: 22, align: "center", spacingAfter: 200 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u0915\u093e\u0930\u094d\u092f\u093e\u0932\u092f: \u090f\u0938\u0921\u0940\u0906\u0908 \u092c\u0932\u093f\u092f\u093e \u092a\u0942\u0930\u094d\u0935 \u0909\u092a-\u092e\u0902\u0921\u0932 (\u092c\u0948\u0930\u093f\u092f\u093e)", { size: 22, spacingAfter: 80 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u0938\u0902\u0926\u0930\u094d\u092d \u0938\u0902\u0916\u094d\u092f\u093e: " + refNo + "   \u0926\u093f\u0928\u093e\u0902\u0915: " + inspDateDisplay, { size: 22, spacingAfter: 40 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u0921\u093e\u0915\u0918\u0930: " + boName + " \u092c\u0940\u0913  |  \u0936\u094d\u0930\u0947\u0923\u0940: " + entry.scheme, { size: 22, spacingAfter: 200 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u0936\u094d\u0930\u0940\u092e\u093e\u0928/\u0936\u094d\u0930\u0940\u092e\u0924\u0940 " + (entry.name || "____________________") + ",", { size: 22, spacingAfter: 80 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, entry.address || "\u092a\u0924\u093e: ____________________", { size: 22, spacingAfter: 200 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u0906\u092a\u0915\u0947 " + entry.scheme + " \u0916\u093e\u0924\u093e \u0938\u0902\u0916\u094d\u092f\u093e " + (entry.acct || "____________________") + " \u0915\u093e, \u091c\u094b " + boName + " \u0921\u093e\u0915\u0918\u0930 \u092e\u0947\u0902 \u091a\u093e\u0932\u0942 \u0939\u0948, \u0921\u093e\u0915\u0918\u0930 \u0915\u0947 \u0905\u092d\u093f\u0932\u0947\u0916\u094b\u0902 \u0915\u0947 \u0905\u0928\u0941\u0938\u093e\u0930 \u0926\u093f\u0928\u093e\u0902\u0915 " + (entry.dlt || "____________") + " \u0915\u094b \u0936\u0947\u0937 \u0930\u093e\u0936\u093f \u20b9 " + (entry.balance || "________") + " (\u0930\u0942\u092a\u092f\u0947 " + balWords + " \u092e\u093e\u0924\u094d\u0930) \u0939\u0948\u0964", { size: 22, spacingAfter: 120 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u0915\u0943\u092a\u092f \u0905\u092a\u0928\u0940 \u092a\u093e\u0938\u092c\u0941\u0915 \u0915\u0940 \u091c\u093e\u0901\u091a \u0915\u0930\u0947\u0902 \u0914\u0930 \u0926\u0947\u0916\u0947\u0902 \u0915\u093f \u092f\u0939 \u0938\u0939\u0940 \u0939\u0948\u0964 \u092f\u0926\u093f \u0928\u0939\u0940\u0902 \u0939\u0948, \u0924\u094b \u0906\u092a\u0915\u0940 \u092a\u093e\u0938\u092c\u0941\u0915 \u092e\u0947\u0902 \u0926\u0930\u094d\u0936\u093e\u0908 \u0917\u0908 \u0938\u0939\u0940 \u0936\u0947\u0937 \u0930\u093e\u0936\u093f \u0928\u0940\u091a\u0947 \u0926\u093f\u090f \u0917\u090f \u0909\u0924\u094d\u0924\u0930 \u092b\u0949\u0930\u094d\u092e \u092e\u0947\u0902 \u092d\u0930 \u0926\u0947\u0902, \u091c\u093f\u0938\u0947 \u0939\u0938\u094d\u0924\u093e\u0915\u094d\u0937\u0930\u093f\u0924 \u090f\u0935\u0902 \u0926\u093f\u0928\u093e\u0902\u0915\u093f\u0924 \u0915\u0930\u0915\u0947 \u0938\u0902\u0932\u0917\u094d\u0928 \u0915\u093f\u090f \u0917\u090f \u092a\u0924\u094d\u0930\u093e\u0935\u0932\u0940 \u0932\u093f\u092b\u093e\u092b\u0947 \u092e\u0947\u0902 \u092c\u0902\u0926 \u0915\u0930 \u0936\u0940\u0918\u094d\u0930 \u0921\u093e\u0915 \u0926\u094d\u0935\u093e\u0930\u093e \u092d\u0947\u091c \u0926\u0947\u0902\u0964", { size: 22, spacingAfter: 200 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u092d\u0935\u0926\u0940\u092f,", { size: 22, spacingAfter: 200 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "(\u0939\u0938\u094d\u0924\u093e\u0915\u094d\u0937\u0930)", { size: 22, spacingAfter: 40 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u0909\u092a-\u092e\u0902\u0921\u0932 \u0928\u093f\u0930\u0940\u0915\u094d\u0937\u0915", { bold: true, size: 22, spacingAfter: 40 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u092c\u0932\u093f\u092f\u093e \u092a\u0942\u0930\u094d\u0935 \u0909\u092a-\u092e\u0902\u0921\u0932 (\u092c\u0948\u0930\u093f\u092f\u093e)", { size: 22, spacingAfter: 80 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u0928\u094b\u091f \u2013 \u0932\u093f\u092b\u093e\u092b\u0947 \u092a\u0930 \u0915\u094b\u0908 \u0921\u093e\u0915 \u091f\u093f\u0915\u091f \u0932\u0917\u093e\u0928\u0947 \u0915\u0940 \u0906\u0935\u0936\u094d\u092f\u0915\u0924\u093e \u0928\u0939\u0940\u0902 \u0939\u0948", { italics: true, size: 20, spacingAfter: 200 }), sectPr);
+
+    // Separator
+    bodyEl.insertBefore(makeSB46Para(doc, "\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014", { size: 20, color: "999999", align: "center", spacingAfter: 200 }), sectPr);
+
+    // --- Part 2: Reply Form ---
+    bodyEl.insertBefore(makeSB46Para(doc, "\u0909\u0924\u094d\u0924\u0930 \u092b\u0949\u0930\u094d\u092e", { bold: true, size: 24, align: "center", spacingAfter: 120 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u0938\u0902\u0926\u0930\u094d\u092d: " + refNo, { size: 22, spacingAfter: 60 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u0921\u093e\u0915\u0918\u0930: " + boName + " \u092c\u0940\u0913", { size: 22, spacingAfter: 60 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u0926\u093f\u0928\u093e\u0902\u0915: ____________ 20__", { size: 22, spacingAfter: 200 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u092e\u0948\u0902 \u0907\u0938\u0915\u0940 \u092a\u0941\u0937\u094d\u091f\u093f \u0915\u0930\u0924\u093e/\u0915\u0930\u0924\u0940 \u0939\u0942\u0901 \u0915\u093f \u092e\u0947\u0930\u0947 " + entry.scheme + " \u0916\u093e\u0924\u093e \u0938\u0902\u0916\u094d\u092f\u093e " + (entry.acct || "____________________") + " \u0915\u093e, \u091c\u094b " + boName + " \u0921\u093e\u0915\u0918\u0930 \u092e\u0947\u0902 \u091a\u093e\u0932\u0942 \u0939\u0948, \u092e\u0947\u0930\u0940 \u092a\u093e\u0938\u092c\u0941\u0915 \u0915\u0947 \u0905\u0928\u0941\u0938\u093e\u0930 \u0926\u093f\u0928\u093e\u0902\u0915 ____________ \u0915\u094b \u0936\u0947\u0937 \u0930\u093e\u0936\u093f \u20b9 __________ (\u0930\u0942\u092a\u092f\u0947 ______________________________ \u092e\u093e\u0924\u094d\u0930) \u0939\u0948\u0964", { size: 22, spacingAfter: 300 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u0939\u0938\u094d\u0924\u093e\u0915\u094d\u0937\u0930: ____________________", { size: 22, spacingAfter: 60 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u0928\u093e\u092e: " + (entry.name || "____________________"), { size: 22, spacingAfter: 60 }), sectPr);
+    bodyEl.insertBefore(makeSB46Para(doc, "\u092a\u0924\u093e: " + (entry.address || "____________________"), { size: 22, spacingAfter: 400 }), sectPr);
+    // Mandatory note at footer of the page
+    bodyEl.insertBefore(makeSB46Para(doc, "\u0928\u094b\u091f: \u092f\u0939 \u0915\u094b\u0908 \u0935\u0948\u0927 \u0926\u093e\u0935\u093e \u092a\u0924\u094d\u0930 \u0928\u0939\u0940\u0902 \u0939\u0948\u0964 \u092f\u0926\u093f \u0915\u093f\u0938\u0940 \u092d\u0940 \u092a\u094d\u0930\u0915\u093e\u0930 \u0915\u0940 \u0905\u0928\u093f\u092f\u092e\u093f\u0924\u0924\u093e \u092a\u093e\u0908 \u091c\u093e\u0924\u0940 \u0939\u0948, \u0924\u094b \u0924\u0941\u0930\u0902\u0924 \u092a\u093e\u0938\u092c\u0941\u0915 \u0938\u0939\u093f\u0924 \u0928\u093f\u0915\u091f\u0924\u092e \u0921\u093e\u0915\u0918\u0930 \u092e\u0947\u0902 \u0909\u092a\u0938\u094d\u0925\u093f\u0924 \u0939\u094b\u0902\u0964", { italics: true, bold: true, size: 20, color: "dc3545", align: "center", spacingAfter: 0 }), sectPr);
+  }
+}
+
 function stripAllHighlighting(bodyEl) {
   // Removes every <w:highlight> element in the document. The template uses
   // yellow highlighting purely as an authoring aid to mark which fields need
@@ -3492,7 +3602,7 @@ function fillBalanceAckTable(doc, bodyEl, entries) {
 // 5 pli_deposit, 6 sukanya_deposit, 7 rd, 8 lekha_sent, 9 final_balance
 // ---------------------------------------------------------------------------
 
-const LOT_TABLE_INDEX = 7;
+var LOT_TABLE_INDEX = 10;
 const LOT_DATA_START_ROW = 2;
 const LOT_MAX_ROWS = 6;
 const LOT_FIELD_ORDER = [
@@ -3521,7 +3631,7 @@ function fillLotTable(doc, bodyEl, entries) {
 // Columns: खाता संख्या, डीएलटी, अमाउंट, बैलेंस
 // ---------------------------------------------------------------------------
 
-const RD_CLOSED_TABLE_INDEX = 8;
+var RD_CLOSED_TABLE_INDEX = 11;
 const RD_CLOSED_MAX_ROWS = 4;
 
 function fillRdClosedTable(doc, bodyEl, entries) {
@@ -3546,7 +3656,7 @@ function fillRdClosedTable(doc, bodyEl, entries) {
 // Fixed categories, columns: क्र, व्यवसाय, पिछले वर्ष, वर्तमान वर्ष, टिप्पणी
 // ---------------------------------------------------------------------------
 
-const BUSINESS_TABLE_INDEX = 9;
+var BUSINESS_TABLE_INDEX = 12;
 const BUSINESS_CATEGORIES = [
   "rd", "ssa", "td", "ippb", "pli", "rpli", "stamp_sales", "sb_deposits",
 ];
@@ -3581,22 +3691,78 @@ function fillBusinessTable(doc, bodyEl, entriesByCategory) {
 // प्रत्येक योजना").
 // ---------------------------------------------------------------------------
 
-const PASSBOOK_TABLE_INDEX = 5;
-const PASSBOOK_SECTIONS = [
-  { key: "sb", startRow: 2, count: 6 },
-  { key: "rd", startRow: 10, count: 6 },
-  { key: "ssa", startRow: 19, count: 6 },
-  { key: "td", startRow: 26, count: 6 },
+var PASSBOOK_TABLE_INDEX = 5;
+var PASSBOOK_SECTIONS = [
+  { key: "sb", tableIdx: 5, startRow: 2, count: 6 },
+  { key: "rd", tableIdx: 6, startRow: 2, count: 6 },
+  { key: "ssa", tableIdx: 7, startRow: 2, count: 6 },
+  { key: "td", tableIdx: 8, startRow: 2, count: 6 },
 ];
+
+// Split the single large Q36 passbook table (34 rows, 4 schemes) into 4
+// separate compact tables (one per scheme) to eliminate excessive gaps.
+function splitPassbookTable(doc, bodyEl) {
+  var tables = getDocTables(bodyEl);
+  var origTbl = tables[PASSBOOK_TABLE_INDEX];
+  if (!origTbl) return;
+  var origRows = getTableRows(origTbl);
+  if (origRows.length < 26) return; // expected 34 rows
+
+  // Clone table properties and grid
+  var tblPr = getDirectChildren(origTbl, "tblPr")[0];
+  var tblGrid = getDirectChildren(origTbl, "tblGrid")[0];
+
+  // Section row ranges in the original table
+  var sections = [
+    { labelRow: 1,  dataStart: 2,  dataCount: 6 }, // SB
+    { labelRow: 9,  dataStart: 10, dataCount: 6 }, // RD
+    { labelRow: 18, dataStart: 19, dataCount: 6 }, // SSA
+    { labelRow: 25, dataStart: 26, dataCount: 6 }, // TD
+  ];
+  var headerRow = origRows[0]; // column headers row
+
+  var parent = origTbl.parentNode;
+  var insertBefore = origTbl.nextSibling;
+
+  for (var si = 0; si < sections.length; si++) {
+    var sec = sections[si];
+    var newTbl = doc.createElementNS(W_NS, "w:tbl");
+    if (tblPr) newTbl.appendChild(tblPr.cloneNode(true));
+    if (tblGrid) newTbl.appendChild(tblGrid.cloneNode(true));
+    // Clone header row for each table
+    newTbl.appendChild(headerRow.cloneNode(true));
+    // Move scheme label row
+    newTbl.appendChild(origRows[sec.labelRow]);
+    // Move data rows
+    for (var di = 0; di < sec.dataCount; di++) {
+      newTbl.appendChild(origRows[sec.dataStart + di]);
+    }
+    // Insert table
+    parent.insertBefore(newTbl, insertBefore);
+    // Small spacer paragraph between tables (not after last)
+    if (si < sections.length - 1) {
+      var spacer = doc.createElementNS(W_NS, "w:p");
+      var spPr = doc.createElementNS(W_NS, "w:pPr");
+      var spSp = doc.createElementNS(W_NS, "w:spacing");
+      spSp.setAttribute("w:after", "0"); spSp.setAttribute("w:before", "0");
+      spSp.setAttribute("w:line", "120"); spSp.setAttribute("w:lineRule", "auto");
+      spPr.appendChild(spSp);
+      spacer.appendChild(spPr);
+      parent.insertBefore(spacer, insertBefore);
+    }
+  }
+  // Remove original table (only extra empty rows remain in it)
+  parent.removeChild(origTbl);
+}
 
 function fillPassbookTable(doc, bodyEl, passbookData) {
   // passbookData: { sb: [{acct, dlt, deposit, withdrawal, balance}, ...], rd: [...], ssa: [...], td: [...] }
   const tables = getDocTables(bodyEl);
-  const t5 = tables[PASSBOOK_TABLE_INDEX];
-  if (!t5) return;
-  const rows = getTableRows(t5);
 
   for (const section of PASSBOOK_SECTIONS) {
+    const t = tables[section.tableIdx];
+    if (!t) continue;
+    const rows = getTableRows(t);
     const entries = (passbookData && passbookData[section.key]) || [];
     for (let i = 0; i < section.count; i++) {
       const rowIdx = section.startRow + i;
@@ -3614,8 +3780,69 @@ function fillPassbookTable(doc, bodyEl, passbookData) {
   }
 }
 
-// Fill PLI/RPLI table (Q49.11) — Policy No, Paid Till, Amount
-const PLI_TABLE_INDEX = 6;
+// Remove empty paragraphs before the first passbook table (Q36) to avoid gap
+function trimEmptyParasBeforePassbookTable(bodyEl) {
+  var tables = getDocTables(bodyEl);
+  var firstTbl = tables[PASSBOOK_TABLE_INDEX]; // SB table (first of 4)
+  if (!firstTbl) return;
+  function isEmptyPara(el) {
+    return el && el.nodeType === 1 && el.localName === "p" && el.namespaceURI === W_NS &&
+           !el.getElementsByTagNameNS(W_NS, "t").length &&
+           !el.getElementsByTagNameNS(W_NS, "br").length;
+  }
+  var prev = firstTbl.previousSibling;
+  while (prev && isEmptyPara(prev)) {
+    var toRemove = prev;
+    prev = prev.previousSibling;
+    bodyEl.removeChild(toRemove);
+  }
+}
+
+// Fill SB-46 entries into empty rows of the Q36 passbook table.
+// Physical verification entries are already filled by fillPassbookTable.
+// SB-46 entries go into the remaining empty rows of each scheme section,
+// with "(SB-46)" appended after the account number.
+function fillSB46InPassbookTable(doc, bodyEl, sb46Data) {
+  if (!sb46Data || !sb46Data.length) return;
+  const tables = getDocTables(bodyEl);
+
+  // Group SB-46 entries by scheme (lowercase to match section keys)
+  var sb46ByScheme = {};
+  sb46Data.forEach(function(entry) {
+    var key = (entry.scheme || "SB").toLowerCase();
+    if (!sb46ByScheme[key]) sb46ByScheme[key] = [];
+    sb46ByScheme[key].push(entry);
+  });
+
+  for (const section of PASSBOOK_SECTIONS) {
+    var entries = sb46ByScheme[section.key];
+    if (!entries || !entries.length) continue;
+    const t = tables[section.tableIdx];
+    if (!t) continue;
+    const rows = getTableRows(t);
+
+    var sb46Idx = 0;
+    for (let i = 0; i < section.count && sb46Idx < entries.length; i++) {
+      const rowIdx = section.startRow + i;
+      if (rowIdx >= rows.length) break;
+      const cells = getRowCells(rows[rowIdx]);
+      if (cells.length < 5) continue;
+
+      // Check if this row already has an account number (filled by physical verification)
+      var cellParas = getDirectChildren(cells[0], "p");
+      var existingText = "";
+      if (cellParas.length > 0) existingText = getParagraphText(cellParas[0]);
+      if (existingText && existingText.trim()) continue; // skip filled rows
+
+      var entry = entries[sb46Idx];
+      sb46Idx++;
+      if (entry.acct) setCellText(doc, cells[0], entry.acct + " (SB-46)");
+      if (entry.dlt) setCellText(doc, cells[1], entry.dlt);
+      if (entry.balance) setCellText(doc, cells[4], entry.balance);
+    }
+  }
+}
+var PLI_TABLE_INDEX = 9;
 const PLI_MAX_ROWS = 6;
 function fillPliTable(doc, bodyEl, passbookData) {
   const pliEntries = (passbookData && passbookData.pli) || [];
@@ -3638,7 +3865,7 @@ function fillPliTable(doc, bodyEl, passbookData) {
 }
 
 // Fill PRB table — only if PRB is enabled
-const PRB_TABLE_INDEX = 10;
+var PRB_TABLE_INDEX = 13;
 const PRB_MAX_ROWS = 6;
 function fillPrbTable(doc, bodyEl, passbookData) {
   const prbEntries = (passbookData && passbookData.prb) || [];
@@ -7058,7 +7285,10 @@ const MASTER_DATA = {
   }
 
   // ============================================================
-  // SB-46: Accounts where passbook could not be collected
+  // SB-46: Accounts where passbook could not be physically verified during inspection.
+  // SB-46 notices are issued to complete the 6 passbook requirement.
+  // Details (account no, DLT, balance) go into the Q36 report answer, marked (SB-46).
+  // Physical SB-46 notice copies are sent separately to depositors for verification.
   // ============================================================
   var sb46Entries = [];
 
@@ -7165,7 +7395,7 @@ const MASTER_DATA = {
 
     for (var ai = 0; ai < sb46Data.length; ai++) {
       var entry = sb46Data[ai];
-      var balNum = parseFloat(entry.balance) || 0;
+      var balNum = Math.floor(parseFloat(entry.balance) || 0);
       var balWords = numberToWordsHindi(balNum);
 
       // Part 1: Intimation
@@ -7221,7 +7451,7 @@ const MASTER_DATA = {
       // Mandatory note
       children.push(new D.Paragraph({
         children: [new D.TextRun({
-          text: "नोट: यह कोई वैध दावा फॉर्म नहीं है। इसका अर्थ यह है कि आप किसी भी प्रकार की भिन्नता के केस में तुरंत पासबुक लेकर निकटतम डाकघर पहुंचें।",
+          text: "नोट: यह कोई वैध दावा पत्र नहीं है। यदि किसी भी प्रकार की अनियमितता पाई जाती है, तो तुरंत पासबुक सहित निकटतम डाकघर में उपस्थित हों।",
           italics: true, bold: true, size: 20, font: "Devanagari", color: "dc3545"
         })],
         spacing: { after: 200 }
@@ -7326,7 +7556,8 @@ const MASTER_DATA = {
 
   // Helper: number to Hindi words
   function numberToWordsHindi(n) {
-    if (!n || n === 0) return "शून्य";
+    n = Math.floor(Number(n) || 0);
+    if (!n || n === 0) return "\u0936\u0942\u0928\u094d\u092f";
     var ek = ["", "एक", "दो", "तीन", "चार", "पाँच", "छह", "सात", "आठ", "नौ"];
     var units = ["", "एक", "दो", "तीन", "चार", "पाँच", "छह", "सात", "आठ", "नौ", "दस", "ग्यारह", "बारह", "तेरह", "चौदह", "पंद्रह", "सोलह", "सत्रह", "अठारह", "उन्नीस", "बीस"];
     if (n < 21) return units[n];
@@ -8068,32 +8299,18 @@ const MASTER_DATA = {
       fillManualData(doc, bodyEl, manual);
       fillMailBagCounts(doc, bodyEl, mailBagCounts);
       applyToggleAnswers(doc, bodyEl, toggleAnswers);
+      // Split the large Q36 passbook table into 4 separate per-scheme tables
+      try { splitPassbookTable(doc, bodyEl); }
+      catch(e) { console.warn("split passbook table failed:", e); }
       fillPassbookTable(doc, bodyEl, passbookData);
-      // Q36: Add SB-46 issued accounts list as part of Q36 answer (after passbook table)
-      // SB-46 notices are issued to complete the 6 passbook requirement when physical verification could not be done.
+      // Remove empty paragraphs before Q36 passbook table
+      try { trimEmptyParasBeforePassbookTable(bodyEl); }
+      catch(e) { console.warn("trim empty paras failed:", e); }
+      // Q36: Fill SB-46 entries into remaining empty rows of the passbook table
+      // (physical verification entries are already filled above)
       if (manual.sb46Data && manual.sb46Data.length > 0) {
-        try {
-          var sb46Tables = getDocTables(bodyEl);
-          var q36Table = sb46Tables[PASSBOOK_TABLE_INDEX];
-          if (q36Table) {
-            var sb46Text = "SB-46 \u0928\u094b\u091f\u093f\u0938 \u091c\u093e\u0930\u0940 \u0915\u093f\u090f \u0917\u090f \u0916\u093e\u0924\u0947 (6 \u092a\u093e\u0938\u092c\u0941\u0915 \u0915\u093e \u092d\u094c\u0924\u093f\u0915 \u0938\u0924\u094d\u092f\u093e\u092a\u0928 \u0928\u0939\u0940\u0902 \u0939\u094b \u0938\u0915\u0928\u0947 \u092a\u0930 6 \u092a\u093e\u0938\u092c\u0941\u0915 \u092a\u0942\u0930\u0940 \u0915\u0930\u0928\u0947 \u0939\u0947\u0924\u0941):\n";
-            manual.sb46Data.forEach(function(d, i) {
-              sb46Text += (i+1) + ". " + d.scheme + " \u0916\u093e\u0924\u093e: " + d.acct + " \u2014 " + d.name + " \u2014 \u0936\u0947\u0937 \u20b9" + d.balance + " (DLT: " + d.dlt + ")\n";
-            });
-            var sb46Para = doc.createElement("w:p");
-            var sb46Run = doc.createElement("w:r");
-            var sb46RPr = doc.createElement("w:rPr");
-            var sb46Sz = doc.createElement("w:sz"); sb46Sz.setAttribute("w:val", "18"); sb46RPr.appendChild(sb46Sz);
-            var sb46Font = doc.createElement("w:rFonts"); sb46Font.setAttribute("w:ascii","Devanagari"); sb46Font.setAttribute("w:hAnsi","Devanagari"); sb46RPr.appendChild(sb46Font);
-            sb46Run.appendChild(sb46RPr);
-            var sb46TextEl = doc.createElement("w:t");
-            sb46TextEl.setAttribute("xml:space","preserve");
-            sb46TextEl.textContent = sb46Text;
-            sb46Run.appendChild(sb46TextEl);
-            sb46Para.appendChild(sb46Run);
-            q36Table.parentNode.appendChild(sb46Para, q36Table.nextSibling);
-          }
-        } catch(e) { console.warn("SB-46 list insertion failed:", e); }
+        try { fillSB46InPassbookTable(doc, bodyEl, manual.sb46Data); }
+        catch(e) { console.warn("SB-46 table fill failed:", e); }
       }
       fillPliTable(doc, bodyEl, passbookData);
       if (manual.prb_enabled) { fillPrbTable(doc, bodyEl, passbookData); }
@@ -8130,6 +8347,16 @@ const MASTER_DATA = {
       // template to flag fields needing attention, not meant for the final
       // report.
       stripAllHighlighting(bodyEl);
+
+      // Append SB-46 notices at the end of the report on separate pages
+      if (manual.sb46Data && manual.sb46Data.length > 0) {
+        var _inspDate = inspectionDateInput ? inspectionDateInput.value : "";
+        var _inspDateDisplay = _inspDate ? fromISODate(_inspDate) : inspectionDateStr;
+        var _inspYear = _inspDate ? _inspDate.split("-")[0] : "2026";
+        var _boNameEn = bo.bo_name_en_raw || bo.bo_name_hi || "";
+        var _refNo = "IR/" + _inspYear + "/" + _boNameEn.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+        appendSB46NoticesToReport(doc, bodyEl, manual.sb46Data, bo, _inspDateDisplay, _refNo);
+      }
 
       const serializer = new XMLSerializer();
       let newXml = serializer.serializeToString(doc);
