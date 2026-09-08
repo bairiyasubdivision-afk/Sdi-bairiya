@@ -849,9 +849,9 @@
     <p class="note" style="margin-top:0;">प्रत्येक योजना से 06 पासबुक — प्रत्येक श्रेणी टैप करके खोलें और भरें।</p>
     <div id="passbookSections"></div>
     <details class="passbook-scheme" id="sb46Section" style="margin-top:12px;border:1px solid #ffcdd2;border-radius:8px;padding:8px 12px;background:#fff5f5;">
-      <summary style="cursor:pointer;font-weight:600;color:#dc3545;">📋 SB-46 नोटिस (पासबुक नहीं मिली) — यदि कोई पासबुक सत्यापित नहीं हो सकी</summary>
+      <summary style="cursor:pointer;font-weight:600;color:#dc3545;">📋 SB-46 नोटिस (प्रश्न 36 के उत्तर का भाग) — पासबुक भौतिक रूप से सत्यापित नहीं हो सकी</summary>
       <div style="margin-top:8px;">
-        <p class="note" style="margin:0 0 8px;font-size:0.8rem;">उन खातों की जानकारी भरें जिनकी पासबुक जमा नहीं हो सकी। SB-46 नोटिस स्वतः तैयार हो जाएगा।</p>
+        <p class="note" style="margin:0 0 8px;font-size:0.8rem;">यदि 6 पासबुक का भौतिक सत्यापन नहीं हो सका, तो 6 पासबुक पूरे करने हेतु इन खातों के लिए SB-46 नोटिस जारी किए जाते हैं। यह जानकारी प्रश्न 36 के उत्तर में रिपोर्ट का भाग होगी।</p>
         <div id="sb46Entries"></div>
         <button type="button" class="btn btn-secondary" id="sb46AddBtn" style="margin-top:8px;font-size:0.8rem;padding:4px 10px;">+ खाता जोड़ें</button>
       </div>
@@ -926,10 +926,6 @@
       <button class="btn" id="markDoneBtn" type="button" style="padding:8px 16px;font-size:0.85rem;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;">✅ निरीक्षण पूर्ण (Mark Done)</button>
     </div>
     <div style="font-size:0.8rem;color:#888;margin-top:4px;">निरीक्षण पूर्ण चिह्नित करने पर यह BO सूची में नीचे चला जाएगा। लंबित BOs ऊपर दिखेंगे।</div>
-    <div style="margin-top:8px;border-top:1px solid #eee;padding-top:8px;">
-      <button type="button" class="btn btn-secondary" id="sb46GenBtn" style="font-size:0.82rem;padding:6px 14px;">📋 SB-46 नोटिस बनाएं (.docx)</button>
-      <div style="font-size:0.78rem;color:#888;margin-top:4px;">पासबुक सत्यापन में जो खाते SB-46 के लिए दर्ज किए गए हैं, उनके नोटिस तैयार होंगे।</div>
-    </div>
   </div>
 
   <div class="card">
@@ -6695,12 +6691,6 @@ const MASTER_DATA = {
     boSelect.addEventListener("change", updateMarkDoneBtn);
 
     markDoneBtn.addEventListener("click", function() {
-
-    // SB-46 generate button
-    var sb46GenBtn = document.getElementById("sb46GenBtn");
-    if (sb46GenBtn) {
-      sb46GenBtn.addEventListener("click", function() { generateSB46(); });
-    }
       var boId = boSelect.value;
       if (!boId) { alert("कृपया पहले शाखा डाकघर चुनें"); return; }
       var bo = MASTER_DATA[boId];
@@ -8079,13 +8069,14 @@ const MASTER_DATA = {
       fillMailBagCounts(doc, bodyEl, mailBagCounts);
       applyToggleAnswers(doc, bodyEl, toggleAnswers);
       fillPassbookTable(doc, bodyEl, passbookData);
-      // Q36: Add SB-46 issued accounts list after passbook table
+      // Q36: Add SB-46 issued accounts list as part of Q36 answer (after passbook table)
+      // SB-46 notices are issued to complete the 6 passbook requirement when physical verification could not be done.
       if (manual.sb46Data && manual.sb46Data.length > 0) {
         try {
           var sb46Tables = getDocTables(bodyEl);
           var q36Table = sb46Tables[PASSBOOK_TABLE_INDEX];
           if (q36Table) {
-            var sb46Text = "SB-46 \u0928\u094b\u091f\u093f\u0938 \u091c\u093e\u0930\u0940 \u0915\u093f\u090f \u0917\u090f \u0916\u093e\u0924\u0947 (\u092a\u093e\u0938\u092c\u0941\u0915 \u0938\u0924\u094d\u092f\u093e\u092a\u093f\u0924 \u0928\u0939\u0940\u0902 \u0939\u094b \u0938\u0915\u0940):\n";
+            var sb46Text = "SB-46 \u0928\u094b\u091f\u093f\u0938 \u091c\u093e\u0930\u0940 \u0915\u093f\u090f \u0917\u090f \u0916\u093e\u0924\u0947 (6 \u092a\u093e\u0938\u092c\u0941\u0915 \u0915\u093e \u092d\u094c\u0924\u093f\u0915 \u0938\u0924\u094d\u092f\u093e\u092a\u0928 \u0928\u0939\u0940\u0902 \u0939\u094b \u0938\u0915\u0928\u0947 \u092a\u0930 6 \u092a\u093e\u0938\u092c\u0941\u0915 \u092a\u0942\u0930\u0940 \u0915\u0930\u0928\u0947 \u0939\u0947\u0924\u0941):\n";
             manual.sb46Data.forEach(function(d, i) {
               sb46Text += (i+1) + ". " + d.scheme + " \u0916\u093e\u0924\u093e: " + d.acct + " \u2014 " + d.name + " \u2014 \u0936\u0947\u0937 \u20b9" + d.balance + " (DLT: " + d.dlt + ")\n";
             });
