@@ -848,6 +848,14 @@
     <h2><span class="step-badge">8</span> पासबुक सत्यापन <span class="qref">(प्रश्न 36 / 49.11)</span></h2>
     <p class="note" style="margin-top:0;">प्रत्येक योजना से 06 पासबुक — प्रत्येक श्रेणी टैप करके खोलें और भरें।</p>
     <div id="passbookSections"></div>
+    <details class="passbook-scheme" id="sb46Section" style="margin-top:12px;border:1px solid #ffcdd2;border-radius:8px;padding:8px 12px;background:#fff5f5;">
+      <summary style="cursor:pointer;font-weight:600;color:#dc3545;">📋 SB-46 नोटिस (पासबुक नहीं मिली) — यदि कोई पासबुक सत्यापित नहीं हो सकी</summary>
+      <div style="margin-top:8px;">
+        <p class="note" style="margin:0 0 8px;font-size:0.8rem;">उन खातों की जानकारी भरें जिनकी पासबुक जमा नहीं हो सकी। SB-46 नोटिस स्वतः तैयार हो जाएगा।</p>
+        <div id="sb46Entries"></div>
+        <button type="button" class="btn btn-secondary" id="sb46AddBtn" style="margin-top:8px;font-size:0.8rem;padding:4px 10px;">+ खाता जोड़ें</button>
+      </div>
+    </details>
   </div>
 
   <div class="card">
@@ -908,6 +916,19 @@
       </div>
 
       <div class="small-muted" style="margin-top:8px;">एक बार सहेजें — यह इस फ़ोन पर सुरक्षित रहेगा और हर रिपोर्ट में अपने-आप जुड़ेगा</div>
+    </div>
+  </div>
+
+  <div class="card" id="inspStatusCard" style="display:none;">
+    <h2>📋 निरीक्षण स्थिति (Inspection Status)</h2>
+    <div id="inspStatusContent" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 0;">
+      <span id="inspStatusText" style="font-size:0.95rem;font-weight:600;color:#555;">—</span>
+      <button class="btn" id="markDoneBtn" type="button" style="padding:8px 16px;font-size:0.85rem;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;">✅ निरीक्षण पूर्ण (Mark Done)</button>
+    </div>
+    <div style="font-size:0.8rem;color:#888;margin-top:4px;">निरीक्षण पूर्ण चिह्नित करने पर यह BO सूची में नीचे चला जाएगा। लंबित BOs ऊपर दिखेंगे।</div>
+    <div style="margin-top:8px;border-top:1px solid #eee;padding-top:8px;">
+      <button type="button" class="btn btn-secondary" id="sb46GenBtn" style="font-size:0.82rem;padding:6px 14px;">📋 SB-46 नोटिस बनाएं (.docx)</button>
+      <div style="font-size:0.78rem;color:#888;margin-top:4px;">पासबुक सत्यापन में जो खाते SB-46 के लिए दर्ज किए गए हैं, उनके नोटिस तैयार होंगे।</div>
     </div>
   </div>
 
@@ -3906,7 +3927,2648 @@ function ensureContentType(ctDoc, extension, contentType) {
 
 <!-- INSPECTION TOOL: Master Data -->
 <script>
-const MASTER_DATA = {"BO30403125001": {"bo_id": "BO30403125001", "facility_id": "BO30403125001", "bo_name_hi": "अचलगढ़", "so_name_hi": "रेवती", "ho_name_hi": "बलिया", "pin_village_list": "277209", "pin_staff_sheet": "277209", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "GAURAV DWIVEDI", "employee_id": "50533264", "status": "WORKING"}, {"post": "ABPM-1", "name": "Shailesh Yadav", "employee_id": "50643004", "status": "WORKING"}], "villages_hi": "अचलगढ़, मणिराय के टोला, जूठी तिवारी के टोला, गंगा पांडेय के टोला", "device": {"device_model": "SAMSUNG A14", "imei": "351733712587311", "mobile_number": "9218426113"}, "inspection_history": {"last_inspection_date": "14.08.2025", "proposed_inspection_month": "अगस्त 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "ACHALGARH"}, "BO30403113001": {"bo_id": "BO30403113001", "facility_id": "BO30403113001", "bo_name_hi": "बाबूबेल", "so_name_hi": "हल्दी", "ho_name_hi": "बलिया", "pin_village_list": "277402", "pin_staff_sheet": "277402", "sanctioned_posts": "3", "staff": [{"post": "BPM", "name": "Nirbhay Kumar Gautam", "employee_id": "50643275", "status": "WORKING"}, {"post": "ABPM-1", "name": "reported in cycle 1 2026", "employee_id": "", "status": "WORKING"}, {"post": "ABPM-2", "name": "", "employee_id": "", "status": "VACANT"}], "villages_hi": "बाबूबेल, चौबे बेल, बंधुचक, बड़ीपुर, भरखोखा, पोखरा, गहलोत बस्ती, शांति नगर", "device": {"device_model": "SAMSUNG A14", "imei": "351733713146950", "mobile_number": "8368117867"}, "inspection_history": {"last_inspection_date": "02.05.2025", "proposed_inspection_month": "अप्रैल 2026", "proposed_inspection_date": "29.04.26", "compliance_received_date": ""}, "bo_name_en_raw": "BABUBEL"}, "BO30403118001": {"bo_id": "BO30403118001", "facility_id": "BO30403118001", "bo_name_hi": "बहुआरा", "so_name_hi": "लालगंज", "ho_name_hi": "बलिया", "pin_village_list": "277216", "pin_staff_sheet": "277216", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "RAJAT KUMAR SINGH", "employee_id": "50519178", "status": "WORKING"}, {"post": "ABPM-1", "name": "SITARAM YADAV", "employee_id": "50196663", "status": "WORKING"}], "villages_hi": "बहुआरा, जय छपरा, बलवंत छपरा, हृदयपुर, उधोपुर", "device": {"device_model": "SAMSUNG A14", "imei": "351733713146497", "mobile_number": "9218426101"}, "inspection_history": {"last_inspection_date": "24.09.2025", "proposed_inspection_month": "सितम्बर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "BAHUARA"}, "BO30403112001": {"bo_id": "BO30403112001", "facility_id": "BO30403112001", "bo_name_hi": "बलिहार", "so_name_hi": "दुबे छपरा", "ho_name_hi": "बलिया", "pin_village_list": "277205", "pin_staff_sheet": "277205", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "NIRAJ MISHRA", "employee_id": "", "status": "WORKING"}, {"post": "ABPM-1", "name": "MANJI YADAV", "employee_id": "50196916", "status": "WORKING"}], "villages_hi": "बलिहार, रामगढ़, बुल्लापुर, तुलापुर, सारा छपरा, तिवारी टोला", "device": {"device_model": "SAMSUNG A14", "imei": "351733713151117", "mobile_number": "#N/A"}, "inspection_history": {"last_inspection_date": "15.02.2025", "proposed_inspection_month": "जनवरी 2026", "proposed_inspection_date": "14.02.26", "compliance_received_date": ""}, "bo_name_en_raw": "BALIHAR"}, "BO30403113002": {"bo_id": "BO30403113002", "facility_id": "BO30403113002", "bo_name_hi": "बघौंच", "so_name_hi": "हल्दी", "ho_name_hi": "बलिया", "pin_village_list": "277402", "pin_staff_sheet": "277402", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "SANTOSH KUMAR", "employee_id": "50196901", "status": "WORKING"}, {"post": "ABPM-1", "name": "SNEHA SINGH", "employee_id": "50690359", "status": "WORKING"}], "villages_hi": "पृथ्वीचक, मुरादीह, गैघाट पूर्वी, गैघाट पश्चिमी, गैघाट दक्षिणी", "device": {"device_model": "SAMSUNG A14", "imei": "351733713130541", "mobile_number": "9218426093"}, "inspection_history": {}, "bo_name_en_raw": "BANGHAUCH"}, "BO30403119001": {"bo_id": "BO30403119001", "facility_id": "BO30403119001", "bo_name_hi": "बेलहरी", "so_name_hi": "मझुआ", "ho_name_hi": "बलिया", "pin_village_list": "277403", "pin_staff_sheet": "277403", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "SINGH ANURAG SRIVASTAVA", "employee_id": "50196624", "status": "WORKING"}, {"post": "ABPM-1", "name": "SUMIT MAVAI", "employee_id": "50640731", "status": "WORKING"}], "villages_hi": "बेलहरी उत्तर टोला, बेलहरी गर पार, बेलहरी दक्षिण टोला", "device": {"device_model": "SAMSUNG A14", "imei": "351733713143437", "mobile_number": "8700006531"}, "inspection_history": {"last_inspection_date": "01.03.2025", "proposed_inspection_month": "जनवरी 2026", "proposed_inspection_date": "17.02.26", "compliance_received_date": ""}, "bo_name_en_raw": "BELHARI"}, "BO30403102001": {"bo_id": "BO30403102001", "facility_id": "BO30403102001", "bo_name_hi": "भगवानपुर", "so_name_hi": "बैरिया", "ho_name_hi": "बलिया", "pin_village_list": "277201", "pin_staff_sheet": "277201", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "ABHISHEK", "employee_id": "50601602", "status": "WORKING"}, {"post": "ABPM-1", "name": "SUMANT KUMAR", "employee_id": "50509698", "status": "WORKING"}], "villages_hi": "भगवानपुर, जमीन बाढ़ी, बेचन चपरा", "device": {"device_model": "SAMSUNG A14", "imei": "351733712587576", "mobile_number": "9218426083"}, "inspection_history": {"last_inspection_date": "28.08.2025", "proposed_inspection_month": "अगस्त 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "BHAGWANPUR"}, "BO30403125002": {"bo_id": "BO30403125002", "facility_id": "BO30403125002", "bo_name_hi": "भोजछपरा", "so_name_hi": "रेवती", "ho_name_hi": "बलिया", "pin_village_list": "277209", "pin_staff_sheet": "277209", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "SRIKANT YADAV", "employee_id": "50196731", "status": "WORKING"}, {"post": "ABPM-1", "name": "NARESH", "employee_id": "", "status": "WORKING"}], "villages_hi": "धीरा छपरा, दियारा भागर, महादानपुर नई बस्ती, महादानपुर पुरानी बस्ती, गमहरी टोला", "device": {"device_model": "SAMSUNG A14", "imei": "351733712877639", "mobile_number": "9218426114"}, "inspection_history": {"last_inspection_date": "17.03.2025", "proposed_inspection_month": "फरवरी 2026", "proposed_inspection_date": "16.03.26", "compliance_received_date": ""}, "bo_name_en_raw": "BHOJCHHAPRA"}, "BO30403125003": {"bo_id": "BO30403125003", "facility_id": "BO30403125003", "bo_name_hi": "भोपालपुर", "so_name_hi": "रेवती", "ho_name_hi": "बलिया", "pin_village_list": "277209", "pin_staff_sheet": "277209", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "MAMTA TIWARI", "employee_id": "50543806", "status": "WORKING"}, {"post": "ABPM-1", "name": "NITISH DUBEY", "employee_id": "", "status": "WORKING"}], "villages_hi": "भोपालपुर पश्चिमी, भोपालपुर पूर्वी, रामपुर मगरिव, राखा नरपुर, राखा छपरा सारिव, नरपुर कान्ही, पांडेय के छपरा, गोबरही", "device": {"device_model": "SAMSUNG A14", "imei": "351733713157387", "mobile_number": "9218426115"}, "inspection_history": {"last_inspection_date": "08.03.2025", "proposed_inspection_month": "फरवरी 2026", "proposed_inspection_date": "03.03.26", "compliance_received_date": ""}, "bo_name_en_raw": "BHOPALPUR"}, "BO30403126001": {"bo_id": "BO30403126001", "facility_id": "BO30403126001", "bo_name_hi": "बिगही", "so_name_hi": "सहतवार", "ho_name_hi": "बलिया", "pin_village_list": "277211", "pin_staff_sheet": "277211", "sanctioned_posts": "3", "staff": [{"post": "BPM", "name": "GANESH TIWARI", "employee_id": "50196841", "status": "WORKING"}, {"post": "ABPM-1", "name": "IRSHAD AHMAD", "employee_id": "50504852", "status": "WORKING"}, {"post": "ABPM-2", "name": "", "employee_id": "", "status": "VACANT"}], "villages_hi": "बिगही, बहुआरा, स्वयंबर छपरा, मरवटिया", "device": {"device_model": "SAMSUNG A14", "imei": "351733712877456", "mobile_number": "9218426123"}, "inspection_history": {}, "bo_name_en_raw": "BIGHI"}, "BO30403126002": {"bo_id": "BO30403126002", "facility_id": "BO30403126002", "bo_name_hi": "बिनहा", "so_name_hi": "सहतवार", "ho_name_hi": "बलिया", "pin_village_list": "277211", "pin_staff_sheet": "277211", "sanctioned_posts": "3", "staff": [{"post": "BPM", "name": "RAJ NATH RAM", "employee_id": "50196843", "status": "WORKING"}, {"post": "ABPM-1", "name": "RAVI RANJAN", "employee_id": "50604909", "status": "WORKING"}, {"post": "ABPM-2", "name": "", "employee_id": "", "status": "VACANT"}], "villages_hi": "बिनहा, भोपालपुर, भोपतपुर के सिवान, पाखा, बलवीर नैना, लीला के हाला", "device": {"device_model": "SAMSUNG A14", "imei": "351733712838979", "mobile_number": "9218426124"}, "inspection_history": {"last_inspection_date": "05.04.2025", "proposed_inspection_month": "मार्च 2026", "proposed_inspection_date": "12.03.26", "compliance_received_date": ""}, "bo_name_en_raw": "BINHA"}, "BO30403126003": {"bo_id": "BO30403126003", "facility_id": "BO30403126003", "bo_name_hi": "बिसौली", "so_name_hi": "सहतवार", "ho_name_hi": "बलिया", "pin_village_list": "277211", "pin_staff_sheet": "277211", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "VISHNU DAYAL MISHRA", "employee_id": "50196844", "status": "WORKING"}, {"post": "ABPM-1", "name": "SANTOSH KUMAR", "employee_id": "50643875", "status": "WORKING"}], "villages_hi": "परसिया, महंगी छाप, दुबे छाप, चांगपुर नई बस्ती, कोलकला, छपिया, हसनपुरा", "device": {"device_model": "SAMSUNG A14", "imei": "351733712877134", "mobile_number": "9218426125"}, "inspection_history": {"last_inspection_date": "26.08.2025", "proposed_inspection_month": "अगस्त 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "BISAULI"}, "BO30403123001": {"bo_id": "BO30403123001", "facility_id": "BO30403123001", "bo_name_hi": "चकिया", "so_name_hi": "रानी गंज बाजार", "ho_name_hi": "बलिया", "pin_village_list": "277208", "pin_staff_sheet": "277208", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "YADAV MITESH KUMAR VERMA", "employee_id": "50616109", "status": "WORKING"}, {"post": "ABPM-1", "name": "DEEPAK VERMA", "employee_id": "50543804", "status": "WORKING"}], "villages_hi": "बलपर, पारभूनाथ नगर, डेरा पार, पछिम टोला, किनार टोला, बिचला टोला, पूर्वा टोला, हरि पंडित के डेरा, चकिया मिल्की सिवान, यादव बस्ती तुलसी के डेरा", "device": {"device_model": "SAMSUNG A14", "imei": "351733712587485", "mobile_number": "9218426106"}, "inspection_history": {"last_inspection_date": "11.11.2025", "proposed_inspection_month": "नवम्बर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "CHAKIA"}, "BO30403115001": {"bo_id": "BO30403115001", "facility_id": "BO30403115001", "bo_name_hi": "चांद डियार", "so_name_hi": "करन छपरा", "ho_name_hi": "बलिया", "pin_village_list": "277214", "pin_staff_sheet": "277214", "sanctioned_posts": "3", "staff": [{"post": "BPM", "name": "ASHA SINGH", "employee_id": "50196716", "status": "WORKING"}, {"post": "ABPM-1", "name": "basudhar rai yadav", "employee_id": "50196657", "status": "WORKING"}, {"post": "ABPM-2", "name": "", "employee_id": "", "status": "VACANT"}], "villages_hi": "टोला सिवान राय, टोला रिशाल राय, थेखा, बकुलहा, टोला फतेह राय, वैजनाथ के देवरा, पियारी टोला, नई बस्ती बखुलाहा फिरंगी टोला, यादव नगर, पलटू नगर, छक्की चांद डियार, लोहा टोला, लोक धाम", "device": {"device_model": "SAMSUNG A14", "imei": "351733712587477", "mobile_number": "9218426097"}, "inspection_history": {"last_inspection_date": "20.11.2025", "proposed_inspection_month": "दिसम्बर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "CHAND DIAR"}, "BO30403126004": {"bo_id": "BO30403126004", "facility_id": "BO30403126004", "bo_name_hi": "चंद पुर", "so_name_hi": "सहतवार", "ho_name_hi": "बलिया", "pin_village_list": "277211", "pin_staff_sheet": "277211", "sanctioned_posts": "3", "staff": [{"post": "BPM", "name": "RISHU VERMA", "employee_id": "50676525", "status": "WORKING"}, {"post": "ABPM-1", "name": "RAM KIRTAN YADAV", "employee_id": "50196845", "status": "WORKING"}, {"post": "ABPM-2", "name": "JYOTI SINGH", "employee_id": "50510157", "status": "WORKING"}], "villages_hi": "महाराजपुर, चितविसाव खुर्द, चितविसाव कला, बनमौली, मठौली, कोलकला बगीचा, कमलपुर, चकविलियम डियार", "device": {"device_model": "SAMSUNG A14", "imei": "351733713151166", "mobile_number": "9218426126"}, "inspection_history": {}, "bo_name_en_raw": "CHANDPUR"}, "BO30403102002": {"bo_id": "BO30403102002", "facility_id": "BO30403102002", "bo_name_hi": "चंदपुर", "so_name_hi": "बैरिया", "ho_name_hi": "बलिया", "pin_village_list": "277201", "pin_staff_sheet": "277201", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "KANHAIYA KUMAR", "employee_id": "50507741", "status": "WORKING"}, {"post": "ABPM-1", "name": "THAKUR PAWAN KUMAR SINGH", "employee_id": "50517568", "status": "WORKING"}], "villages_hi": "चंदपुर, शुभनाथही, चराजपुरा, गोविंदपुर, पकड़िया टोला, संकीर्तन नगर, चंदपुर चक", "device": {"device_model": "SAMSUNG A14", "imei": "351733712889899", "mobile_number": "8368118593"}, "inspection_history": {"last_inspection_date": "04.09.2025", "proposed_inspection_month": "सितम्बर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "(Sahtwar) CHANDPUR"}, "BO30403125004": {"bo_id": "BO30403125004", "facility_id": "BO30403125004", "bo_name_hi": "छेरीडीह", "so_name_hi": "रेवती", "ho_name_hi": "बलिया", "pin_village_list": "277204", "pin_staff_sheet": "277209", "sanctioned_posts": "3", "staff": [{"post": "BPM", "name": "Shweta Kumari", "employee_id": "50624247", "status": "WORKING"}, {"post": "ABPM-1", "name": "CHANDESHWAR RAM", "employee_id": "50196578", "status": "WORKING"}, {"post": "ABPM-2", "name": "KRISHNA JEE", "employee_id": "50498258", "status": "WORKING"}], "villages_hi": "केवान, छेरीडीह, छेरीडीह नदी पार, चौबे चपरा, चौबे छपरा बारी, श्री छपरा", "device": {"device_model": "SAMSUNG A14", "imei": "351733712517904", "mobile_number": "8851764357"}, "inspection_history": {"last_inspection_date": "29.03.2025", "proposed_inspection_month": "मार्च 2026", "proposed_inspection_date": "17.02.26", "compliance_received_date": ""}, "bo_name_en_raw": "(Bairia) CHHERIDIH"}, "BO30403109001": {"bo_id": "BO30403109001", "facility_id": "BO30403109001", "bo_name_hi": "छोटकी सेरिया", "so_name_hi": "छाता", "ho_name_hi": "बलिया", "pin_village_list": "277210", "pin_staff_sheet": "277210", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "SUMIT KUMAR SINGH", "employee_id": "50509701", "status": "WORKING"}, {"post": "ABPM-1", "name": "UPADHYAY reported in cycle 1 2026", "employee_id": "", "status": "WORKING"}], "villages_hi": "छोटकी सेरिया, फरसाटार", "device": {"device_model": "SAMSUNG A14", "imei": "351733713145564", "mobile_number": "8920828712"}, "inspection_history": {"last_inspection_date": "03.09.2025", "proposed_inspection_month": "सितम्बर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "CHOTAKI SERIA"}, "BO30403125005": {"bo_id": "BO30403125005", "facility_id": "BO30403125005", "bo_name_hi": "दलछपरा", "so_name_hi": "रेवती", "ho_name_hi": "बलिया", "pin_village_list": "277209", "pin_staff_sheet": "277209", "sanctioned_posts": "1", "staff": [{"post": "BPM", "name": "Pankaj Kumar Singh", "employee_id": "50570453", "status": "WORKING"}], "villages_hi": "दलछपरा, परमानंद के डेरा, नौवाबारा", "device": {"device_model": "SAMSUNG A14", "imei": "351733712845040", "mobile_number": "9218426116"}, "inspection_history": {"last_inspection_date": "11.06.2025", "proposed_inspection_month": "जून 2026", "proposed_inspection_date": "13.05.26", "compliance_received_date": ""}, "bo_name_en_raw": "DALCHHAPRA"}, "BO30403112002": {"bo_id": "BO30403112002", "facility_id": "BO30403112002", "bo_name_hi": "दया छपरा", "so_name_hi": "दुबे छपरा", "ho_name_hi": "बलिया", "pin_village_list": "277205", "pin_staff_sheet": "277205", "sanctioned_posts": "3", "staff": [{"post": "BPM", "name": "", "employee_id": "", "status": "VACANT"}, {"post": "ABPM-1", "name": "RAKESH KU,MAR YADAV", "employee_id": "", "status": "WORKING"}, {"post": "ABPM-2", "name": "", "employee_id": "", "status": "VACANT"}], "villages_hi": "दया छपरा, प्रसाद छपरा, चोकटा बुधन चक, बड़का बुधन चक, दलपतपुर, नौकागांव, शिव चक, गंगा पांडेय के टोला, आलम राय का टोला, तड़ी दया छपरा, ओझवलिया, रामपुर मिश्रा, पवाया छपरा, हर छपरा, पहाड़ गिरी का मठिया, मुरली छपरा, भोरा छपरा, हरक्कू भरमपुर", "device": {"device_model": "SAMSUNG A14", "imei": "351733712596627", "mobile_number": "7678393396"}, "inspection_history": {"last_inspection_date": "06.08.2025", "proposed_inspection_month": "अगस्त 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "DAYACHAPRA"}, "BO30403119002": {"bo_id": "BO30403119002", "facility_id": "BO30403119002", "bo_name_hi": "दिघर", "so_name_hi": "मझुआ", "ho_name_hi": "बलिया", "pin_village_list": "277403", "pin_staff_sheet": "277403", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "JAI PRAKASH", "employee_id": "", "status": "WORKING"}, {"post": "ABPM-1", "name": "RADHEY", "employee_id": "", "status": "WORKING"}], "villages_hi": "रामपुर, दिघर", "device": {"device_model": "SAMSUNG A14", "imei": "351733712965988", "mobile_number": "9625960680"}, "inspection_history": {"last_inspection_date": "25.09.2025", "proposed_inspection_month": "अक्टूबर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "DIGHAR"}, "BO30403111001": {"bo_id": "BO30403111001", "facility_id": "BO30403111001", "bo_name_hi": "डोकती", "so_name_hi": "दल्लन छपरा", "ho_name_hi": "बलिया", "pin_village_list": "277204", "pin_staff_sheet": "277204", "sanctioned_posts": "1", "staff": [{"post": "BPM", "name": "SHASHI KANT SINGH", "employee_id": "50196590", "status": "WORKING"}], "villages_hi": "बिसुनपुरा, डोकती पुरा, राम दारा के डेरा, डोकती थाना, मुरली छपरा ब्लॉक, डोकती अस्पताल, डोकती मवेशी अस्पताल, डोकती स्टेट बैंक, डोकती ग्रामीण बैंक, डोकती मिडिल स्कूल", "device": {"device_model": "SAMSUNG A14", "imei": "351733713149400", "mobile_number": "9218426087"}, "inspection_history": {"last_inspection_date": "22.09.2025", "proposed_inspection_month": "सितम्बर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "DOKATI"}, "BO30403119003": {"bo_id": "BO30403119003", "facility_id": "BO30403119003", "bo_name_hi": "दुधैला कलां", "so_name_hi": "मझुआ", "ho_name_hi": "बलिया", "pin_village_list": "277403", "pin_staff_sheet": "277403", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "UMESH SINGH (UNDER", "employee_id": "", "status": "WORKING"}, {"post": "ABPM-1", "name": "SUSPENSIO) SHRUTI SHREYA", "employee_id": "50643906", "status": "WORKING"}], "villages_hi": "दुधैला कलां, दुधैला खुर्द, मिल्की, शांति नगर, अघैला", "device": {"device_model": "SAMSUNG A14", "imei": "351733713155233", "mobile_number": "8368276202"}, "inspection_history": {"last_inspection_date": "08.08.2025", "proposed_inspection_month": "अगस्त 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "DUDHAILAKALA"}, "BO30403126005": {"bo_id": "BO30403126005", "facility_id": "BO30403126005", "bo_name_hi": "दुमरिया", "so_name_hi": "सहतवार", "ho_name_hi": "बलिया", "pin_village_list": "277211", "pin_staff_sheet": "277211", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "SANJANA", "employee_id": "50687870", "status": "WORKING"}, {"post": "ABPM-1", "name": "SATYA DEV TIWARI", "employee_id": "50196847", "status": "WORKING"}], "villages_hi": "खानपुर, दुमरिया, गोपाल पांडेय का टीला, मनौली, परसा, हरपुर, मनसारा के बारी, आठबीघवा", "device": {"device_model": "SAMSUNG A14", "imei": "351733712882456", "mobile_number": "8700521024"}, "inspection_history": {"last_inspection_date": "08.04.2025", "proposed_inspection_month": "अप्रैल 2026", "proposed_inspection_date": "20.03.26", "compliance_received_date": ""}, "bo_name_en_raw": "DUMRIYA"}, "BO30403123002": {"bo_id": "BO30403123002", "facility_id": "BO30403123002", "bo_name_hi": "दुर्जनपुर", "so_name_hi": "रानी गंज बाजार", "ho_name_hi": "बलिया", "pin_village_list": "277208", "pin_staff_sheet": "277208", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "Abhishek Ranjan", "employee_id": "50533112", "status": "WORKING"}, {"post": "ABPM-1", "name": "(ABSCOND) Akshay", "employee_id": "50677527", "status": "WORKING"}], "villages_hi": "मंगढ़, दुर्जनपुर, हनुमानगढ़", "device": {"device_model": "SAMSUNG A14", "imei": "351733712591990", "mobile_number": "7982276246"}, "inspection_history": {"last_inspection_date": "31.10.2025", "proposed_inspection_month": "नवम्बर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "(Sahtwar) DURJANPUR"}, "BO30403125006": {"bo_id": "BO30403125006", "facility_id": "BO30403125006", "bo_name_hi": "गैघाट", "so_name_hi": "रेवती", "ho_name_hi": "बलिया", "pin_village_list": "277209", "pin_staff_sheet": "277209", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "AMIT TIWARI", "employee_id": "50633455", "status": "WORKING"}, {"post": "ABPM-1", "name": "Chhaya Pandey", "employee_id": "50643005", "status": "WORKING"}], "villages_hi": "लाला टोला, गैघाट, रामकरही, अटरदरिया, ओझा टोला, गिरी के मठिया, विशुनपुरा, बभनौली, शांतिनगर", "device": {"device_model": "SAMSUNG A14", "imei": "351733712831990", "mobile_number": "9218426117"}, "inspection_history": {"last_inspection_date": "30.05.2025", "proposed_inspection_month": "मई 2026", "proposed_inspection_date": "11.05.26", "compliance_received_date": ""}, "bo_name_en_raw": "GAIGHAT"}, "BO30403112003": {"bo_id": "BO30403112003", "facility_id": "BO30403112003", "bo_name_hi": "गंगापुर", "so_name_hi": "दुबे छपरा", "ho_name_hi": "बलिया", "pin_village_list": "277205", "pin_staff_sheet": "277205", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "LOVE KUMAR", "employee_id": "50498263", "status": "WORKING"}, {"post": "ABPM-1", "name": "SRI KANT SRIVASTAV", "employee_id": "50196917", "status": "WORKING"}], "villages_hi": "रामगढ़, दुर्जनपुर, मिनापुर, तिवारी टोला, गंगापुर", "device": {"device_model": "SAMSUNG A14", "imei": "351733713142942", "mobile_number": "9218426092"}, "inspection_history": {"last_inspection_date": "12.08.2025", "proposed_inspection_month": "अगस्त 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "GANGAPUR"}, "BO30403123003": {"bo_id": "BO30403123003", "facility_id": "BO30403123003", "bo_name_hi": "गोनिया छपरा", "so_name_hi": "रानी गंज बाजार", "ho_name_hi": "बलिया", "pin_village_list": "277208", "pin_staff_sheet": "277208", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "PRIYA PANDEY", "employee_id": "50196733", "status": "WORKING"}, {"post": "ABPM-1", "name": "RAKESH SINGH", "employee_id": "50525362", "status": "WORKING"}], "villages_hi": "गोनिया छपरा, रामपुर टोला, अधसिझुआ, गमानी के डेरा, बांटड़ी के डेरा", "device": {"device_model": "SAMSUNG A14", "imei": "351733712593269", "mobile_number": "9218426107"}, "inspection_history": {"last_inspection_date": "06.11.2025", "proposed_inspection_month": "नवम्बर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "GONHIACHHAPRA"}, "BO30403123004": {"bo_id": "BO30403123004", "facility_id": "BO30403123004", "bo_name_hi": "गोपालनगर", "so_name_hi": "रानी गंज बाजार", "ho_name_hi": "बलिया", "pin_village_list": "277208", "pin_staff_sheet": "277208", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "BIRENDRA KUMAR", "employee_id": "50196735", "status": "WORKING"}, {"post": "ABPM-1", "name": "", "employee_id": "50641012", "status": "VACANT"}, {"post": "ABPM-1", "name": "", "employee_id": "50641012", "status": "VACANT"}], "villages_hi": "गोपालनगर, गोपालनगर महाज, गोपालनगर तड़ी, वशिष्ठ नगर, शिवाल मठिया", "device": {"device_model": "SAMSUNG A14", "imei": "351733712594069", "mobile_number": "9218426108"}, "inspection_history": {"last_inspection_date": "11.04.2025", "proposed_inspection_month": "अप्रैल 2026", "proposed_inspection_date": "24.03.26", "compliance_received_date": ""}, "bo_name_en_raw": "GOPALNAGAR"}, "BO30403125007": {"bo_id": "BO30403125007", "facility_id": "BO30403125007", "bo_name_hi": "हरियाहन कलां", "so_name_hi": "रेवती", "ho_name_hi": "बलिया", "pin_village_list": "277209", "pin_staff_sheet": "277209", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "SUBH NARAIN MISHRA", "employee_id": "50196918", "status": "WORKING"}, {"post": "ABPM-1", "name": "ANKITA MISHRA", "employee_id": "50613622", "status": "WORKING"}], "villages_hi": "हरिया खुर्द, नवापुर, छतीसा, हरिया कलां", "device": {"device_model": "SAMSUNG A14", "imei": "351733712834267", "mobile_number": "9218426118"}, "inspection_history": {"last_inspection_date": "30.04.2025", "proposed_inspection_month": "अप्रैल 2026", "proposed_inspection_date": "25.03.26", "compliance_received_date": ""}, "bo_name_en_raw": "HARIHAKALAN"}, "BO30403123005": {"bo_id": "BO30403123005", "facility_id": "BO30403123005", "bo_name_hi": "इब्राहिमाबाद", "so_name_hi": "रानी गंज बाजार", "ho_name_hi": "बलिया", "pin_village_list": "277208", "pin_staff_sheet": "277208", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "SARVESHWAR SINGH", "employee_id": "50196905", "status": "WORKING"}, {"post": "ABPM-1", "name": "UTTAM", "employee_id": "", "status": "WORKING"}], "villages_hi": "इब्राहिमाबाद, मुज के डेरा, मठ जोगिंदर गिरी, नई बस्ती", "device": {"device_model": "SAMSUNG A14", "imei": "351733712589705", "mobile_number": "9218426109"}, "inspection_history": {"last_inspection_date": "30.06.2025", "proposed_inspection_month": "जून 2026", "proposed_inspection_date": "16.05.26", "compliance_received_date": ""}, "bo_name_en_raw": "IBRAHIMABAD"}, "BO30403115002": {"bo_id": "BO30403115002", "facility_id": "BO30403115002", "bo_name_hi": "इब्राहिमाबाद उपरवार", "so_name_hi": "करन छपरा", "ho_name_hi": "बलिया", "pin_village_list": "277214", "pin_staff_sheet": "277214", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "ASHUTOSH SINGH", "employee_id": "50196659", "status": "WORKING"}, {"post": "ABPM-1", "name": "LALAN YADVAV", "employee_id": "50196665", "status": "WORKING"}], "villages_hi": "टोला बाज राय, टोला फकरू राय, चौधरी टोला, तारकेश्वर नगर, नरहरि धाम नई बाटी", "device": {"device_model": "SAMSUNG A14", "imei": "351733712594267", "mobile_number": "9218426098"}, "inspection_history": {"last_inspection_date": "21.07.2025", "proposed_inspection_month": "जुलाई 2026", "proposed_inspection_date": "22.05.26", "compliance_received_date": ""}, "bo_name_en_raw": "IBRAHIMABADUPA"}, "BO30403111002": {"bo_id": "BO30403111002", "facility_id": "BO30403111002", "bo_name_hi": "जय प्रकाश नगर", "so_name_hi": "दल्लन छपरा", "ho_name_hi": "बलिया", "pin_village_list": "277204", "pin_staff_sheet": "277204", "sanctioned_posts": "1", "staff": [{"post": "BPM", "name": "SHIKHA SINGH", "employee_id": "50628290", "status": "WORKING"}], "villages_hi": "भवन टोला, भवन टोला पूर्वी व भवन टोला सथिया, भगवान टोला, अलेख टोला, पूर्वी दलजीत टोला, जेपी नगर", "device": {"device_model": "SAMSUNG A14", "imei": "351733713151174", "mobile_number": "9218426088"}, "inspection_history": {"last_inspection_date": "01.04.2025", "proposed_inspection_month": "मार्च 2026", "proposed_inspection_date": "06.03.26", "compliance_received_date": ""}, "bo_name_en_raw": "RAWAR J.P.NAGAR"}, "BO30403102003": {"bo_id": "BO30403102003", "facility_id": "BO30403102003", "bo_name_hi": "जगदेवा", "so_name_hi": "बैरिया", "ho_name_hi": "बलिया", "pin_village_list": "277201", "pin_staff_sheet": "277201", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "Mohit", "employee_id": "50642196", "status": "WORKING"}, {"post": "ABPM-1", "name": "SURAJ PANDEY", "employee_id": "50509685", "status": "WORKING"}], "villages_hi": "मध्यो मिश्रा के टोला, शुभनाथी, बनवा बाजार, यादव बस्ती", "device": {}, "inspection_history": {"last_inspection_date": "19.06.2025", "proposed_inspection_month": "जून 2026", "proposed_inspection_date": "08.05.26", "compliance_received_date": ""}, "bo_name_en_raw": "JAGDEVA"}, "BO30403123006": {"bo_id": "BO30403123006", "facility_id": "BO30403123006", "bo_name_hi": "जमालपुर", "so_name_hi": "रानी गंज बाजार", "ho_name_hi": "बलिया", "pin_village_list": "277208", "pin_staff_sheet": "277208", "sanctioned_posts": "3", "staff": [{"post": "BPM", "name": "", "employee_id": "", "status": "VACANT"}, {"post": "ABPM-1", "name": "SHATRUDHAN SINGH", "employee_id": "50196756", "status": "WORKING"}, {"post": "ABPM-2", "name": "PRIYA SINGH", "employee_id": "50509684", "status": "WORKING"}], "villages_hi": "दलपतपुर, जवाहर टोला, देवी चौधरी के हाता, सबलपुर, राधा पांडेय के टोला", "device": {"device_model": "SAMSUNG A14", "imei": "351733712594127", "mobile_number": "9218426110"}, "inspection_history": {"last_inspection_date": "07.10.2025", "proposed_inspection_month": "अक्टूबर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "JAMALPUR"}, "BO30403113003": {"bo_id": "BO30403113003", "facility_id": "BO30403113003", "bo_name_hi": "जवाही", "so_name_hi": "हल्दी", "ho_name_hi": "बलिया", "pin_village_list": "277402", "pin_staff_sheet": "277402", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "KAILASH JI UAPADHYAY", "employee_id": "", "status": "WORKING"}, {"post": "ABPM-1", "name": "SURESH YADAV", "employee_id": "50529696", "status": "WORKING"}], "villages_hi": "जवाही, नई बस्ती, बहादुरपुर, अंबेडकर पार्क क्र.सं. बीओ का नाम एसओ का नाम पिन कोड डिलीवरी क्षेत्र में आने वाले गांवों के नाम", "device": {"device_model": "SAMSUNG A14", "imei": "351733713143809", "mobile_number": "9218426094"}, "inspection_history": {"last_inspection_date": "25.10.2025", "proposed_inspection_month": "अक्टूबर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "JAWAHI"}, "BO30403113004": {"bo_id": "BO30403113004", "facility_id": "BO30403113004", "bo_name_hi": "जवाही डियार", "so_name_hi": "हल्दी", "ho_name_hi": "बलिया", "pin_village_list": "277402", "pin_staff_sheet": "277402", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "SAURABH RANJAN", "employee_id": "50601598", "status": "WORKING"}, {"post": "ABPM-1", "name": "", "employee_id": "", "status": "VACANT"}, {"post": "ABPM-1", "name": "", "employee_id": "", "status": "VACANT"}], "villages_hi": "पांडेय वाली, महाजी, मिश्रीवाला, रघुबर डेरा, दुसैया", "device": {"device_model": "SAMSUNG A14", "imei": "351733713143676", "mobile_number": "9218426095"}, "inspection_history": {"last_inspection_date": "11.09.2025", "proposed_inspection_month": "सितम्बर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "JAWAHI DIAR"}, "BO30403125008": {"bo_id": "BO30403125008", "facility_id": "BO30403125008", "bo_name_hi": "झरकठहा", "so_name_hi": "रेवती", "ho_name_hi": "बलिया", "pin_village_list": "277209", "pin_staff_sheet": "277209", "sanctioned_posts": "3", "staff": [{"post": "BPM", "name": "VINOD KUMAR SINGH", "employee_id": "50196574", "status": "WORKING"}, {"post": "ABPM-1", "name": "AJAY KUMAR YADAV", "employee_id": "50196587", "status": "WORKING"}, {"post": "ABPM-2", "name": "MOHIT", "employee_id": "", "status": "WORKING"}], "villages_hi": "झरकठहा, बगमरिया, वशिष्ठ नगर प्लॉट, देवपुर मठिया, मठनाग नाथ, नौकागांव, रत्ती छपरा", "device": {"device_model": "SAMSUNG A14", "imei": "351733712874438", "mobile_number": "9218426119"}, "inspection_history": {}, "bo_name_en_raw": "JHARKATHA"}, "BO30403119004": {"bo_id": "BO30403119004", "facility_id": "BO30403119004", "bo_name_hi": "कंचनपुर", "so_name_hi": "मझुआ", "ho_name_hi": "बलिया", "pin_village_list": "277403", "pin_staff_sheet": "277403", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "BRIJ kumar pandey", "employee_id": "50196636", "status": "WORKING"}, {"post": "ABPM-1", "name": "", "employee_id": "", "status": "VACANT"}], "villages_hi": "छोटकी बेलहरी, कंचनपुर", "device": {"device_model": "SAMSUNG A14", "imei": "351733713140102", "mobile_number": "9218426105"}, "inspection_history": {"last_inspection_date": "10.11.2025", "proposed_inspection_month": "नवम्बर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "KANCHANPUR"}, "BO30403123007": {"bo_id": "BO30403123007", "facility_id": "BO30403123007", "bo_name_hi": "करमनपुर", "so_name_hi": "रानी गंज बाजार", "ho_name_hi": "बलिया", "pin_village_list": "277208", "pin_staff_sheet": "277208", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "PRITI KUMARI", "employee_id": "", "status": "WORKING"}, {"post": "ABPM-1", "name": "AKHILESHWAR SINGH", "employee_id": "50196758", "status": "WORKING"}], "villages_hi": "करमनपुर, तालिबपुर, सबलपुर, श्रद्धा पांडेय का टोला, दुखहरन गिरी के मठिया", "device": {"device_model": "SAMSUNG A14", "imei": "351733712587683", "mobile_number": "8700685502"}, "inspection_history": {"last_inspection_date": "08.10.2025", "proposed_inspection_month": "अक्टूबर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "KARMANPUR"}, "BO30403109002": {"bo_id": "BO30403109002", "facility_id": "BO30403109002", "bo_name_hi": "केवरा", "so_name_hi": "छाता", "ho_name_hi": "बलिया", "pin_village_list": "277210", "pin_staff_sheet": "277210", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "SANJAY KUMAR SINGH", "employee_id": "50196852", "status": "WORKING"}, {"post": "ABPM-1", "name": "", "employee_id": "", "status": "VACANT"}], "villages_hi": "केवरा, पुरा, अकोल्ही", "device": {"device_model": "SAMSUNG A14", "imei": "351733712594762", "mobile_number": "9218426085"}, "inspection_history": {"last_inspection_date": "08.04.2025", "proposed_inspection_month": "अप्रैल 2026", "proposed_inspection_date": "08.04.26", "compliance_received_date": ""}, "bo_name_en_raw": "KEWARA"}, "BO30403111003": {"bo_id": "BO30403111003", "facility_id": "BO30403111003", "bo_name_hi": "कोडहरा उपरवार", "so_name_hi": "दल्लन छपरा", "ho_name_hi": "बलिया", "pin_village_list": "277204", "pin_staff_sheet": "277204", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "SHRIPRAKASH SINGH", "employee_id": "50196586", "status": "WORKING"}, {"post": "ABPM-1", "name": "KARAN KUMAR", "employee_id": "50622390", "status": "WORKING"}], "villages_hi": "दलजीत टोला, बाबू डेरा पूर्व, बाबू डेरा पश्चिम, संसार टोला, टोला काशी राय, गोबरधन पहाड़, शंकर, नई बस्ती दलजीत टोला, कृष्णा नगर, नभैया के डेरा, घुरी टोला, दलेल टोला, शिव नारायण टोला, बड़ा सुफल टोला, छोटका सुफल टोला, रामेश्वर टोला, नवका टोला, बीजू टोला, राम नगर, कोडहरा नौबरार", "device": {"device_model": "SAMSUNG A14", "imei": "351733712835793", "mobile_number": "9218426089"}, "inspection_history": {"last_inspection_date": "01.09.2025", "proposed_inspection_month": "अगस्त 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "KODAHARAUPAR"}, "BO30403126006": {"bo_id": "BO30403126006", "facility_id": "BO30403126006", "bo_name_hi": "कुसौरा", "so_name_hi": "सहतवार", "ho_name_hi": "बलिया", "pin_village_list": "277211", "pin_staff_sheet": "277211", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "BABITA", "employee_id": "50623792", "status": "WORKING"}, {"post": "ABPM-1", "name": "ADITYA KUMAR VERMA", "employee_id": "", "status": "WORKING"}], "villages_hi": "कुसौरा, कुसौरा के मठिया, सुहावल, पिठाइच, बभनौली", "device": {"device_model": "SAMSUNG A14", "imei": "351733713153097", "mobile_number": "9218426127"}, "inspection_history": {"last_inspection_date": "03.03.2025", "proposed_inspection_month": "फरवरी 2026", "proposed_inspection_date": "02.03.26", "compliance_received_date": ""}, "bo_name_en_raw": "WAR KUSAURA"}, "BO30403125009": {"bo_id": "BO30403125009", "facility_id": "BO30403125009", "bo_name_hi": "कुसौरी", "so_name_hi": "रेवती", "ho_name_hi": "बलिया", "pin_village_list": "277209", "pin_staff_sheet": "277209", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "ROHIT", "employee_id": "", "status": "WORKING"}, {"post": "ABPM-1", "name": "VIKRANT", "employee_id": "", "status": "WORKING"}], "villages_hi": "कुसौरी कला, नैना, शोभनाथपुर, कुसौरी खुर्द, ताहिरपुर", "device": {"device_model": "SAMSUNG A14", "imei": "351733712835371", "mobile_number": "7678391540"}, "inspection_history": {"last_inspection_date": "05.07.2025", "proposed_inspection_month": "जुलाई 2026", "proposed_inspection_date": "30.05.26", "compliance_received_date": ""}, "bo_name_en_raw": "KUSAURI"}, "BO30403115003": {"bo_id": "BO30403115003", "facility_id": "BO30403115003", "bo_name_hi": "लक्ष्मण छपरा", "so_name_hi": "करन छपरा", "ho_name_hi": "बलिया", "pin_village_list": "277214", "pin_staff_sheet": "277214", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "", "employee_id": "", "status": "VACANT"}, {"post": "ABPM-1", "name": "", "employee_id": "", "status": "VACANT"}], "villages_hi": "कृष्णा नगर, हनुमान नगर, शांति नगर, मटिया धाजू गिरी, लाली के डेरा", "device": {"device_model": "SAMSUNG A14", "imei": "351733712587444", "mobile_number": "#N/A"}, "inspection_history": {"last_inspection_date": "23.12.2025", "proposed_inspection_month": "दिसम्बर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "LAXMANCHAPRA"}, "BO30403123008": {"bo_id": "BO30403123008", "facility_id": "BO30403123008", "bo_name_hi": "मधुबनी", "so_name_hi": "रानी गंज बाजार", "ho_name_hi": "बलिया", "pin_village_list": "277208", "pin_staff_sheet": "277208", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "PRAMOD KUMAR SINGH", "employee_id": "50196760", "status": "WORKING"}, {"post": "ABPM-1", "name": "SIMRAN KUMARI", "employee_id": "", "status": "WORKING"}], "villages_hi": "मधुबनी, पासवान चौक, मधुबनी तानी पार, मधुबनी यादव बस्ती, मधुबनी हरिजन बस्ती", "device": {"device_model": "SAMSUNG A14", "imei": "351733712596247", "mobile_number": "9218426112"}, "inspection_history": {"last_inspection_date": "09.10.2025", "proposed_inspection_month": "अक्टूबर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "MADHUBANI"}, "BO30403125010": {"bo_id": "BO30403125010", "facility_id": "BO30403125010", "bo_name_hi": "मूनछपरा", "so_name_hi": "रेवती", "ho_name_hi": "बलिया", "pin_village_list": "277209", "pin_staff_sheet": "277209", "sanctioned_posts": "3", "staff": [{"post": "BPM", "name": "ANIL KUMAR YADAV", "employee_id": "50196603", "status": "WORKING"}, {"post": "ABPM-1", "name": "NIKKI YADAV", "employee_id": "50509683", "status": "WORKING"}, {"post": "ABPM-2", "name": "VINOD KUMAR VERMA", "employee_id": "50196601", "status": "WORKING"}], "villages_hi": "धुमरे के टोला, राजगुरु टोला, गंगा पांडेय के टोला, मियाचक, लक्ष्मीपुर", "device": {"device_model": "SAMSUNG A14", "imei": "351733712833079", "mobile_number": "9218426120"}, "inspection_history": {"last_inspection_date": "06.10.2025", "proposed_inspection_month": "अक्टूबर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "MOONCHHAPRA"}, "BO30403125011": {"bo_id": "BO30403125011", "facility_id": "BO30403125011", "bo_name_hi": "मुरादीह", "so_name_hi": "रेवती", "ho_name_hi": "बलिया", "pin_village_list": "277209", "pin_staff_sheet": "277209", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "ASHOK SINGH", "employee_id": "", "status": "WORKING"}, {"post": "ABPM-1", "name": "RITIKA SINGH", "employee_id": "", "status": "WORKING"}], "villages_hi": "असमान थोथा, त्रिकालपुर, दतौली, मुरादीह", "device": {"device_model": "SAMSUNG A14", "imei": "351733712877340", "mobile_number": "9218426121"}, "inspection_history": {"last_inspection_date": "03.10.2025", "proposed_inspection_month": "अक्टूबर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "MURADIH"}, "BO30403111004": {"bo_id": "BO30403111004", "facility_id": "BO30403111004", "bo_name_hi": "मुरली छपरा", "so_name_hi": "दल्लन छपरा", "ho_name_hi": "बलिया", "pin_village_list": "277204", "pin_staff_sheet": "277204", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "VINOD KUMAR SINGH", "employee_id": "50196589", "status": "WORKING"}, {"post": "ABPM-1", "name": "Mohit Kumar", "employee_id": "50683683", "status": "WORKING"}], "villages_hi": "मुरली छपरा, नवा नगर, दलकी नं. 1, रुखी के डेरा नवानगर, जोगी के डेरा, फागुबीन के डेरा", "device": {"device_model": "SAMSUNG A14", "imei": "351733712845255", "mobile_number": "9218426090"}, "inspection_history": {"last_inspection_date": "27.10.2025", "proposed_inspection_month": "अक्टूबर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "MURLICHAPRA"}, "BO30403123009": {"bo_id": "BO30403123009", "facility_id": "BO30403123009", "bo_name_hi": "नारायणगढ़", "so_name_hi": "रानी गंज बाजार", "ho_name_hi": "बलिया", "pin_village_list": "277208", "pin_staff_sheet": "277208", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "PHOOL KUMARI", "employee_id": "50196762", "status": "WORKING"}, {"post": "ABPM-1", "name": "LALIT KUMAR SINGH", "employee_id": "50196765", "status": "WORKING"}], "villages_hi": "नारायणगढ़, नया टोल, दुशाद नयापाटी, राय मोहल्ला, हरिजन बस्ती रेलवे", "device": {"device_model": "SAMSUNG A14", "imei": "351733713146653", "mobile_number": "8700915086"}, "inspection_history": {"last_inspection_date": "31.10.2025", "proposed_inspection_month": "अक्टूबर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "NARAYANGARH"}, "BO13203203009": {"bo_id": "BO13203203009", "facility_id": "BO13203203009", "bo_name_hi": "नौरंगा", "so_name_hi": "दुबे छपरा", "ho_name_hi": "बलिया", "pin_village_list": "277205", "pin_staff_sheet": "277205", "sanctioned_posts": "3", "staff": [{"post": "BPM", "name": "ABHIJEET RAJ", "employee_id": "50622387", "status": "WORKING"}, {"post": "ABPM-1", "name": "ARBIND KUMAR THAKUR", "employee_id": "50162158", "status": "WORKING"}, {"post": "ABPM-2", "name": "", "employee_id": "", "status": "VACANT"}], "villages_hi": "भुआल छपरा, चक्की नौरंगा, उदय छपरा के डेरा, नौरंगा", "device": {"device_model": "SAMSUNG A14", "imei": "351733713140045", "mobile_number": "8076096864"}, "inspection_history": {"last_inspection_date": "09.04.2025", "proposed_inspection_month": "अप्रैल 2026", "proposed_inspection_date": "13.03.26", "compliance_received_date": ""}, "bo_name_en_raw": "NAURANGA"}, "BO30403102004": {"bo_id": "BO30403102004", "facility_id": "BO30403102004", "bo_name_hi": "पांडेयपुर", "so_name_hi": "बैरिया", "ho_name_hi": "बलिया", "pin_village_list": "277001", "pin_staff_sheet": "277201", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "ASHUTOSH", "employee_id": "50585068", "status": "WORKING"}, {"post": "ABPM-1", "name": "", "employee_id": "", "status": "VACANT"}], "villages_hi": "पांडेयपुर, मुरली छपरा, चिंतामणि राय के टोला, रामपुर मिश्रा, किनू तिवारी के टोला, गुजरी सिंह के टोला, मिश्रा के हट्टा, मिश्रा गिरी के मठिया", "device": {"device_model": "SAMSUNG A14", "imei": "351733712589788", "mobile_number": "9218470993"}, "inspection_history": {"last_inspection_date": "23.08.2025", "proposed_inspection_month": "अगस्त 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "PANDEYPUR"}, "BO30403119005": {"bo_id": "BO30403119005", "facility_id": "BO30403119005", "bo_name_hi": "पियारौंता", "so_name_hi": "मझुआ", "ho_name_hi": "बलिया", "pin_village_list": "277403", "pin_staff_sheet": "277403", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "SUNIL KUMAR PASWAN", "employee_id": "50698221", "status": "WORKING"}, {"post": "ABPM-1", "name": "SACHIN", "employee_id": "", "status": "WORKING"}], "villages_hi": "पियारौंता", "device": {"device_model": "SAMSUNG A14", "imei": "351733713152446", "mobile_number": "#N/A"}, "inspection_history": {"last_inspection_date": "23.09.2025", "proposed_inspection_month": "सितम्बर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "PIYRAUTA"}, "BO30403126007": {"bo_id": "BO30403126007", "facility_id": "BO30403126007", "bo_name_hi": "पुरास", "so_name_hi": "सहतवार", "ho_name_hi": "बलिया", "pin_village_list": "277211", "pin_staff_sheet": "277211", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "VINAY KUMAR SINGH", "employee_id": "50599915", "status": "WORKING"}, {"post": "ABPM-1", "name": "ADITYA KUMR GUPTA", "employee_id": "", "status": "WORKING"}], "villages_hi": "पुरास, पुरास के मठिया, वासुधार पाह, बरुणा", "device": {"device_model": "SAMSUNG A14", "imei": "351733712845651", "mobile_number": "9218426128"}, "inspection_history": {"last_inspection_date": "07.05.2025", "proposed_inspection_month": "मई 2026", "proposed_inspection_date": "10.04.26", "compliance_received_date": ""}, "bo_name_en_raw": "PURAS"}, "BO30403111005": {"bo_id": "BO30403111005", "facility_id": "BO30403111005", "bo_name_hi": "राम नगर", "so_name_hi": "दल्लन छपरा", "ho_name_hi": "बलिया", "pin_village_list": "277402", "pin_staff_sheet": "277204", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "", "employee_id": "", "status": "VACANT"}, {"post": "ABPM-1", "name": "", "employee_id": "", "status": "VACANT"}], "villages_hi": "राम नगर, राम नगर जनाबी, राम नगर चिमनी, श्रीपतिपुर रामनगर, कान्हीपुर, टोला सेवक राय", "device": {"device_model": "SAMSUNG A14", "imei": "351733713153733", "mobile_number": "9218426091"}, "inspection_history": {"last_inspection_date": "14.06.2025", "proposed_inspection_month": "जून 2026", "proposed_inspection_date": "19.05.26", "compliance_received_date": ""}, "bo_name_en_raw": "RAMNAGAR"}, "BO30403126008": {"bo_id": "BO30403126008", "facility_id": "BO30403126008", "bo_name_hi": "रोहुआं", "so_name_hi": "सहतवार", "ho_name_hi": "बलिया", "pin_village_list": "277211", "pin_staff_sheet": "277211", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "AMRESH", "employee_id": "", "status": "WORKING"}, {"post": "ABPM-1", "name": "", "employee_id": "", "status": "VACANT"}], "villages_hi": "रोहुआं, तिवारी, सड़क", "device": {"device_model": "SAMSUNG A14", "imei": "351733712844654", "mobile_number": "9218433063"}, "inspection_history": {"last_inspection_date": "22.03.2025", "proposed_inspection_month": "मार्च 2026", "proposed_inspection_date": "11.03.26", "compliance_received_date": ""}, "bo_name_en_raw": "ROHUA"}, "BO30403113005": {"bo_id": "BO30403113005", "facility_id": "BO30403113005", "bo_name_hi": "रुद्रपुर", "so_name_hi": "हल्दी", "ho_name_hi": "बलिया", "pin_village_list": "277402", "pin_staff_sheet": "277402", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "SANGEETA SINGH", "employee_id": "50196906", "status": "WORKING"}, {"post": "ABPM-1", "name": "ARPIT", "employee_id": "", "status": "WORKING"}], "villages_hi": "प्रबोधपुर, रुद्रपुर, चोल्हनचक, डांगरबाद, जग छपरा, बगही", "device": {"device_model": "SAMSUNG A14", "imei": "351733713146778", "mobile_number": "7701987868"}, "inspection_history": {}, "bo_name_en_raw": "RUDRAPUR"}, "BO30403109003": {"bo_id": "BO30403109003", "facility_id": "BO30403109003", "bo_name_hi": "सहोदीह", "so_name_hi": "छाता", "ho_name_hi": "बलिया", "pin_village_list": "277210", "pin_staff_sheet": "277210", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "SUBHASH CHANDRA", "employee_id": "50196853", "status": "WORKING"}, {"post": "ABPM-1", "name": "SRIVASTAVA SHIVA NAND SINGH", "employee_id": "50196854", "status": "WORKING"}], "villages_hi": "सहोदीह, बड़ासारी, नारायणपुर, सहापुर, कटारिया, जयतीफ", "device": {"device_model": "SAMSUNG A14", "imei": "351733712596593", "mobile_number": "9218426086"}, "inspection_history": {}, "bo_name_en_raw": "SAHODIH"}, "BO30403118002": {"bo_id": "BO30403118002", "facility_id": "BO30403118002", "bo_name_hi": "सावन छपरा", "so_name_hi": "लालगंज", "ho_name_hi": "बलिया", "pin_village_list": "277216", "pin_staff_sheet": "277216", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "CHANDAN KUMAR", "employee_id": "50528229", "status": "WORKING"}, {"post": "ABPM-1", "name": "MAURYA SURABHI SINGH", "employee_id": "50642098", "status": "WORKING"}], "villages_hi": "सावन छपरा, सावन छपरा डेरा, जगदेवा टोला, लक्ष्मीपुर, भोजापुर, भोजापुर 85", "device": {"device_model": "SAMSUNG A14", "imei": "351733713157395", "mobile_number": "9218426102"}, "inspection_history": {"last_inspection_date": "04.11.2025", "proposed_inspection_month": "नवम्बर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "SAWANCHAPRA"}, "BO30403118003": {"bo_id": "BO30403118003", "facility_id": "BO30403118003", "bo_name_hi": "सेमरिया", "so_name_hi": "लालगंज", "ho_name_hi": "बलिया", "pin_village_list": "277216", "pin_staff_sheet": "277216", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "CHITRA SRIVASTAV", "employee_id": "50196656", "status": "WORKING"}, {"post": "ABPM-1", "name": "JITENDRA KUMAR", "employee_id": "50196602", "status": "WORKING"}], "villages_hi": "शिवपुर कपूर डियार, जगदीशपुर, ग्रयेरिया, सेमरिया, सेमरिया डेरा, लच्छू टोला, सुरेमानपुर", "device": {"device_model": "SAMSUNG A14", "imei": "351733713140144", "mobile_number": "9218426103"}, "inspection_history": {"last_inspection_date": "13.09.2025", "proposed_inspection_month": "सितम्बर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "SEMARIYA"}, "BO30403100009": {"bo_id": "BO30403100009", "facility_id": "BO30403100009", "bo_name_hi": "सीताकुंड", "so_name_hi": "हल्दी", "ho_name_hi": "बलिया", "pin_village_list": "277402", "pin_staff_sheet": "277402", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "YADAV ARBIND KUMAR TIWARI", "employee_id": "50196902", "status": "WORKING"}, {"post": "ABPM-1", "name": "VED PRAKASH TIWARI", "employee_id": "50196903", "status": "WORKING"}], "villages_hi": "सीताकुंड, परसिया, पंडितपुरा, निरूपुर, पंडारी, बहादुरपुर, नई बस्ती हरिहरपुर", "device": {"device_model": "SAMSUNG A14", "imei": "351733713140037", "mobile_number": "9218426096"}, "inspection_history": {"last_inspection_date": "02.09.2025", "proposed_inspection_month": "अगस्त 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "(Lalganj) SITAKUND"}, "BO30403115004": {"bo_id": "BO30403115004", "facility_id": "BO30403115004", "bo_name_hi": "शोभा छपरा", "so_name_hi": "करन छपरा", "ho_name_hi": "बलिया", "pin_village_list": "277214", "pin_staff_sheet": "277214", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "SANDHYA SINGH", "employee_id": "50196664", "status": "WORKING"}, {"post": "ABPM-1", "name": "VISHAL KUMR SINGH", "employee_id": "50600361", "status": "WORKING"}], "villages_hi": "शोभा छपरा, मठधज्जू गिरी, नौका टोल", "device": {"device_model": "SAMSUNG A14", "imei": "351733712588723", "mobile_number": "9218426100"}, "inspection_history": {"last_inspection_date": "15.05.2025", "proposed_inspection_month": "मई 2026", "proposed_inspection_date": "30.03.26", "compliance_received_date": ""}, "bo_name_en_raw": "SOBHACHAPRA"}, "BO30403123010": {"bo_id": "BO30403123010", "facility_id": "BO30403123010", "bo_name_hi": "सोनबरसा", "so_name_hi": "रानी गंज बाजार", "ho_name_hi": "बलिया", "pin_village_list": "277208", "pin_staff_sheet": "277208", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "PANNA LAL", "employee_id": "50196767", "status": "WORKING"}, {"post": "ABPM-1", "name": "VINAY KUMAR SINGH", "employee_id": "50543807", "status": "WORKING"}], "villages_hi": "सोनबरसा, लीला छपरा", "device": {"device_model": "SAMSUNG A14", "imei": "351733713144732", "mobile_number": "8178735579"}, "inspection_history": {"last_inspection_date": "19.05.2025", "proposed_inspection_month": "मई 2026", "proposed_inspection_date": "11.04.26", "compliance_received_date": ""}, "bo_name_en_raw": "SONBARSHA"}, "BO30403111006": {"bo_id": "BO30403111006", "facility_id": "BO30403111006", "bo_name_hi": "सोनकी भाट", "so_name_hi": "दल्लन छपरा", "ho_name_hi": "बलिया", "pin_village_list": "277402", "pin_staff_sheet": "277204", "sanctioned_posts": "3", "staff": [{"post": "BPM", "name": "SONU KUMAR SINGH", "employee_id": "50635020", "status": "WORKING"}, {"post": "ABPM-1", "name": "CHHITESHWAR RAM", "employee_id": "50196584", "status": "WORKING"}, {"post": "ABPM-2", "name": "", "employee_id": "", "status": "VACANT"}], "villages_hi": "श्रीपतापुर, रामनगर, धातुरी टोला, कोडहरा उपरवार, लक्ष्मी राम ब्रह्म के टोला, महरान गौरी के मठिया", "device": {"device_model": "SAMSUNG A14", "imei": "351733712872580", "mobile_number": "9218433061"}, "inspection_history": {"last_inspection_date": "15.11.2025", "proposed_inspection_month": "नवम्बर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "SONKIBHAT"}, "BO30403113006": {"bo_id": "BO30403113006", "facility_id": "BO30403113006", "bo_name_hi": "सोनवानी", "so_name_hi": "हल्दी", "ho_name_hi": "बलिया", "pin_village_list": "277402", "pin_staff_sheet": "277402", "sanctioned_posts": "3", "staff": [{"post": "BPM", "name": "RAKESH KUMAR", "employee_id": "50640730", "status": "WORKING"}, {"post": "ABPM-1", "name": "RAJ PRATAP SINGH", "employee_id": "50642275", "status": "WORKING"}, {"post": "ABPM-2", "name": "", "employee_id": "", "status": "VACANT"}], "villages_hi": "सोनवानी, कठही, कृपालपुर, बाबूआपुर, लखपुर, समरथपाह", "device": {"device_model": "SAMSUNG A14", "imei": "351733713146687", "mobile_number": "9218433062"}, "inspection_history": {"last_inspection_date": "29.05.2025", "proposed_inspection_month": "मई 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "SONWANI"}, "BO30403125012": {"bo_id": "BO30403125012", "facility_id": "BO30403125012", "bo_name_hi": "श्री नगर", "so_name_hi": "रेवती", "ho_name_hi": "बलिया", "pin_village_list": "277209", "pin_staff_sheet": "277209", "sanctioned_posts": "3", "staff": [{"post": "BPM", "name": "", "employee_id": "", "status": "VACANT"}, {"post": "ABPM-1", "name": "KUMARI ANSHU", "employee_id": "", "status": "WORKING"}, {"post": "ABPM-2", "name": "RAVI RANJAN", "employee_id": "", "status": "WORKING"}], "villages_hi": "श्रीनगर, नई बस्ती श्रीनगर, बच्छा के डेरा", "device": {"device_model": "SAMSUNG A14", "imei": "351733712847244", "mobile_number": "9218426122"}, "inspection_history": {"last_inspection_date": "08.05.2025", "proposed_inspection_month": "मई 2026", "proposed_inspection_date": "11.05.26", "compliance_received_date": ""}, "bo_name_en_raw": "SRINAGAR"}, "BO30403118004": {"bo_id": "BO30403118004", "facility_id": "BO30403118004", "bo_name_hi": "श्रीपालपुर", "so_name_hi": "लालगंज", "ho_name_hi": "बलिया", "pin_village_list": "277216", "pin_staff_sheet": "277216", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "MENKA", "employee_id": "50700186", "status": "WORKING"}, {"post": "ABPM-1", "name": "KHUSHBHU TIWARI", "employee_id": "50473400", "status": "WORKING"}], "villages_hi": "श्रीपालपुर, किशनपुरा, लुटाईपुर, भुवाल छपरा", "device": {"device_model": "SAMSUNG A14", "imei": "351733713144567", "mobile_number": "8920512035"}, "inspection_history": {"last_inspection_date": "04.10.2025", "proposed_inspection_month": "अक्टूबर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "SRIPALPUR"}, "BO30403123011": {"bo_id": "BO30403123011", "facility_id": "BO30403123011", "bo_name_hi": "सुरेमानपुर", "so_name_hi": "रानी गंज बाजार", "ho_name_hi": "बलिया", "pin_village_list": "277208", "pin_staff_sheet": "277208", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "KAMLESHWAR KUMAR", "employee_id": "50196771", "status": "WORKING"}, {"post": "ABPM-1", "name": "SINGH MANOJ KUMAR TIWARI", "employee_id": "50196773", "status": "WORKING"}], "villages_hi": "हेवंतपुर, गंगापुर, शिवराहिया, सुरेमानपुर स्टेशन, उपाध्यायपुर, छाई चपरा, बिशुनपुरा", "device": {"device_model": "SAMSUNG A14", "imei": "351733713143791", "mobile_number": "9315310441"}, "inspection_history": {"last_inspection_date": "16.09.2025", "proposed_inspection_month": "सितम्बर 2026", "proposed_inspection_date": "", "compliance_received_date": ""}, "bo_name_en_raw": "SUREMANPUR"}, "BO30403118005": {"bo_id": "BO30403118005", "facility_id": "BO30403118005", "bo_name_hi": "सूर्यभानपुर", "so_name_hi": "लालगंज", "ho_name_hi": "बलिया", "pin_village_list": "277216", "pin_staff_sheet": "277216", "sanctioned_posts": "2", "staff": [{"post": "BPM", "name": "SUNNY KUMAR SINGH", "employee_id": "50616519", "status": "WORKING"}, {"post": "ABPM-1", "name": "RANJANA YADAV", "employee_id": "", "status": "WORKING"}], "villages_hi": "सूर्यभानपुर, चौबे की दलकी, दलकी नं.2, चिरंजी छपरा", "device": {"device_model": "SAMSUNG A14", "imei": "351733713144633", "mobile_number": "9218426104"}, "inspection_history": {"last_inspection_date": "09.05.2025", "proposed_inspection_month": "मई 2026", "proposed_inspection_date": "09.04.26", "compliance_received_date": ""}, "bo_name_en_raw": "SURYABHANPUR"}, "BO30403102005": {"bo_id": "BO30403102005", "facility_id": "BO30403102005", "bo_name_hi": "तेंगरिही", "so_name_hi": "बैरिया", "ho_name_hi": "बलिया", "pin_village_list": "277201", "pin_staff_sheet": "277201", "sanctioned_posts": "3", "staff": [{"post": "BPM", "name": "", "employee_id": "50196635", "status": "VACANT"}, {"post": "ABPM-1", "name": "URMILA MISRA", "employee_id": "50196776", "status": "WORKING"}, {"post": "ABPM-2", "name": "RAGHUWANSH KUMAR", "employee_id": "50515964", "status": "WORKING"}], "villages_hi": "तेंगराही, बंसगोपाल छपरा, मिश्रा के हाते, तेंगराही धानी, बैरिया कान्ही", "device": {"device_model": "SAMSUNG A14", "imei": "351733712596296", "mobile_number": "9218426084"}, "inspection_history": {"last_inspection_date": "31.07.2025", "proposed_inspection_month": "जुलाई 2026", "proposed_inspection_date": "25.05.26", "compliance_received_date": ""}, "bo_name_en_raw": "TENGARAHI"}};
+const MASTER_DATA = {
+  "BO30403125001": {
+    "bo_id": "BO30403125001",
+    "facility_id": "BO30403125001",
+    "bo_name_hi": "अचलगढ़",
+    "so_name_hi": "रेवती",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277209",
+    "pin_staff_sheet": "277209",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "GAURAV DWIVEDI",
+        "employee_id": "50533264",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "Shailesh Yadav",
+        "employee_id": "50643004",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "अचलगढ़, मणिराय के टोला, जूठी तिवारी के टोला, गंगा पांडेय के टोला",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712587311",
+      "mobile_number": "9218426113"
+    },
+    "inspection_history": {
+      "last_inspection_date": "14.08.2025",
+      "proposed_inspection_month": "अगस्त 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "ACHALGARH"
+  },
+  "BO30403113001": {
+    "bo_id": "BO30403113001",
+    "facility_id": "BO30403113001",
+    "bo_name_hi": "बाबूबेल",
+    "so_name_hi": "हल्दी",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277402",
+    "pin_staff_sheet": "277402",
+    "sanctioned_posts": "3",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "Nirbhay Kumar Gautam",
+        "employee_id": "50643275",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "reported in cycle 1 2026",
+        "employee_id": "",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-2",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      }
+    ],
+    "villages_hi": "बाबूबेल, चौबे बेल, बंधुचक, बड़ीपुर, भरखोखा, पोखरा, गहलोत बस्ती, शांति नगर",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713146950",
+      "mobile_number": "8368117867"
+    },
+    "inspection_history": {
+      "last_inspection_date": "02.05.2025",
+      "proposed_inspection_month": "अप्रैल 2026",
+      "proposed_inspection_date": "29.04.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "BABUBEL"
+  },
+  "BO30403118001": {
+    "bo_id": "BO30403118001",
+    "facility_id": "BO30403118001",
+    "bo_name_hi": "बहुआरा",
+    "so_name_hi": "लालगंज",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277216",
+    "pin_staff_sheet": "277216",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "RAJAT KUMAR SINGH",
+        "employee_id": "50519178",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "SITARAM YADAV",
+        "employee_id": "50196663",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "बहुआरा, जय छपरा, बलवंत छपरा, हृदयपुर, उधोपुर",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713146497",
+      "mobile_number": "9218426101"
+    },
+    "inspection_history": {
+      "last_inspection_date": "24.09.2025",
+      "proposed_inspection_month": "सितम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "BAHUARA"
+  },
+  "BO30403112001": {
+    "bo_id": "BO30403112001",
+    "facility_id": "BO30403112001",
+    "bo_name_hi": "बलिहार",
+    "so_name_hi": "दुबे छपरा",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277205",
+    "pin_staff_sheet": "277205",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "NIRAJ MISHRA",
+        "employee_id": "",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "MANJI YADAV",
+        "employee_id": "50196916",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "बलिहार, रामगढ़, बुल्लापुर, तुलापुर, सारा छपरा, तिवारी टोला",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713151117",
+      "mobile_number": "#N/A"
+    },
+    "inspection_history": {
+      "last_inspection_date": "15.02.2025",
+      "proposed_inspection_month": "जनवरी 2026",
+      "proposed_inspection_date": "14.02.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "BALIHAR"
+  },
+  "BO30403113002": {
+    "bo_id": "BO30403113002",
+    "facility_id": "BO30403113002",
+    "bo_name_hi": "बघौंच",
+    "so_name_hi": "हल्दी",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277402",
+    "pin_staff_sheet": "277402",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SANTOSH KUMAR",
+        "employee_id": "50196901",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "SNEHA SINGH",
+        "employee_id": "50690359",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "पृथ्वीचक, मुरादीह, गैघाट पूर्वी, गैघाट पश्चिमी, गैघाट दक्षिणी",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713130541",
+      "mobile_number": "9218426093"
+    },
+    "inspection_history": {},
+    "bo_name_en_raw": "BANGHAUCH"
+  },
+  "BO30403119001": {
+    "bo_id": "BO30403119001",
+    "facility_id": "BO30403119001",
+    "bo_name_hi": "बेलहरी",
+    "so_name_hi": "मझुआ",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277403",
+    "pin_staff_sheet": "277403",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SINGH ANURAG SRIVASTAVA",
+        "employee_id": "50196624",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "SUMIT MAVAI",
+        "employee_id": "50640731",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "बेलहरी उत्तर टोला, बेलहरी गर पार, बेलहरी दक्षिण टोला",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713143437",
+      "mobile_number": "8700006531"
+    },
+    "inspection_history": {
+      "last_inspection_date": "01.03.2025",
+      "proposed_inspection_month": "जनवरी 2026",
+      "proposed_inspection_date": "17.02.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "BELHARI"
+  },
+  "BO30403102001": {
+    "bo_id": "BO30403102001",
+    "facility_id": "BO30403102001",
+    "bo_name_hi": "भगवानपुर",
+    "so_name_hi": "बैरिया",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277201",
+    "pin_staff_sheet": "277201",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "ABHISHEK",
+        "employee_id": "50601602",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "SUMANT KUMAR",
+        "employee_id": "50509698",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "भगवानपुर, जमीन बाढ़ी, बेचन चपरा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712587576",
+      "mobile_number": "9218426083"
+    },
+    "inspection_history": {
+      "last_inspection_date": "28.08.2025",
+      "proposed_inspection_month": "अगस्त 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "BHAGWANPUR"
+  },
+  "BO30403125002": {
+    "bo_id": "BO30403125002",
+    "facility_id": "BO30403125002",
+    "bo_name_hi": "भोजछपरा",
+    "so_name_hi": "रेवती",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277209",
+    "pin_staff_sheet": "277209",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SRIKANT YADAV",
+        "employee_id": "50196731",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "NARESH",
+        "employee_id": "",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "धीरा छपरा, दियारा भागर, महादानपुर नई बस्ती, महादानपुर पुरानी बस्ती, गमहरी टोला",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712877639",
+      "mobile_number": "9218426114"
+    },
+    "inspection_history": {
+      "last_inspection_date": "17.03.2025",
+      "proposed_inspection_month": "फरवरी 2026",
+      "proposed_inspection_date": "16.03.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "BHOJCHHAPRA"
+  },
+  "BO30403125003": {
+    "bo_id": "BO30403125003",
+    "facility_id": "BO30403125003",
+    "bo_name_hi": "भोपालपुर",
+    "so_name_hi": "रेवती",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277209",
+    "pin_staff_sheet": "277209",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "MAMTA TIWARI",
+        "employee_id": "50543806",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "NITISH DUBEY",
+        "employee_id": "",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "भोपालपुर पश्चिमी, भोपालपुर पूर्वी, रामपुर मगरिव, राखा नरपुर, राखा छपरा सारिव, नरपुर कान्ही, पांडेय के छपरा, गोबरही",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713157387",
+      "mobile_number": "9218426115"
+    },
+    "inspection_history": {
+      "last_inspection_date": "08.03.2025",
+      "proposed_inspection_month": "फरवरी 2026",
+      "proposed_inspection_date": "03.03.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "BHOPALPUR"
+  },
+  "BO30403126001": {
+    "bo_id": "BO30403126001",
+    "facility_id": "BO30403126001",
+    "bo_name_hi": "बिगही",
+    "so_name_hi": "सहतवार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277211",
+    "pin_staff_sheet": "277211",
+    "sanctioned_posts": "3",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "GANESH TIWARI",
+        "employee_id": "50196841",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "IRSHAD AHMAD",
+        "employee_id": "50504852",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-2",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      }
+    ],
+    "villages_hi": "बिगही, बहुआरा, स्वयंबर छपरा, मरवटिया",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712877456",
+      "mobile_number": "9218426123"
+    },
+    "inspection_history": {},
+    "bo_name_en_raw": "BIGHI"
+  },
+  "BO30403126002": {
+    "bo_id": "BO30403126002",
+    "facility_id": "BO30403126002",
+    "bo_name_hi": "बिनहा",
+    "so_name_hi": "सहतवार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277211",
+    "pin_staff_sheet": "277211",
+    "sanctioned_posts": "3",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "RAJ NATH RAM",
+        "employee_id": "50196843",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "RAVI RANJAN",
+        "employee_id": "50604909",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-2",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      }
+    ],
+    "villages_hi": "बिनहा, भोपालपुर, भोपतपुर के सिवान, पाखा, बलवीर नैना, लीला के हाला",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712838979",
+      "mobile_number": "9218426124"
+    },
+    "inspection_history": {
+      "last_inspection_date": "05.04.2025",
+      "proposed_inspection_month": "मार्च 2026",
+      "proposed_inspection_date": "12.03.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "BINHA"
+  },
+  "BO30403126003": {
+    "bo_id": "BO30403126003",
+    "facility_id": "BO30403126003",
+    "bo_name_hi": "बिसौली",
+    "so_name_hi": "सहतवार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277211",
+    "pin_staff_sheet": "277211",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "VISHNU DAYAL MISHRA",
+        "employee_id": "50196844",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "SANTOSH KUMAR",
+        "employee_id": "50643875",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "परसिया, महंगी छाप, दुबे छाप, चांगपुर नई बस्ती, कोलकला, छपिया, हसनपुरा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712877134",
+      "mobile_number": "9218426125"
+    },
+    "inspection_history": {
+      "last_inspection_date": "26.08.2025",
+      "proposed_inspection_month": "अगस्त 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "BISAULI"
+  },
+  "BO30403123001": {
+    "bo_id": "BO30403123001",
+    "facility_id": "BO30403123001",
+    "bo_name_hi": "चकिया",
+    "so_name_hi": "रानी गंज बाजार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277208",
+    "pin_staff_sheet": "277208",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "YADAV MITESH KUMAR VERMA",
+        "employee_id": "50616109",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "DEEPAK VERMA",
+        "employee_id": "50543804",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "बलपर, पारभूनाथ नगर, डेरा पार, पछिम टोला, किनार टोला, बिचला टोला, पूर्वा टोला, हरि पंडित के डेरा, चकिया मिल्की सिवान, यादव बस्ती तुलसी के डेरा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712587485",
+      "mobile_number": "9218426106"
+    },
+    "inspection_history": {
+      "last_inspection_date": "11.11.2025",
+      "proposed_inspection_month": "नवम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "CHAKIA"
+  },
+  "BO30403115001": {
+    "bo_id": "BO30403115001",
+    "facility_id": "BO30403115001",
+    "bo_name_hi": "चांद डियार",
+    "so_name_hi": "करन छपरा",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277214",
+    "pin_staff_sheet": "277214",
+    "sanctioned_posts": "3",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "ASHA SINGH",
+        "employee_id": "50196716",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "basudhar rai yadav",
+        "employee_id": "50196657",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-2",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      }
+    ],
+    "villages_hi": "टोला सिवान राय, टोला रिशाल राय, थेखा, बकुलहा, टोला फतेह राय, वैजनाथ के देवरा, पियारी टोला, नई बस्ती बखुलाहा फिरंगी टोला, यादव नगर, पलटू नगर, छक्की चांद डियार, लोहा टोला, लोक धाम",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712587477",
+      "mobile_number": "9218426097"
+    },
+    "inspection_history": {
+      "last_inspection_date": "20.11.2025",
+      "proposed_inspection_month": "दिसम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "CHAND DIAR"
+  },
+  "BO30403126004": {
+    "bo_id": "BO30403126004",
+    "facility_id": "BO30403126004",
+    "bo_name_hi": "चंद पुर",
+    "so_name_hi": "सहतवार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277211",
+    "pin_staff_sheet": "277211",
+    "sanctioned_posts": "3",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "RISHU VERMA",
+        "employee_id": "50676525",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "RAM KIRTAN YADAV",
+        "employee_id": "50196845",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-2",
+        "name": "JYOTI SINGH",
+        "employee_id": "50510157",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "महाराजपुर, चितविसाव खुर्द, चितविसाव कला, बनमौली, मठौली, कोलकला बगीचा, कमलपुर, चकविलियम डियार",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713151166",
+      "mobile_number": "9218426126"
+    },
+    "inspection_history": {},
+    "bo_name_en_raw": "CHANDPUR"
+  },
+  "BO30403102002": {
+    "bo_id": "BO30403102002",
+    "facility_id": "BO30403102002",
+    "bo_name_hi": "चंदपुर",
+    "so_name_hi": "बैरिया",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277201",
+    "pin_staff_sheet": "277201",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "KANHAIYA KUMAR",
+        "employee_id": "50507741",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "THAKUR PAWAN KUMAR SINGH",
+        "employee_id": "50517568",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "चंदपुर, शुभनाथही, चराजपुरा, गोविंदपुर, पकड़िया टोला, संकीर्तन नगर, चंदपुर चक",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712889899",
+      "mobile_number": "8368118593"
+    },
+    "inspection_history": {
+      "last_inspection_date": "04.09.2025",
+      "proposed_inspection_month": "सितम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "(Sahtwar) CHANDPUR"
+  },
+  "BO30403125004": {
+    "bo_id": "BO30403125004",
+    "facility_id": "BO30403125004",
+    "bo_name_hi": "छेरीडीह",
+    "so_name_hi": "रेवती",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277204",
+    "pin_staff_sheet": "277209",
+    "sanctioned_posts": "3",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "Shweta Kumari",
+        "employee_id": "50624247",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "CHANDESHWAR RAM",
+        "employee_id": "50196578",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-2",
+        "name": "KRISHNA JEE",
+        "employee_id": "50498258",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "केवान, छेरीडीह, छेरीडीह नदी पार, चौबे चपरा, चौबे छपरा बारी, श्री छपरा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712517904",
+      "mobile_number": "8851764357"
+    },
+    "inspection_history": {
+      "last_inspection_date": "29.03.2025",
+      "proposed_inspection_month": "मार्च 2026",
+      "proposed_inspection_date": "17.02.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "(Bairia) CHHERIDIH"
+  },
+  "BO30403109001": {
+    "bo_id": "BO30403109001",
+    "facility_id": "BO30403109001",
+    "bo_name_hi": "छोटकी सेरिया",
+    "so_name_hi": "छाता",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277210",
+    "pin_staff_sheet": "277210",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SUMIT KUMAR SINGH",
+        "employee_id": "50509701",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "UPADHYAY reported in cycle 1 2026",
+        "employee_id": "",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "छोटकी सेरिया, फरसाटार",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713145564",
+      "mobile_number": "8920828712"
+    },
+    "inspection_history": {
+      "last_inspection_date": "03.09.2025",
+      "proposed_inspection_month": "सितम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "CHOTAKI SERIA"
+  },
+  "BO30403125005": {
+    "bo_id": "BO30403125005",
+    "facility_id": "BO30403125005",
+    "bo_name_hi": "दलछपरा",
+    "so_name_hi": "रेवती",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277209",
+    "pin_staff_sheet": "277209",
+    "sanctioned_posts": "1",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "Pankaj Kumar Singh",
+        "employee_id": "50570453",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "दलछपरा, परमानंद के डेरा, नौवाबारा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712845040",
+      "mobile_number": "9218426116"
+    },
+    "inspection_history": {
+      "last_inspection_date": "11.06.2025",
+      "proposed_inspection_month": "जून 2026",
+      "proposed_inspection_date": "13.05.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "DALCHHAPRA"
+  },
+  "BO30403112002": {
+    "bo_id": "BO30403112002",
+    "facility_id": "BO30403112002",
+    "bo_name_hi": "दया छपरा",
+    "so_name_hi": "दुबे छपरा",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277205",
+    "pin_staff_sheet": "277205",
+    "sanctioned_posts": "3",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "RAKESH KU,MAR YADAV",
+        "employee_id": "",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-2",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      }
+    ],
+    "villages_hi": "दया छपरा, प्रसाद छपरा, चोकटा बुधन चक, बड़का बुधन चक, दलपतपुर, नौकागांव, शिव चक, गंगा पांडेय के टोला, आलम राय का टोला, तड़ी दया छपरा, ओझवलिया, रामपुर मिश्रा, पवाया छपरा, हर छपरा, पहाड़ गिरी का मठिया, मुरली छपरा, भोरा छपरा, हरक्कू भरमपुर",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712596627",
+      "mobile_number": "7678393396"
+    },
+    "inspection_history": {
+      "last_inspection_date": "06.08.2025",
+      "proposed_inspection_month": "अगस्त 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "DAYACHAPRA"
+  },
+  "BO30403119002": {
+    "bo_id": "BO30403119002",
+    "facility_id": "BO30403119002",
+    "bo_name_hi": "दिघर",
+    "so_name_hi": "मझुआ",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277403",
+    "pin_staff_sheet": "277403",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "JAI PRAKASH",
+        "employee_id": "",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "RADHEY",
+        "employee_id": "",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "रामपुर, दिघर",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712965988",
+      "mobile_number": "9625960680"
+    },
+    "inspection_history": {
+      "last_inspection_date": "25.09.2025",
+      "proposed_inspection_month": "अक्टूबर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "DIGHAR"
+  },
+  "BO30403111001": {
+    "bo_id": "BO30403111001",
+    "facility_id": "BO30403111001",
+    "bo_name_hi": "डोकती",
+    "so_name_hi": "दल्लन छपरा",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277204",
+    "pin_staff_sheet": "277204",
+    "sanctioned_posts": "1",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SHASHI KANT SINGH",
+        "employee_id": "50196590",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "बिसुनपुरा, डोकती पुरा, राम दारा के डेरा, डोकती थाना, मुरली छपरा ब्लॉक, डोकती अस्पताल, डोकती मवेशी अस्पताल, डोकती स्टेट बैंक, डोकती ग्रामीण बैंक, डोकती मिडिल स्कूल",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713149400",
+      "mobile_number": "9218426087"
+    },
+    "inspection_history": {
+      "last_inspection_date": "22.09.2025",
+      "proposed_inspection_month": "सितम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "DOKATI"
+  },
+  "BO30403119003": {
+    "bo_id": "BO30403119003",
+    "facility_id": "BO30403119003",
+    "bo_name_hi": "दुधैला कलां",
+    "so_name_hi": "मझुआ",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277403",
+    "pin_staff_sheet": "277403",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "UMESH SINGH (UNDER",
+        "employee_id": "",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "SUSPENSIO) SHRUTI SHREYA",
+        "employee_id": "50643906",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "दुधैला कलां, दुधैला खुर्द, मिल्की, शांति नगर, अघैला",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713155233",
+      "mobile_number": "8368276202"
+    },
+    "inspection_history": {
+      "last_inspection_date": "08.08.2025",
+      "proposed_inspection_month": "अगस्त 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "DUDHAILAKALA"
+  },
+  "BO30403126005": {
+    "bo_id": "BO30403126005",
+    "facility_id": "BO30403126005",
+    "bo_name_hi": "दुमरिया",
+    "so_name_hi": "सहतवार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277211",
+    "pin_staff_sheet": "277211",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SANJANA",
+        "employee_id": "50687870",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "SATYA DEV TIWARI",
+        "employee_id": "50196847",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "खानपुर, दुमरिया, गोपाल पांडेय का टीला, मनौली, परसा, हरपुर, मनसारा के बारी, आठबीघवा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712882456",
+      "mobile_number": "8700521024"
+    },
+    "inspection_history": {
+      "last_inspection_date": "08.04.2025",
+      "proposed_inspection_month": "अप्रैल 2026",
+      "proposed_inspection_date": "20.03.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "DUMRIYA"
+  },
+  "BO30403123002": {
+    "bo_id": "BO30403123002",
+    "facility_id": "BO30403123002",
+    "bo_name_hi": "दुर्जनपुर",
+    "so_name_hi": "रानी गंज बाजार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277208",
+    "pin_staff_sheet": "277208",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "Abhishek Ranjan",
+        "employee_id": "50533112",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "(ABSCOND) Akshay",
+        "employee_id": "50677527",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "मंगढ़, दुर्जनपुर, हनुमानगढ़",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712591990",
+      "mobile_number": "7982276246"
+    },
+    "inspection_history": {
+      "last_inspection_date": "31.10.2025",
+      "proposed_inspection_month": "नवम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "(Sahtwar) DURJANPUR"
+  },
+  "BO30403125006": {
+    "bo_id": "BO30403125006",
+    "facility_id": "BO30403125006",
+    "bo_name_hi": "गैघाट",
+    "so_name_hi": "रेवती",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277209",
+    "pin_staff_sheet": "277209",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "AMIT TIWARI",
+        "employee_id": "50633455",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "Chhaya Pandey",
+        "employee_id": "50643005",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "लाला टोला, गैघाट, रामकरही, अटरदरिया, ओझा टोला, गिरी के मठिया, विशुनपुरा, बभनौली, शांतिनगर",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712831990",
+      "mobile_number": "9218426117"
+    },
+    "inspection_history": {
+      "last_inspection_date": "30.05.2025",
+      "proposed_inspection_month": "मई 2026",
+      "proposed_inspection_date": "11.05.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "GAIGHAT"
+  },
+  "BO30403112003": {
+    "bo_id": "BO30403112003",
+    "facility_id": "BO30403112003",
+    "bo_name_hi": "गंगापुर",
+    "so_name_hi": "दुबे छपरा",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277205",
+    "pin_staff_sheet": "277205",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "LOVE KUMAR",
+        "employee_id": "50498263",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "SRI KANT SRIVASTAV",
+        "employee_id": "50196917",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "रामगढ़, दुर्जनपुर, मिनापुर, तिवारी टोला, गंगापुर",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713142942",
+      "mobile_number": "9218426092"
+    },
+    "inspection_history": {
+      "last_inspection_date": "12.08.2025",
+      "proposed_inspection_month": "अगस्त 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "GANGAPUR"
+  },
+  "BO30403123003": {
+    "bo_id": "BO30403123003",
+    "facility_id": "BO30403123003",
+    "bo_name_hi": "गोनिया छपरा",
+    "so_name_hi": "रानी गंज बाजार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277208",
+    "pin_staff_sheet": "277208",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "PRIYA PANDEY",
+        "employee_id": "50196733",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "RAKESH SINGH",
+        "employee_id": "50525362",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "गोनिया छपरा, रामपुर टोला, अधसिझुआ, गमानी के डेरा, बांटड़ी के डेरा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712593269",
+      "mobile_number": "9218426107"
+    },
+    "inspection_history": {
+      "last_inspection_date": "06.11.2025",
+      "proposed_inspection_month": "नवम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "GONHIACHHAPRA"
+  },
+  "BO30403123004": {
+    "bo_id": "BO30403123004",
+    "facility_id": "BO30403123004",
+    "bo_name_hi": "गोपालनगर",
+    "so_name_hi": "रानी गंज बाजार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277208",
+    "pin_staff_sheet": "277208",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "BIRENDRA KUMAR",
+        "employee_id": "50196735",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "",
+        "employee_id": "50641012",
+        "status": "VACANT"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "",
+        "employee_id": "50641012",
+        "status": "VACANT"
+      }
+    ],
+    "villages_hi": "गोपालनगर, गोपालनगर महाज, गोपालनगर तड़ी, वशिष्ठ नगर, शिवाल मठिया",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712594069",
+      "mobile_number": "9218426108"
+    },
+    "inspection_history": {
+      "last_inspection_date": "11.04.2025",
+      "proposed_inspection_month": "अप्रैल 2026",
+      "proposed_inspection_date": "24.03.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "GOPALNAGAR"
+  },
+  "BO30403125007": {
+    "bo_id": "BO30403125007",
+    "facility_id": "BO30403125007",
+    "bo_name_hi": "हरियाहन कलां",
+    "so_name_hi": "रेवती",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277209",
+    "pin_staff_sheet": "277209",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SUBH NARAIN MISHRA",
+        "employee_id": "50196918",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "ANKITA MISHRA",
+        "employee_id": "50613622",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "हरिया खुर्द, नवापुर, छतीसा, हरिया कलां",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712834267",
+      "mobile_number": "9218426118"
+    },
+    "inspection_history": {
+      "last_inspection_date": "30.04.2025",
+      "proposed_inspection_month": "अप्रैल 2026",
+      "proposed_inspection_date": "25.03.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "HARIHAKALAN"
+  },
+  "BO30403123005": {
+    "bo_id": "BO30403123005",
+    "facility_id": "BO30403123005",
+    "bo_name_hi": "इब्राहिमाबाद",
+    "so_name_hi": "रानी गंज बाजार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277208",
+    "pin_staff_sheet": "277208",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SARVESHWAR SINGH",
+        "employee_id": "50196905",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "UTTAM",
+        "employee_id": "",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "इब्राहिमाबाद, मुज के डेरा, मठ जोगिंदर गिरी, नई बस्ती",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712589705",
+      "mobile_number": "9218426109"
+    },
+    "inspection_history": {
+      "last_inspection_date": "30.06.2025",
+      "proposed_inspection_month": "जून 2026",
+      "proposed_inspection_date": "16.05.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "IBRAHIMABAD"
+  },
+  "BO30403115002": {
+    "bo_id": "BO30403115002",
+    "facility_id": "BO30403115002",
+    "bo_name_hi": "इब्राहिमाबाद उपरवार",
+    "so_name_hi": "करन छपरा",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277214",
+    "pin_staff_sheet": "277214",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "ASHUTOSH SINGH",
+        "employee_id": "50196659",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "LALAN YADVAV",
+        "employee_id": "50196665",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "टोला बाज राय, टोला फकरू राय, चौधरी टोला, तारकेश्वर नगर, नरहरि धाम नई बाटी",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712594267",
+      "mobile_number": "9218426098"
+    },
+    "inspection_history": {
+      "last_inspection_date": "21.07.2025",
+      "proposed_inspection_month": "जुलाई 2026",
+      "proposed_inspection_date": "22.05.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "IBRAHIMABADUPA"
+  },
+  "BO30403111002": {
+    "bo_id": "BO30403111002",
+    "facility_id": "BO30403111002",
+    "bo_name_hi": "जय प्रकाश नगर",
+    "so_name_hi": "दल्लन छपरा",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277204",
+    "pin_staff_sheet": "277204",
+    "sanctioned_posts": "1",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SHIKHA SINGH",
+        "employee_id": "50628290",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "भवन टोला, भवन टोला पूर्वी व भवन टोला सथिया, भगवान टोला, अलेख टोला, पूर्वी दलजीत टोला, जेपी नगर",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713151174",
+      "mobile_number": "9218426088"
+    },
+    "inspection_history": {
+      "last_inspection_date": "01.04.2025",
+      "proposed_inspection_month": "मार्च 2026",
+      "proposed_inspection_date": "06.03.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "RAWAR J.P.NAGAR"
+  },
+  "BO30403102003": {
+    "bo_id": "BO30403102003",
+    "facility_id": "BO30403102003",
+    "bo_name_hi": "जगदेवा",
+    "so_name_hi": "बैरिया",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277201",
+    "pin_staff_sheet": "277201",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "Mohit",
+        "employee_id": "50642196",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "SURAJ PANDEY",
+        "employee_id": "50509685",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "मध्यो मिश्रा के टोला, शुभनाथी, बनवा बाजार, यादव बस्ती",
+    "device": {},
+    "inspection_history": {
+      "last_inspection_date": "19.06.2025",
+      "proposed_inspection_month": "जून 2026",
+      "proposed_inspection_date": "08.05.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "JAGDEVA"
+  },
+  "BO30403123006": {
+    "bo_id": "BO30403123006",
+    "facility_id": "BO30403123006",
+    "bo_name_hi": "जमालपुर",
+    "so_name_hi": "रानी गंज बाजार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277208",
+    "pin_staff_sheet": "277208",
+    "sanctioned_posts": "3",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "SHATRUDHAN SINGH",
+        "employee_id": "50196756",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-2",
+        "name": "PRIYA SINGH",
+        "employee_id": "50509684",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "दलपतपुर, जवाहर टोला, देवी चौधरी के हाता, सबलपुर, राधा पांडेय के टोला",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712594127",
+      "mobile_number": "9218426110"
+    },
+    "inspection_history": {
+      "last_inspection_date": "07.10.2025",
+      "proposed_inspection_month": "अक्टूबर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "JAMALPUR"
+  },
+  "BO30403113003": {
+    "bo_id": "BO30403113003",
+    "facility_id": "BO30403113003",
+    "bo_name_hi": "जवाही",
+    "so_name_hi": "हल्दी",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277402",
+    "pin_staff_sheet": "277402",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "KAILASH JI UAPADHYAY",
+        "employee_id": "",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "SURESH YADAV",
+        "employee_id": "50529696",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "जवाही, नई बस्ती, बहादुरपुर, अंबेडकर पार्क क्र.सं. बीओ का नाम एसओ का नाम पिन कोड डिलीवरी क्षेत्र में आने वाले गांवों के नाम",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713143809",
+      "mobile_number": "9218426094"
+    },
+    "inspection_history": {
+      "last_inspection_date": "25.10.2025",
+      "proposed_inspection_month": "अक्टूबर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "JAWAHI"
+  },
+  "BO30403113004": {
+    "bo_id": "BO30403113004",
+    "facility_id": "BO30403113004",
+    "bo_name_hi": "जवाही डियार",
+    "so_name_hi": "हल्दी",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277402",
+    "pin_staff_sheet": "277402",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SAURABH RANJAN",
+        "employee_id": "50601598",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      }
+    ],
+    "villages_hi": "पांडेय वाली, महाजी, मिश्रीवाला, रघुबर डेरा, दुसैया",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713143676",
+      "mobile_number": "9218426095"
+    },
+    "inspection_history": {
+      "last_inspection_date": "11.09.2025",
+      "proposed_inspection_month": "सितम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "JAWAHI DIAR"
+  },
+  "BO30403125008": {
+    "bo_id": "BO30403125008",
+    "facility_id": "BO30403125008",
+    "bo_name_hi": "झरकठहा",
+    "so_name_hi": "रेवती",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277209",
+    "pin_staff_sheet": "277209",
+    "sanctioned_posts": "3",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "VINOD KUMAR SINGH",
+        "employee_id": "50196574",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "AJAY KUMAR YADAV",
+        "employee_id": "50196587",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-2",
+        "name": "MOHIT",
+        "employee_id": "",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "झरकठहा, बगमरिया, वशिष्ठ नगर प्लॉट, देवपुर मठिया, मठनाग नाथ, नौकागांव, रत्ती छपरा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712874438",
+      "mobile_number": "9218426119"
+    },
+    "inspection_history": {},
+    "bo_name_en_raw": "JHARKATHA"
+  },
+  "BO30403119004": {
+    "bo_id": "BO30403119004",
+    "facility_id": "BO30403119004",
+    "bo_name_hi": "कंचनपुर",
+    "so_name_hi": "मझुआ",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277403",
+    "pin_staff_sheet": "277403",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "BRIJ kumar pandey",
+        "employee_id": "50196636",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      }
+    ],
+    "villages_hi": "छोटकी बेलहरी, कंचनपुर",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713140102",
+      "mobile_number": "9218426105"
+    },
+    "inspection_history": {
+      "last_inspection_date": "10.11.2025",
+      "proposed_inspection_month": "नवम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "KANCHANPUR"
+  },
+  "BO30403123007": {
+    "bo_id": "BO30403123007",
+    "facility_id": "BO30403123007",
+    "bo_name_hi": "करमनपुर",
+    "so_name_hi": "रानी गंज बाजार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277208",
+    "pin_staff_sheet": "277208",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "PRITI KUMARI",
+        "employee_id": "",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "AKHILESHWAR SINGH",
+        "employee_id": "50196758",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "करमनपुर, तालिबपुर, सबलपुर, श्रद्धा पांडेय का टोला, दुखहरन गिरी के मठिया",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712587683",
+      "mobile_number": "8700685502"
+    },
+    "inspection_history": {
+      "last_inspection_date": "08.10.2025",
+      "proposed_inspection_month": "अक्टूबर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "KARMANPUR"
+  },
+  "BO30403109002": {
+    "bo_id": "BO30403109002",
+    "facility_id": "BO30403109002",
+    "bo_name_hi": "केवरा",
+    "so_name_hi": "छाता",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277210",
+    "pin_staff_sheet": "277210",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SANJAY KUMAR SINGH",
+        "employee_id": "50196852",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      }
+    ],
+    "villages_hi": "केवरा, पुरा, अकोल्ही",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712594762",
+      "mobile_number": "9218426085"
+    },
+    "inspection_history": {
+      "last_inspection_date": "08.04.2025",
+      "proposed_inspection_month": "अप्रैल 2026",
+      "proposed_inspection_date": "08.04.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "KEWARA"
+  },
+  "BO30403111003": {
+    "bo_id": "BO30403111003",
+    "facility_id": "BO30403111003",
+    "bo_name_hi": "कोडहरा उपरवार",
+    "so_name_hi": "दल्लन छपरा",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277204",
+    "pin_staff_sheet": "277204",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SHRIPRAKASH SINGH",
+        "employee_id": "50196586",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "KARAN KUMAR",
+        "employee_id": "50622390",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "दलजीत टोला, बाबू डेरा पूर्व, बाबू डेरा पश्चिम, संसार टोला, टोला काशी राय, गोबरधन पहाड़, शंकर, नई बस्ती दलजीत टोला, कृष्णा नगर, नभैया के डेरा, घुरी टोला, दलेल टोला, शिव नारायण टोला, बड़ा सुफल टोला, छोटका सुफल टोला, रामेश्वर टोला, नवका टोला, बीजू टोला, राम नगर, कोडहरा नौबरार",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712835793",
+      "mobile_number": "9218426089"
+    },
+    "inspection_history": {
+      "last_inspection_date": "01.09.2025",
+      "proposed_inspection_month": "अगस्त 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "KODAHARAUPAR"
+  },
+  "BO30403126006": {
+    "bo_id": "BO30403126006",
+    "facility_id": "BO30403126006",
+    "bo_name_hi": "कुसौरा",
+    "so_name_hi": "सहतवार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277211",
+    "pin_staff_sheet": "277211",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "BABITA",
+        "employee_id": "50623792",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "ADITYA KUMAR VERMA",
+        "employee_id": "",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "कुसौरा, कुसौरा के मठिया, सुहावल, पिठाइच, बभनौली",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713153097",
+      "mobile_number": "9218426127"
+    },
+    "inspection_history": {
+      "last_inspection_date": "03.03.2025",
+      "proposed_inspection_month": "फरवरी 2026",
+      "proposed_inspection_date": "02.03.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "WAR KUSAURA"
+  },
+  "BO30403125009": {
+    "bo_id": "BO30403125009",
+    "facility_id": "BO30403125009",
+    "bo_name_hi": "कुसौरी",
+    "so_name_hi": "रेवती",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277209",
+    "pin_staff_sheet": "277209",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "ROHIT",
+        "employee_id": "",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "VIKRANT",
+        "employee_id": "",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "कुसौरी कला, नैना, शोभनाथपुर, कुसौरी खुर्द, ताहिरपुर",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712835371",
+      "mobile_number": "7678391540"
+    },
+    "inspection_history": {
+      "last_inspection_date": "05.07.2025",
+      "proposed_inspection_month": "जुलाई 2026",
+      "proposed_inspection_date": "30.05.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "KUSAURI"
+  },
+  "BO30403115003": {
+    "bo_id": "BO30403115003",
+    "facility_id": "BO30403115003",
+    "bo_name_hi": "लक्ष्मण छपरा",
+    "so_name_hi": "करन छपरा",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277214",
+    "pin_staff_sheet": "277214",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      }
+    ],
+    "villages_hi": "कृष्णा नगर, हनुमान नगर, शांति नगर, मटिया धाजू गिरी, लाली के डेरा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712587444",
+      "mobile_number": "#N/A"
+    },
+    "inspection_history": {
+      "last_inspection_date": "23.12.2025",
+      "proposed_inspection_month": "दिसम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "LAXMANCHAPRA"
+  },
+  "BO30403123008": {
+    "bo_id": "BO30403123008",
+    "facility_id": "BO30403123008",
+    "bo_name_hi": "मधुबनी",
+    "so_name_hi": "रानी गंज बाजार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277208",
+    "pin_staff_sheet": "277208",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "PRAMOD KUMAR SINGH",
+        "employee_id": "50196760",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "SIMRAN KUMARI",
+        "employee_id": "",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "मधुबनी, पासवान चौक, मधुबनी तानी पार, मधुबनी यादव बस्ती, मधुबनी हरिजन बस्ती",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712596247",
+      "mobile_number": "9218426112"
+    },
+    "inspection_history": {
+      "last_inspection_date": "09.10.2025",
+      "proposed_inspection_month": "अक्टूबर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "MADHUBANI"
+  },
+  "BO30403125010": {
+    "bo_id": "BO30403125010",
+    "facility_id": "BO30403125010",
+    "bo_name_hi": "मूनछपरा",
+    "so_name_hi": "रेवती",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277209",
+    "pin_staff_sheet": "277209",
+    "sanctioned_posts": "3",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "ANIL KUMAR YADAV",
+        "employee_id": "50196603",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "NIKKI YADAV",
+        "employee_id": "50509683",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-2",
+        "name": "VINOD KUMAR VERMA",
+        "employee_id": "50196601",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "धुमरे के टोला, राजगुरु टोला, गंगा पांडेय के टोला, मियाचक, लक्ष्मीपुर",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712833079",
+      "mobile_number": "9218426120"
+    },
+    "inspection_history": {
+      "last_inspection_date": "06.10.2025",
+      "proposed_inspection_month": "अक्टूबर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "MOONCHHAPRA"
+  },
+  "BO30403125011": {
+    "bo_id": "BO30403125011",
+    "facility_id": "BO30403125011",
+    "bo_name_hi": "मुरादीह",
+    "so_name_hi": "रेवती",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277209",
+    "pin_staff_sheet": "277209",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "ASHOK SINGH",
+        "employee_id": "",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "RITIKA SINGH",
+        "employee_id": "",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "असमान थोथा, त्रिकालपुर, दतौली, मुरादीह",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712877340",
+      "mobile_number": "9218426121"
+    },
+    "inspection_history": {
+      "last_inspection_date": "03.10.2025",
+      "proposed_inspection_month": "अक्टूबर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "MURADIH"
+  },
+  "BO30403111004": {
+    "bo_id": "BO30403111004",
+    "facility_id": "BO30403111004",
+    "bo_name_hi": "मुरली छपरा",
+    "so_name_hi": "दल्लन छपरा",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277204",
+    "pin_staff_sheet": "277204",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "VINOD KUMAR SINGH",
+        "employee_id": "50196589",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "Mohit Kumar",
+        "employee_id": "50683683",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "मुरली छपरा, नवा नगर, दलकी नं. 1, रुखी के डेरा नवानगर, जोगी के डेरा, फागुबीन के डेरा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712845255",
+      "mobile_number": "9218426090"
+    },
+    "inspection_history": {
+      "last_inspection_date": "27.10.2025",
+      "proposed_inspection_month": "अक्टूबर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "MURLICHAPRA"
+  },
+  "BO30403123009": {
+    "bo_id": "BO30403123009",
+    "facility_id": "BO30403123009",
+    "bo_name_hi": "नारायणगढ़",
+    "so_name_hi": "रानी गंज बाजार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277208",
+    "pin_staff_sheet": "277208",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "PHOOL KUMARI",
+        "employee_id": "50196762",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "LALIT KUMAR SINGH",
+        "employee_id": "50196765",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "नारायणगढ़, नया टोल, दुशाद नयापाटी, राय मोहल्ला, हरिजन बस्ती रेलवे",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713146653",
+      "mobile_number": "8700915086"
+    },
+    "inspection_history": {
+      "last_inspection_date": "31.10.2025",
+      "proposed_inspection_month": "अक्टूबर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "NARAYANGARH"
+  },
+  "BO13203203009": {
+    "bo_id": "BO13203203009",
+    "facility_id": "BO13203203009",
+    "bo_name_hi": "नौरंगा",
+    "so_name_hi": "दुबे छपरा",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277205",
+    "pin_staff_sheet": "277205",
+    "sanctioned_posts": "3",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "ABHIJEET RAJ",
+        "employee_id": "50622387",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "ARBIND KUMAR THAKUR",
+        "employee_id": "50162158",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-2",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      }
+    ],
+    "villages_hi": "भुआल छपरा, चक्की नौरंगा, उदय छपरा के डेरा, नौरंगा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713140045",
+      "mobile_number": "8076096864"
+    },
+    "inspection_history": {
+      "last_inspection_date": "09.04.2025",
+      "proposed_inspection_month": "अप्रैल 2026",
+      "proposed_inspection_date": "13.03.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "NAURANGA"
+  },
+  "BO30403102004": {
+    "bo_id": "BO30403102004",
+    "facility_id": "BO30403102004",
+    "bo_name_hi": "पांडेयपुर",
+    "so_name_hi": "बैरिया",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277001",
+    "pin_staff_sheet": "277201",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "ASHUTOSH",
+        "employee_id": "50585068",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      }
+    ],
+    "villages_hi": "पांडेयपुर, मुरली छपरा, चिंतामणि राय के टोला, रामपुर मिश्रा, किनू तिवारी के टोला, गुजरी सिंह के टोला, मिश्रा के हट्टा, मिश्रा गिरी के मठिया",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712589788",
+      "mobile_number": "9218470993"
+    },
+    "inspection_history": {
+      "last_inspection_date": "23.08.2025",
+      "proposed_inspection_month": "अगस्त 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "PANDEYPUR"
+  },
+  "BO30403119005": {
+    "bo_id": "BO30403119005",
+    "facility_id": "BO30403119005",
+    "bo_name_hi": "पियारौंता",
+    "so_name_hi": "मझुआ",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277403",
+    "pin_staff_sheet": "277403",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SUNIL KUMAR PASWAN",
+        "employee_id": "50698221",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "SACHIN",
+        "employee_id": "",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "पियारौंता",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713152446",
+      "mobile_number": "#N/A"
+    },
+    "inspection_history": {
+      "last_inspection_date": "23.09.2025",
+      "proposed_inspection_month": "सितम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "PIYRAUTA"
+  },
+  "BO30403126007": {
+    "bo_id": "BO30403126007",
+    "facility_id": "BO30403126007",
+    "bo_name_hi": "पुरास",
+    "so_name_hi": "सहतवार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277211",
+    "pin_staff_sheet": "277211",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "VINAY KUMAR SINGH",
+        "employee_id": "50599915",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "ADITYA KUMR GUPTA",
+        "employee_id": "",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "पुरास, पुरास के मठिया, वासुधार पाह, बरुणा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712845651",
+      "mobile_number": "9218426128"
+    },
+    "inspection_history": {
+      "last_inspection_date": "07.05.2025",
+      "proposed_inspection_month": "मई 2026",
+      "proposed_inspection_date": "10.04.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "PURAS"
+  },
+  "BO30403111005": {
+    "bo_id": "BO30403111005",
+    "facility_id": "BO30403111005",
+    "bo_name_hi": "राम नगर",
+    "so_name_hi": "दल्लन छपरा",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277402",
+    "pin_staff_sheet": "277204",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      }
+    ],
+    "villages_hi": "राम नगर, राम नगर जनाबी, राम नगर चिमनी, श्रीपतिपुर रामनगर, कान्हीपुर, टोला सेवक राय",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713153733",
+      "mobile_number": "9218426091"
+    },
+    "inspection_history": {
+      "last_inspection_date": "14.06.2025",
+      "proposed_inspection_month": "जून 2026",
+      "proposed_inspection_date": "19.05.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "RAMNAGAR"
+  },
+  "BO30403126008": {
+    "bo_id": "BO30403126008",
+    "facility_id": "BO30403126008",
+    "bo_name_hi": "रोहुआं",
+    "so_name_hi": "सहतवार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277211",
+    "pin_staff_sheet": "277211",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "AMRESH",
+        "employee_id": "",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      }
+    ],
+    "villages_hi": "रोहुआं, तिवारी, सड़क",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712844654",
+      "mobile_number": "9218433063"
+    },
+    "inspection_history": {
+      "last_inspection_date": "22.03.2025",
+      "proposed_inspection_month": "मार्च 2026",
+      "proposed_inspection_date": "11.03.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "ROHUA"
+  },
+  "BO30403113005": {
+    "bo_id": "BO30403113005",
+    "facility_id": "BO30403113005",
+    "bo_name_hi": "रुद्रपुर",
+    "so_name_hi": "हल्दी",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277402",
+    "pin_staff_sheet": "277402",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SANGEETA SINGH",
+        "employee_id": "50196906",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "ARPIT",
+        "employee_id": "",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "प्रबोधपुर, रुद्रपुर, चोल्हनचक, डांगरबाद, जग छपरा, बगही",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713146778",
+      "mobile_number": "7701987868"
+    },
+    "inspection_history": {},
+    "bo_name_en_raw": "RUDRAPUR"
+  },
+  "BO30403109003": {
+    "bo_id": "BO30403109003",
+    "facility_id": "BO30403109003",
+    "bo_name_hi": "सहोदीह",
+    "so_name_hi": "छाता",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277210",
+    "pin_staff_sheet": "277210",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SUBHASH CHANDRA",
+        "employee_id": "50196853",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "SRIVASTAVA SHIVA NAND SINGH",
+        "employee_id": "50196854",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "सहोदीह, बड़ासारी, नारायणपुर, सहापुर, कटारिया, जयतीफ",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712596593",
+      "mobile_number": "9218426086"
+    },
+    "inspection_history": {},
+    "bo_name_en_raw": "SAHODIH"
+  },
+  "BO30403118002": {
+    "bo_id": "BO30403118002",
+    "facility_id": "BO30403118002",
+    "bo_name_hi": "सावन छपरा",
+    "so_name_hi": "लालगंज",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277216",
+    "pin_staff_sheet": "277216",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "CHANDAN KUMAR",
+        "employee_id": "50528229",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "MAURYA SURABHI SINGH",
+        "employee_id": "50642098",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "सावन छपरा, सावन छपरा डेरा, जगदेवा टोला, लक्ष्मीपुर, भोजापुर, भोजापुर 85",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713157395",
+      "mobile_number": "9218426102"
+    },
+    "inspection_history": {
+      "last_inspection_date": "04.11.2025",
+      "proposed_inspection_month": "नवम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "SAWANCHAPRA"
+  },
+  "BO30403118003": {
+    "bo_id": "BO30403118003",
+    "facility_id": "BO30403118003",
+    "bo_name_hi": "सेमरिया",
+    "so_name_hi": "लालगंज",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277216",
+    "pin_staff_sheet": "277216",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "CHITRA SRIVASTAV",
+        "employee_id": "50196656",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "JITENDRA KUMAR",
+        "employee_id": "50196602",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "शिवपुर कपूर डियार, जगदीशपुर, ग्रयेरिया, सेमरिया, सेमरिया डेरा, लच्छू टोला, सुरेमानपुर",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713140144",
+      "mobile_number": "9218426103"
+    },
+    "inspection_history": {
+      "last_inspection_date": "13.09.2025",
+      "proposed_inspection_month": "सितम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "SEMARIYA"
+  },
+  "BO30403100009": {
+    "bo_id": "BO30403100009",
+    "facility_id": "BO30403100009",
+    "bo_name_hi": "सीताकुंड",
+    "so_name_hi": "हल्दी",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277402",
+    "pin_staff_sheet": "277402",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "YADAV ARBIND KUMAR TIWARI",
+        "employee_id": "50196902",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "VED PRAKASH TIWARI",
+        "employee_id": "50196903",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "सीताकुंड, परसिया, पंडितपुरा, निरूपुर, पंडारी, बहादुरपुर, नई बस्ती हरिहरपुर",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713140037",
+      "mobile_number": "9218426096"
+    },
+    "inspection_history": {
+      "last_inspection_date": "02.09.2025",
+      "proposed_inspection_month": "अगस्त 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "(Lalganj) SITAKUND"
+  },
+  "BO30403115004": {
+    "bo_id": "BO30403115004",
+    "facility_id": "BO30403115004",
+    "bo_name_hi": "शोभा छपरा",
+    "so_name_hi": "करन छपरा",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277214",
+    "pin_staff_sheet": "277214",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SANDHYA SINGH",
+        "employee_id": "50196664",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "VISHAL KUMR SINGH",
+        "employee_id": "50600361",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "शोभा छपरा, मठधज्जू गिरी, नौका टोल",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712588723",
+      "mobile_number": "9218426100"
+    },
+    "inspection_history": {
+      "last_inspection_date": "15.05.2025",
+      "proposed_inspection_month": "मई 2026",
+      "proposed_inspection_date": "30.03.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "SOBHACHAPRA"
+  },
+  "BO30403123010": {
+    "bo_id": "BO30403123010",
+    "facility_id": "BO30403123010",
+    "bo_name_hi": "सोनबरसा",
+    "so_name_hi": "रानी गंज बाजार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277208",
+    "pin_staff_sheet": "277208",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "PANNA LAL",
+        "employee_id": "50196767",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "VINAY KUMAR SINGH",
+        "employee_id": "50543807",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "सोनबरसा, लीला छपरा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713144732",
+      "mobile_number": "8178735579"
+    },
+    "inspection_history": {
+      "last_inspection_date": "19.05.2025",
+      "proposed_inspection_month": "मई 2026",
+      "proposed_inspection_date": "11.04.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "SONBARSHA"
+  },
+  "BO30403111006": {
+    "bo_id": "BO30403111006",
+    "facility_id": "BO30403111006",
+    "bo_name_hi": "सोनकी भाट",
+    "so_name_hi": "दल्लन छपरा",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277402",
+    "pin_staff_sheet": "277204",
+    "sanctioned_posts": "3",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SONU KUMAR SINGH",
+        "employee_id": "50635020",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "CHHITESHWAR RAM",
+        "employee_id": "50196584",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-2",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      }
+    ],
+    "villages_hi": "श्रीपतापुर, रामनगर, धातुरी टोला, कोडहरा उपरवार, लक्ष्मी राम ब्रह्म के टोला, महरान गौरी के मठिया",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712872580",
+      "mobile_number": "9218433061"
+    },
+    "inspection_history": {
+      "last_inspection_date": "15.11.2025",
+      "proposed_inspection_month": "नवम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "SONKIBHAT"
+  },
+  "BO30403113006": {
+    "bo_id": "BO30403113006",
+    "facility_id": "BO30403113006",
+    "bo_name_hi": "सोनवानी",
+    "so_name_hi": "हल्दी",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277402",
+    "pin_staff_sheet": "277402",
+    "sanctioned_posts": "3",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "RAKESH KUMAR",
+        "employee_id": "50640730",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "RAJ PRATAP SINGH",
+        "employee_id": "50642275",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-2",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      }
+    ],
+    "villages_hi": "सोनवानी, कठही, कृपालपुर, बाबूआपुर, लखपुर, समरथपाह",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713146687",
+      "mobile_number": "9218433062"
+    },
+    "inspection_history": {
+      "last_inspection_date": "29.05.2025",
+      "proposed_inspection_month": "मई 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "SONWANI"
+  },
+  "BO30403125012": {
+    "bo_id": "BO30403125012",
+    "facility_id": "BO30403125012",
+    "bo_name_hi": "श्री नगर",
+    "so_name_hi": "रेवती",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277209",
+    "pin_staff_sheet": "277209",
+    "sanctioned_posts": "3",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "",
+        "employee_id": "",
+        "status": "VACANT"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "KUMARI ANSHU",
+        "employee_id": "",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-2",
+        "name": "RAVI RANJAN",
+        "employee_id": "",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "श्रीनगर, नई बस्ती श्रीनगर, बच्छा के डेरा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712847244",
+      "mobile_number": "9218426122"
+    },
+    "inspection_history": {
+      "last_inspection_date": "08.05.2025",
+      "proposed_inspection_month": "मई 2026",
+      "proposed_inspection_date": "11.05.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "SRINAGAR"
+  },
+  "BO30403118004": {
+    "bo_id": "BO30403118004",
+    "facility_id": "BO30403118004",
+    "bo_name_hi": "श्रीपालपुर",
+    "so_name_hi": "लालगंज",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277216",
+    "pin_staff_sheet": "277216",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "MENKA",
+        "employee_id": "50700186",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "KHUSHBHU TIWARI",
+        "employee_id": "50473400",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "श्रीपालपुर, किशनपुरा, लुटाईपुर, भुवाल छपरा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713144567",
+      "mobile_number": "8920512035"
+    },
+    "inspection_history": {
+      "last_inspection_date": "04.10.2025",
+      "proposed_inspection_month": "अक्टूबर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "SRIPALPUR"
+  },
+  "BO30403123011": {
+    "bo_id": "BO30403123011",
+    "facility_id": "BO30403123011",
+    "bo_name_hi": "सुरेमानपुर",
+    "so_name_hi": "रानी गंज बाजार",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277208",
+    "pin_staff_sheet": "277208",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "KAMLESHWAR KUMAR",
+        "employee_id": "50196771",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "SINGH MANOJ KUMAR TIWARI",
+        "employee_id": "50196773",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "हेवंतपुर, गंगापुर, शिवराहिया, सुरेमानपुर स्टेशन, उपाध्यायपुर, छाई चपरा, बिशुनपुरा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713143791",
+      "mobile_number": "9315310441"
+    },
+    "inspection_history": {
+      "last_inspection_date": "16.09.2025",
+      "proposed_inspection_month": "सितम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "SUREMANPUR"
+  },
+  "BO30403118005": {
+    "bo_id": "BO30403118005",
+    "facility_id": "BO30403118005",
+    "bo_name_hi": "सूर्यभानपुर",
+    "so_name_hi": "लालगंज",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277216",
+    "pin_staff_sheet": "277216",
+    "sanctioned_posts": "2",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "SUNNY KUMAR SINGH",
+        "employee_id": "50616519",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "RANJANA YADAV",
+        "employee_id": "",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "सूर्यभानपुर, चौबे की दलकी, दलकी नं.2, चिरंजी छपरा",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733713144633",
+      "mobile_number": "9218426104"
+    },
+    "inspection_history": {
+      "last_inspection_date": "09.05.2025",
+      "proposed_inspection_month": "मई 2026",
+      "proposed_inspection_date": "09.04.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "SURYABHANPUR"
+  },
+  "BO30403102005": {
+    "bo_id": "BO30403102005",
+    "facility_id": "BO30403102005",
+    "bo_name_hi": "तेंगरिही",
+    "so_name_hi": "बैरिया",
+    "ho_name_hi": "बलिया",
+    "pin_village_list": "277201",
+    "pin_staff_sheet": "277201",
+    "sanctioned_posts": "3",
+    "staff": [
+      {
+        "post": "BPM",
+        "name": "",
+        "employee_id": "50196635",
+        "status": "VACANT"
+      },
+      {
+        "post": "ABPM-1",
+        "name": "URMILA MISRA",
+        "employee_id": "50196776",
+        "status": "WORKING"
+      },
+      {
+        "post": "ABPM-2",
+        "name": "RAGHUWANSH KUMAR",
+        "employee_id": "50515964",
+        "status": "WORKING"
+      }
+    ],
+    "villages_hi": "तेंगराही, बंसगोपाल छपरा, मिश्रा के हाते, तेंगराही धानी, बैरिया कान्ही",
+    "device": {
+      "device_model": "SAMSUNG A14",
+      "imei": "351733712596296",
+      "mobile_number": "9218426084"
+    },
+    "inspection_history": {
+      "last_inspection_date": "31.07.2025",
+      "proposed_inspection_month": "जुलाई 2026",
+      "proposed_inspection_date": "25.05.26",
+      "compliance_received_date": ""
+    },
+    "bo_name_en_raw": "TENGARAHI"
+  }
+};
 </script>
 
 <!-- INSPECTION TOOL: Template (base64) -->
@@ -3922,7 +6584,48 @@ const MASTER_DATA = {"BO30403125001": {"bo_id": "BO30403125001", "facility_id": 
   // ---------------------------------------------------------------------
   // Populate BO selector
   // ---------------------------------------------------------------------
+  // Inspection-done status: stored in localStorage as JSON {boId: true}
+  var INSPECTED_KEY = "sdi_insp_done_v1";
+  function getInspectedBOs() {
+    try { return JSON.parse(localStorage.getItem(INSPECTED_KEY) || "{}"); } catch(e) { return {}; }
+  }
+  function setBOInspected(boId, done) {
+    var d = getInspectedBOs();
+    if (done) d[boId] = true; else delete d[boId];
+    localStorage.setItem(INSPECTED_KEY, JSON.stringify(d));
+  }
+  function isBOInspected(boId) {
+    return !!getInspectedBOs()[boId];
+  }
+
+  // Sort BOs: pending (not done) first starting from current month, done at bottom
+  // Current month = September (9). Months wrap: Sept→Oct→...→Dec→Jan→...→Aug
+  var CURRENT_MONTH = 9; // September
+  var monthOrder = {"जनवरी":1,"फरवरी":2,"मार्च":3,"अप्रैल":4,"मई":5,"जून":6,"जुलाई":7,"अगस्त":8,"सितम्बर":9,"अक्टूबर":10,"नवम्बर":11,"दिसम्बर":12};
+
+  function getMonthOffset(monthName) {
+    var key = (monthName || "").split(" ")[0] || "";
+    var m = monthOrder[key] || 0;
+    if (!m) return 99; // no proposed month → sort last among pending
+    // Calculate offset from current month (wrapping)
+    var offset = m - CURRENT_MONTH;
+    if (offset < 0) offset += 12; // wrap around (e.g., Jan is after Dec)
+    return offset;
+  }
+
   const boIds = Object.keys(MASTER_DATA).sort((a, b) => {
+    var aDone = isBOInspected(a);
+    var bDone = isBOInspected(b);
+    // Pending BOs first, done BOs at bottom
+    if (aDone && !bDone) return 1;
+    if (!aDone && bDone) return -1;
+    // Within same group, sort by month offset (from September)
+    var aMonth = (MASTER_DATA[a].inspection_history || {}).proposed_inspection_month || "";
+    var bMonth = (MASTER_DATA[b].inspection_history || {}).proposed_inspection_month || "";
+    var aOff = getMonthOffset(aMonth);
+    var bOff = getMonthOffset(bMonth);
+    if (aOff !== bOff) return aOff - bOff;
+    // Same month → sort by name
     return MASTER_DATA[a].bo_name_hi.localeCompare(MASTER_DATA[b].bo_name_hi, "hi");
   });
 
@@ -3957,6 +6660,66 @@ const MASTER_DATA = {"BO30403125001": {"bo_id": "BO30403125001", "facility_id": 
   });
 
   boSelect.addEventListener("change", () => renderAutoFill(boSelect.value));
+
+  // --- Mark as Inspected button ---
+  const markDoneBtn = document.getElementById("markDoneBtn");
+  const inspStatusCard = document.getElementById("inspStatusCard");
+  const inspStatusText = document.getElementById("inspStatusText");
+  if (markDoneBtn) {
+    // Update button text and card visibility based on current BO status
+    function updateMarkDoneBtn() {
+      var boId = boSelect.value;
+      if (!boId) {
+        if (inspStatusCard) inspStatusCard.style.display = "none";
+        return;
+      }
+      if (inspStatusCard) inspStatusCard.style.display = "block";
+      var bo = MASTER_DATA[boId];
+      var boName = bo ? bo.bo_name_hi : boId;
+      var hist = (bo && bo.inspection_history) || {};
+      var lastDate = hist.last_inspection_date || "—";
+      var propMonth = hist.proposed_inspection_month || "—";
+      if (isBOInspected(boId)) {
+        inspStatusText.textContent = boName + " — निरीक्षण पूर्ण ✅ (पिछला: " + lastDate + " | प्रस्तावित: " + propMonth + ")";
+        inspStatusText.style.color = "#28a745";
+        markDoneBtn.textContent = "↩️ वापस लंबित करें (Undo Done)";
+        markDoneBtn.style.background = "#6c757d";
+      } else {
+        inspStatusText.textContent = boName + " — निरीक्षण लंबित ⏳ (पिछला: " + lastDate + " | प्रस्तावित: " + propMonth + ")";
+        inspStatusText.style.color = "#e65100";
+        markDoneBtn.textContent = "✅ निरीक्षण पूर्ण चिह्नित करें (Mark Done)";
+        markDoneBtn.style.background = "#28a745";
+      }
+    }
+    updateMarkDoneBtn();
+    boSelect.addEventListener("change", updateMarkDoneBtn);
+
+    markDoneBtn.addEventListener("click", function() {
+
+    // SB-46 generate button
+    var sb46GenBtn = document.getElementById("sb46GenBtn");
+    if (sb46GenBtn) {
+      sb46GenBtn.addEventListener("click", function() { generateSB46(); });
+    }
+      var boId = boSelect.value;
+      if (!boId) { alert("कृपया पहले शाखा डाकघर चुनें"); return; }
+      var bo = MASTER_DATA[boId];
+      var boName = bo ? bo.bo_name_hi : boId;
+      if (isBOInspected(boId)) {
+        if (confirm("इस BO (" + boName + ") को वापस 'लंबित' (pending) में ले जाएं?\n\nClick OK to undo, Cancel to keep as done.")) {
+          setBOInspected(boId, false);
+          updateMarkDoneBtn();
+          if (statusMsg) { statusMsg.textContent = boName + " को लंबित किया गया"; statusMsg.className = "status"; }
+        }
+      } else {
+        if (confirm("इस BO (" + boName + ") का निरीक्षण पूर्ण मानें?\n\nइसे सूची में नीचे ले जाया जाएगा और लंबित BOs ऊपर दिखेंगे।\n\nClick OK to mark done, Cancel to abort.")) {
+          setBOInspected(boId, true);
+          updateMarkDoneBtn();
+          if (statusMsg) { statusMsg.textContent = "✅ " + boName + " निरीक्षण पूर्ण चिह्नित"; statusMsg.className = "status"; }
+        }
+      }
+    });
+  }
 
   // ---------------------------------------------------------------------
   // Auto-fill display
@@ -4303,6 +7066,288 @@ const MASTER_DATA = {"BO30403125001": {"bo_id": "BO30403125001", "facility_id": 
     }
     return data;
   }
+
+  // ============================================================
+  // SB-46: Accounts where passbook could not be collected
+  // ============================================================
+  var sb46Entries = [];
+
+  function renderSB46Entries() {
+    var container = document.getElementById("sb46Entries");
+    if (!container) return;
+    container.innerHTML = "";
+    sb46Entries.forEach(function(entry, idx) {
+      var div = document.createElement("div");
+      div.className = "passbook-entry";
+      div.style.cssText = "border:1px solid #ffcdd2;border-radius:6px;padding:8px;margin-bottom:6px;background:#fffafa;";
+      var schemeOpts = ["SB","RD","TD","SSA","MIS","SCSS","PPF","KVP","NSC"];
+      var schemeHtml = schemeOpts.map(function(s) {
+        return '<option value="' + s + '"' + (entry.scheme === s ? ' selected' : '') + '>' + s + '</option>';
+      }).join("");
+      div.innerHTML =
+        '<div class="entry-idx">SB-46 #' + (idx + 1) +
+        ' <button type="button" onclick="removeSB46Entry(' + idx + ')" style="float:right;background:#dc3545;color:white;border:none;border-radius:3px;width:22px;height:22px;cursor:pointer;font-size:0.8rem;">X</button></div>' +
+        '<div class="row2" style="margin-top:6px;">' +
+          '<select id="sb46_' + idx + '_scheme" style="flex:0 0 100px;">' + schemeHtml + '</select>' +
+          '<input type="number" id="sb46_' + idx + '_acct" placeholder="खाता संख्या (Account No.)" inputmode="numeric" value="' + (entry.acct || '') + '" style="flex:1;">' +
+        '</div>' +
+        '<div class="row2" style="margin-top:6px;">' +
+          '<input type="text" id="sb46_' + idx + '_name" placeholder="जमाकर्ता का नाम (Name)" value="' + (entry.name || '') + '" style="flex:1;">' +
+        '</div>' +
+        '<div class="row2" style="margin-top:6px;">' +
+          '<input type="text" id="sb46_' + idx + '_address" placeholder="पता (Address)" value="' + (entry.address || '') + '" style="flex:1;">' +
+        '</div>' +
+        '<div class="row2" style="margin-top:6px;">' +
+          '<input type="number" id="sb46_' + idx + '_balance" placeholder="शेष राशि (Balance) ₹" inputmode="decimal" value="' + (entry.balance || '') + '" style="flex:1;">' +
+          '<input type="date" id="sb46_' + idx + '_dlt" title="अंतिम लेन-देन तिथि (DLT)" value="' + (entry.dlt || '') + '">' +
+        '</div>';
+      container.appendChild(div);
+    });
+  }
+
+  window.removeSB46Entry = function(idx) {
+    sb46Entries.splice(idx, 1);
+    renderSB46Entries();
+  };
+
+  setTimeout(function() {
+    var addBtn = document.getElementById("sb46AddBtn");
+    if (addBtn) {
+      addBtn.addEventListener("click", function() {
+        sb46Entries.push({ scheme: "SB", acct: "", name: "", address: "", balance: "", dlt: "" });
+        renderSB46Entries();
+      });
+    }
+  }, 500);
+
+  function readSB46Data() {
+    var data = [];
+    sb46Entries.forEach(function(entry, idx) {
+      var schemeEl = document.getElementById("sb46_" + idx + "_scheme");
+      var acctEl = document.getElementById("sb46_" + idx + "_acct");
+      var nameEl = document.getElementById("sb46_" + idx + "_name");
+      var addrEl = document.getElementById("sb46_" + idx + "_address");
+      var balEl = document.getElementById("sb46_" + idx + "_balance");
+      var dltEl = document.getElementById("sb46_" + idx + "_dlt");
+      var dltRaw = dltEl ? dltEl.value : "";
+      var dltDisplay = dltRaw ? fromISODate(dltRaw) : "";
+      data.push({
+        scheme: schemeEl ? schemeEl.value : "SB",
+        acct: acctEl ? acctEl.value : "",
+        name: nameEl ? nameEl.value : "",
+        address: addrEl ? addrEl.value : "",
+        balance: balEl ? balEl.value : "",
+        dlt: dltDisplay
+      });
+    });
+    return data.filter(function(d) { return d.acct || d.name; });
+  }
+
+  // SB-46 DOCX generation
+  async function generateSB46() {
+    var boId = boSelect.value;
+    if (!boId) { alert("कृपया पहले शाखा डाकघर चुनें"); return; }
+    var bo = MASTER_DATA[boId];
+    if (!bo) { alert("BO data not found"); return; }
+
+    var sb46Data = readSB46Data();
+    if (!sb46Data.length) { alert("SB-46 के लिए कोई खाता दर्ज नहीं है। कृपया पहले खाते जोड़ें।"); return; }
+
+    var ok = await loadDocx();
+    if (!ok) { alert("docx library load नहीं हो सकी"); return; }
+    if (!initDocx()) return;
+
+    var boName = bo.bo_name_hi || bo.bo_name_en_raw || boId;
+    var boNameEn = bo.bo_name_en_raw || boName;
+    var inspDate = inspectionDateInput ? inspectionDateInput.value : "";
+    var inspDateDisplay = inspDate ? fromISODate(inspDate) : "";
+    var inspYear = inspDate ? inspDate.split("-")[0] : "2026";
+    var refNo = "IR/" + inspYear + "/" + boNameEn.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+
+    var sigDataUrl = null;
+    try {
+      var sigRaw = localStorage.getItem("bo_ir_signature_v1");
+      if (sigRaw) sigDataUrl = sigRaw;
+    } catch(e) {}
+
+    var D = window.docx;
+    var children = [];
+
+    for (var ai = 0; ai < sb46Data.length; ai++) {
+      var entry = sb46Data[ai];
+      var balNum = parseFloat(entry.balance) || 0;
+      var balWords = numberToWordsHindi(balNum);
+
+      // Part 1: Intimation
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "SB-46", bold: true, size: 28, font: "Devanagari" })],
+        alignment: D.AlignmentType.CENTER, spacing: { after: 60 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "भारत सरकार, डाक विभाग", bold: true, size: 24, font: "Devanagari" })],
+        alignment: D.AlignmentType.CENTER, spacing: { after: 40 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "जमाकर्ता को खाते में जमा राशि की सूचना एवं उसकी पावती", bold: true, size: 22, font: "Devanagari" })],
+        alignment: D.AlignmentType.CENTER, spacing: { after: 200 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "कार्यालय: एसडीआई बलिया पूर्व उप-मंडल (बैरिया)", size: 22, font: "Devanagari" })],
+        spacing: { after: 80 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "संदर्भ संख्या: " + refNo + "   दिनांक: " + inspDateDisplay, size: 22, font: "Devanagari" })],
+        spacing: { after: 40 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "डाकघर: " + boName + " बीओ  |  श्रेणी: " + entry.scheme, size: 22, font: "Devanagari" })],
+        spacing: { after: 200 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "श्रीमान/श्रीमती " + (entry.name || "____________________") + ",", size: 22, font: "Devanagari" })],
+        spacing: { after: 80 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: entry.address || "पता: ____________________", size: 22, font: "Devanagari" })],
+        spacing: { after: 200 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({
+          text: "आपके " + entry.scheme + " खाता संख्या " + (entry.acct || "____________________") +
+                " का, जो " + boName + " डाकघर में चालू है, डाकघर के अभिलेखों के अनुसार दिनांक " +
+                (entry.dlt || "____________") + " को शेष राशि ₹ " + (entry.balance || "________") +
+                " (रूपये " + balWords + " मात्र) है।",
+          size: 22, font: "Devanagari"
+        })],
+        spacing: { after: 120 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({
+          text: "कृपया अपनी पासबुक की जाँच करें और देखें कि यह सही है। यदि नहीं है, तो आपकी पासबुक में दर्शाई गई सही शेष राशि नीचे दिए गए उत्तर फॉर्म में भर दें, जिसे हस्ताक्षरित एवं दिनांकित करके संलग्न किए गए पत्रावली लिफाफे में बंद कर शीघ्र डाक द्वारा भेज दें।",
+          size: 22, font: "Devanagari"
+        })],
+        spacing: { after: 200 }
+      }));
+      // Mandatory note
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({
+          text: "नोट: यह कोई वैध दावा फॉर्म नहीं है। इसका अर्थ यह है कि आप किसी भी प्रकार की भिन्नता के केस में तुरंत पासबुक लेकर निकटतम डाकघर पहुंचें।",
+          italics: true, bold: true, size: 20, font: "Devanagari", color: "dc3545"
+        })],
+        spacing: { after: 200 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "भवदीय,", size: 22, font: "Devanagari" })],
+        spacing: { after: 200 }
+      }));
+      if (sigDataUrl) {
+        try {
+          children.push(new D.Paragraph({
+            children: [new D.ImageRun({ data: sigDataUrl, transformation: { width: 150, height: 70 }, type: "png" })],
+            spacing: { after: 40 }
+          }));
+        } catch(e) {
+          children.push(new D.Paragraph({ children: [new D.TextRun({ text: "(हस्ताक्षर)", size: 22, font: "Devanagari" })], spacing: { after: 40 } }));
+        }
+      } else {
+        children.push(new D.Paragraph({ children: [new D.TextRun({ text: "(हस्ताक्षर)", size: 22, font: "Devanagari" })], spacing: { after: 40 } }));
+      }
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "उप-मंडल निरीक्षक", bold: true, size: 22, font: "Devanagari" })],
+        spacing: { after: 40 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "बलिया पूर्व उप-मंडल (बैरिया)", size: 22, font: "Devanagari" })],
+        spacing: { after: 80 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "नोट – लिफाफे पर कोई डाक टिकट लगाने की आवश्यकता नहीं है", italics: true, size: 20, font: "Devanagari" })],
+        spacing: { after: 200 }
+      }));
+
+      // Separator
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "————————————————————————————————", size: 20, color: "999999" })],
+        alignment: D.AlignmentType.CENTER, spacing: { after: 200 }
+      }));
+
+      // Part 2: Reply Form
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "उत्तर फॉर्म", bold: true, size: 24, font: "Devanagari" })],
+        alignment: D.AlignmentType.CENTER, spacing: { after: 120 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "संदर्भ: " + refNo, size: 22, font: "Devanagari" })],
+        spacing: { after: 60 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "डाकघर: " + boName + " बीओ", size: 22, font: "Devanagari" })],
+        spacing: { after: 60 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "दिनांक: ____________ 20__", size: 22, font: "Devanagari" })],
+        spacing: { after: 200 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({
+          text: "मैं इसकी पुष्टि करता/करती हूँ कि मेरे " + entry.scheme + " खाता संख्या " +
+                (entry.acct || "____________________") + " का, जो " + boName +
+                " डाकघर में चालू है, मेरी पासबुक के अनुसार दिनांक ____________ को शेष राशि ₹ __________ (रूपये ______________________________ मात्र) है।",
+          size: 22, font: "Devanagari"
+        })],
+        spacing: { after: 300 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "हस्ताक्षर: ____________________", size: 22, font: "Devanagari" })],
+        spacing: { after: 60 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "नाम: " + (entry.name || "____________________"), size: 22, font: "Devanagari" })],
+        spacing: { after: 60 }
+      }));
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "पता: " + (entry.address || "____________________"), size: 22, font: "Devanagari" })],
+        spacing: { after: 200 }
+      }));
+
+      if (ai < sb46Data.length - 1) {
+        children.push(new D.Paragraph({ children: [new D.PageBreak()] }));
+      }
+    }
+
+    var doc = new D.Document({
+      styles: { default: { document: { run: { font: "Devanagari", size: 22 } } } },
+      sections: [{
+        properties: { page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } } },
+        children: children
+      }]
+    });
+
+    D.Packer.toBlob(doc).then(function(blob) {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "SB-46_" + boNameEn + "_" + (inspDateDisplay || "date") + ".docx";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      if (statusMsg) { statusMsg.textContent = "✅ SB-46 तैयार! (" + sb46Data.length + " नोटिस)"; statusMsg.className = "status ok"; }
+    }).catch(function(err) {
+      alert("SB-46 बनाने में त्रुटि: " + err.message);
+    });
+  }
+
+  // Helper: number to Hindi words
+  function numberToWordsHindi(n) {
+    if (!n || n === 0) return "शून्य";
+    var ek = ["", "एक", "दो", "तीन", "चार", "पाँच", "छह", "सात", "आठ", "नौ"];
+    var units = ["", "एक", "दो", "तीन", "चार", "पाँच", "छह", "सात", "आठ", "नौ", "दस", "ग्यारह", "बारह", "तेरह", "चौदह", "पंद्रह", "सोलह", "सत्रह", "अठारह", "उन्नीस", "बीस"];
+    if (n < 21) return units[n];
+    if (n < 100) { var t = Math.floor(n/10), o = n%10; var tw = ["","","बीस","तीस","चालीस","पचास","साठ","सत्तर","अस्सी","नब्बे"]; return (tw[t]||"") + (o ? " " + ek[o] : ""); }
+    if (n < 1000) { return ek[Math.floor(n/100)] + " सौ " + (n%100 ? numberToWordsHindi(n%100) : ""); }
+    if (n < 100000) { return numberToWordsHindi(Math.floor(n/1000)) + " हज़ार " + (n%1000 ? numberToWordsHindi(n%1000) : ""); }
+    if (n < 10000000) { return numberToWordsHindi(Math.floor(n/100000)) + " लाख " + (n%100000 ? numberToWordsHindi(n%100000) : ""); }
+    return numberToWordsHindi(Math.floor(n/10000000)) + " करोड़ " + (n%10000000 ? numberToWordsHindi(n%10000000) : "");
+  }
+
+
 
   // ---------------------------------------------------------------------
   // Q27 — balance acknowledgement across 7 dates
@@ -4984,6 +8029,7 @@ const MASTER_DATA = {"BO30403125001": {"bo_id": "BO30403125001", "facility_id": 
       const inspectionDateStr = ddmmyyyy(inspectionDateInput.value) || "";
 
       const manual = {
+        sb46Data: (typeof readSB46Data === "function") ? readSB46Data() : [],
         last_inspection_date: document.getElementById("lastInspectionDate").value,
         last_inspector: document.getElementById("lastInspector").value,
         dtr_balance: document.getElementById("dtrBalance").value,
@@ -5033,6 +8079,31 @@ const MASTER_DATA = {"BO30403125001": {"bo_id": "BO30403125001", "facility_id": 
       fillMailBagCounts(doc, bodyEl, mailBagCounts);
       applyToggleAnswers(doc, bodyEl, toggleAnswers);
       fillPassbookTable(doc, bodyEl, passbookData);
+      // Q36: Add SB-46 issued accounts list after passbook table
+      if (manual.sb46Data && manual.sb46Data.length > 0) {
+        try {
+          var sb46Tables = getDocTables(bodyEl);
+          var q36Table = sb46Tables[PASSBOOK_TABLE_INDEX];
+          if (q36Table) {
+            var sb46Text = "SB-46 \u0928\u094b\u091f\u093f\u0938 \u091c\u093e\u0930\u0940 \u0915\u093f\u090f \u0917\u090f \u0916\u093e\u0924\u0947 (\u092a\u093e\u0938\u092c\u0941\u0915 \u0938\u0924\u094d\u092f\u093e\u092a\u093f\u0924 \u0928\u0939\u0940\u0902 \u0939\u094b \u0938\u0915\u0940):\n";
+            manual.sb46Data.forEach(function(d, i) {
+              sb46Text += (i+1) + ". " + d.scheme + " \u0916\u093e\u0924\u093e: " + d.acct + " \u2014 " + d.name + " \u2014 \u0936\u0947\u0937 \u20b9" + d.balance + " (DLT: " + d.dlt + ")\n";
+            });
+            var sb46Para = doc.createElement("w:p");
+            var sb46Run = doc.createElement("w:r");
+            var sb46RPr = doc.createElement("w:rPr");
+            var sb46Sz = doc.createElement("w:sz"); sb46Sz.setAttribute("w:val", "18"); sb46RPr.appendChild(sb46Sz);
+            var sb46Font = doc.createElement("w:rFonts"); sb46Font.setAttribute("w:ascii","Devanagari"); sb46Font.setAttribute("w:hAnsi","Devanagari"); sb46RPr.appendChild(sb46Font);
+            sb46Run.appendChild(sb46RPr);
+            var sb46TextEl = doc.createElement("w:t");
+            sb46TextEl.setAttribute("xml:space","preserve");
+            sb46TextEl.textContent = sb46Text;
+            sb46Run.appendChild(sb46TextEl);
+            sb46Para.appendChild(sb46Run);
+            q36Table.parentNode.appendChild(sb46Para, q36Table.nextSibling);
+          }
+        } catch(e) { console.warn("SB-46 list insertion failed:", e); }
+      }
       fillPliTable(doc, bodyEl, passbookData);
       if (manual.prb_enabled) { fillPrbTable(doc, bodyEl, passbookData); }
       fillBalanceAckTable(doc, bodyEl, balanceAckData);
@@ -5122,9 +8193,12 @@ const MASTER_DATA = {"BO30403125001": {"bo_id": "BO30403125001", "facility_id": 
   var _inspSaveTimer = null;
 
   function collectInspDraft() {
+  // Read SB-46 data
+  var sb46Data = (typeof readSB46Data === "function") ? readSB46Data() : [];
     const draft = {
       boId: boSelect.value,
       inspectionDate: inspectionDateInput.value,
+      sb46Data: (typeof readSB46Data === "function") ? readSB46Data() : [],
       lastInspectionDate: document.getElementById("lastInspectionDate").value,
       lastInspector: document.getElementById("lastInspector").value,
       dtrBalance: document.getElementById("dtrBalance").value,
@@ -5282,6 +8356,8 @@ const MASTER_DATA = {"BO30403125001": {"bo_id": "BO30403125001", "facility_id": 
   }
 
   function restoreInspDraft(boId) {
+  // Clear SB-46 entries
+  sb46Entries = [];
     const raw = localStorage.getItem(INSP_DRAFT_KEY_PREFIX + boId);
     if (!raw) return false;
     try {
@@ -5423,6 +8499,11 @@ const MASTER_DATA = {"BO30403125001": {"bo_id": "BO30403125001", "facility_id": 
         });
       }
 
+      // Restore SB-46 entries
+      if (d.sb46Data && Array.isArray(d.sb46Data)) {
+        sb46Entries = d.sb46Data.map(function(e) { return Object.assign({}, e); });
+        renderSB46Entries();
+      }
       return true;
     } catch(e) {
       console.warn("Insp restore failed:", e);
