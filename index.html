@@ -770,6 +770,17 @@
         <input type="text" id="lastInspector" placeholder="नाम">
       </div>
     </div>
+
+    <div class="row2">
+      <div>
+        <label for="divisionalHeadVisitDate">मंडल प्रधान की अंतिम भ्रमण तिथि <span class="qref">(सारणी 1, क्रम — कृपया पुष्टि करें)</span></label>
+        <input type="text" id="divisionalHeadVisitDate" placeholder="dd.mm.yyyy — निरीक्षण के दौरान भरें">
+      </div>
+      <div>
+        <label for="mailOverseerVisitDate">मेल ओवरसियर की अंतिम भ्रमण तिथि <span class="qref">(सारणी 1, क्रम — कृपया पुष्टि करें)</span></label>
+        <input type="text" id="mailOverseerVisitDate" placeholder="dd.mm.yyyy — निरीक्षण के दौरान भरें">
+      </div>
+    </div>
   </div>
 
   <div class="card">
@@ -3346,6 +3357,15 @@ function fillManualData(doc, bodyEl, manual) {
   if (manual.last_inspection_date) {
     setCellText(doc, getRowCells(t0rows[8])[2], manual.last_inspection_date);
   }
+  // TODO(Rahul): confirm actual row indices for these two rows against the
+  // physical Table 1 (सारणी 1) template before relying on this in production.
+  // Guessed as the rows immediately after "last inspector" (row 9) — rows 10 and 11.
+  if (manual.divisional_head_visit_date && t0rows.length > 10) {
+    setCellText(doc, getRowCells(t0rows[10])[2], manual.divisional_head_visit_date);
+  }
+  if (manual.mail_overseer_visit_date && t0rows.length > 11) {
+    setCellText(doc, getRowCells(t0rows[11])[2], manual.mail_overseer_visit_date);
+  }
 
   // Table 4: balance acknowledgement
   const t4 = tables[4];
@@ -3725,6 +3745,7 @@ function fillRDLoanRemark(doc, bodyEl, showRemark) {
 
 // Fill PLI/RPLI table (Q49.11) — Policy No, Paid Till, Amount
 const PLI_MAX_ROWS = 6;
+const PLI_TABLE_INDEX = 6;
 function fillPliTable(doc, bodyEl, passbookData) {
   const pliEntries = (passbookData && passbookData.pli) || [];
   if (!pliEntries.length) return;
@@ -8212,6 +8233,8 @@ const MASTER_DATA = {
         sb46Data: (typeof readSB46Data === "function") ? readSB46Data() : [],
         last_inspection_date: document.getElementById("lastInspectionDate").value,
         last_inspector: document.getElementById("lastInspector").value,
+        divisional_head_visit_date: document.getElementById("divisionalHeadVisitDate").value,
+        mail_overseer_visit_date: document.getElementById("mailOverseerVisitDate").value,
         dtr_balance: document.getElementById("dtrBalance").value,
         same_balance: sameBalChk ? sameBalChk.checked : false,
         bo_account_balance: document.getElementById("boAccountBalance").value,
@@ -8364,6 +8387,8 @@ const MASTER_DATA = {
       sb46Data: (typeof readSB46Data === "function") ? readSB46Data() : [],
       lastInspectionDate: document.getElementById("lastInspectionDate").value,
       lastInspector: document.getElementById("lastInspector").value,
+      divisionalHeadVisitDate: document.getElementById("divisionalHeadVisitDate").value,
+      mailOverseerVisitDate: document.getElementById("mailOverseerVisitDate").value,
       dtrBalance: document.getElementById("dtrBalance").value,
       boAccountBalance: document.getElementById("boAccountBalance").value,
       walletBalance: document.getElementById("walletBalance").value,
@@ -8503,7 +8528,7 @@ const MASTER_DATA = {
 
   function hasInspDraftData() {
     // Check if any field has data
-    const ids = ["lastInspectionDate","lastInspector","dtrBalance","boAccountBalance","walletBalance","physicalCash","mailSp","mailPl","mailCod","mailVpp","mailOrdinary"];
+    const ids = ["lastInspectionDate","lastInspector","divisionalHeadVisitDate","mailOverseerVisitDate","dtrBalance","boAccountBalance","walletBalance","physicalCash","mailSp","mailPl","mailCod","mailVpp","mailOrdinary"];
     for (const id of ids) {
       if (document.getElementById(id) && document.getElementById(id).value) return true;
     }
@@ -8530,6 +8555,8 @@ const MASTER_DATA = {
       const fieldMap = {
         lastInspectionDate: d.lastInspectionDate,
         lastInspector: d.lastInspector,
+        divisionalHeadVisitDate: d.divisionalHeadVisitDate,
+        mailOverseerVisitDate: d.mailOverseerVisitDate,
         dtrBalance: d.dtrBalance,
         boAccountBalance: d.boAccountBalance,
         walletBalance: d.walletBalance,
