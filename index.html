@@ -8084,13 +8084,16 @@ const MASTER_DATA = {
   showSignatureUI();
 
   // ---------------------------------------------------------------------
-  // Clear draft — resets manually-entered fields for the next inspection,
-  // leaving the saved signature and BO selection untouched.
+  // Reset all manually-entered inspection fields to blank (shared by the
+  // "Clear" button AND by BO-switching, so a new BO never shows stale
+  // data left over from whichever BO was selected before it).
+  // Leaves the saved signature and BO selection untouched. Restores
+  // lastInspectionDate from the newly-selected BO's own history (if any)
+  // rather than leaving it blank.
   // ---------------------------------------------------------------------
-  const clearDraftBtn = document.getElementById("clearDraftBtn");
-  clearDraftBtn.addEventListener("click", () => {
+  function resetInspFormFields() {
     const ids = [
-      "lastInspector",
+      "lastInspector", "divisionalHeadVisitDate", "mailOverseerVisitDate",
       "dtrBalance", "boAccountBalance", "walletBalance", "physicalCash",
       "sameBalanceChk",
       "mailSp", "mailPl", "mailCod", "mailVpp", "mailOrdinary",
@@ -8152,11 +8155,19 @@ const MASTER_DATA = {
       });
     });
 
+    // Clear SB-46 entries and re-render so old rows disappear from the UI
+    sb46Entries = [];
+    if (typeof renderSB46Entries === "function") renderSB46Entries();
+
     // reset last-inspection-date back to the selected BO's known history, if any
     const bo = MASTER_DATA[boSelect.value];
     const hist = (bo && bo.inspection_history) || {};
     lastInspectionDateInput.value = hist.last_inspection_date || "";
+  }
 
+  const clearDraftBtn = document.getElementById("clearDraftBtn");
+  clearDraftBtn.addEventListener("click", () => {
+    resetInspFormFields();
     dlLinks.style.display = "none";
     dlLinks.innerHTML = "";
     statusMsg.className = "status";
@@ -8515,13 +8526,21 @@ const MASTER_DATA = {
     return draft;
   }
 
-  function saveInspDraft() {
-    if (!boSelect.value) return;
+  var _prevBoIdForDraft = boSelect.value || "";
+
+  function saveInspDraft(targetBoId) {
+    // Lock in which BO this save belongs to RIGHT NOW — do not read
+    // boSelect.value inside the setTimeout below, since by the time it
+    // fires the user may already have switched to a different BO, which
+    // would silently save this BO's data under the wrong BO's key.
+    var boIdToSave = targetBoId || boSelect.value;
+    if (!boIdToSave) return;
     if (_inspSaveTimer) clearTimeout(_inspSaveTimer);
     _inspSaveTimer = setTimeout(function() {
       try {
         const draft = collectInspDraft();
-        localStorage.setItem(INSP_DRAFT_KEY_PREFIX + boSelect.value, JSON.stringify(draft));
+        draft.boId = boIdToSave;
+        localStorage.setItem(INSP_DRAFT_KEY_PREFIX + boIdToSave, JSON.stringify(draft));
       } catch(e) { console.warn("Insp auto-save failed:", e); }
     }, 1000);
   }
@@ -8704,11 +8723,21 @@ const MASTER_DATA = {
   // Wrap the boSelect change handler to save current draft before switching
   const _origBoSelectHandler = boSelect.onchange;
   boSelect.addEventListener("change", function() {
-    // Save current draft before switching
-    if (boSelect.value && hasInspDraftData()) {
-      saveInspDraft();
+    var newBoId = boSelect.value;
+    var oldBoId = _prevBoIdForDraft;
+
+    // Save the OUTGOING BO's draft under its OWN id — boSelect.value has
+    // already changed to newBoId by this point, so we must pass oldBoId
+    // explicitly rather than let saveInspDraft() fall back to boSelect.value.
+    if (oldBoId && oldBoId !== newBoId && hasInspDraftData()) {
+      saveInspDraft(oldBoId);
     }
-    // After auto-fill renders, try to restore draft for the new BO
+
+    // Blank every manually-entered field immediately so the new BO never
+    // shows data left over from whichever BO was selected before it.
+    resetInspFormFields();
+
+    // After auto-fill renders, try to restore a saved draft for the new BO
     setTimeout(function() {
       if (boSelect.value) {
         var hasDraft = restoreInspDraft(boSelect.value);
@@ -8719,6 +8748,8 @@ const MASTER_DATA = {
         }
       }
     }, 100);
+
+    _prevBoIdForDraft = newBoId;
   });
 
   // Also auto-save on input/change in any form field
