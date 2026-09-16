@@ -8409,6 +8409,7 @@ const MASTER_DATA = {
       mailCod: document.getElementById("mailCod").value,
       mailVpp: document.getElementById("mailVpp").value,
       mailOrdinary: document.getElementById("mailOrdinary").value,
+      same_balance: sameBalChk ? sameBalChk.checked : false,
     };
 
     // Toggles
@@ -8455,6 +8456,7 @@ const MASTER_DATA = {
           dlt: dltVal,
           deposit: document.getElementById(`pb_${section.key}_${i}_deposit`) ? document.getElementById(`pb_${section.key}_${i}_deposit`).value : "",
           withdrawal: document.getElementById(`pb_${section.key}_${i}_withdrawal`) ? document.getElementById(`pb_${section.key}_${i}_withdrawal`).value : "",
+          balance: document.getElementById(`pb_${section.key}_${i}_balance`) ? document.getElementById(`pb_${section.key}_${i}_balance`).value : "",
         });
       }
     });
