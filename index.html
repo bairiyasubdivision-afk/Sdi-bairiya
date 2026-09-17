@@ -175,7 +175,7 @@
   
   
   
-  #insp-root .footer-bar{position:fixed;left:0;right:0;bottom:0;padding:6px 12px calc(6px + env(safe-area-inset-bottom));background:rgba(255,255,255,0.97);border-top:1px solid var(--border);box-shadow:0 -2px 8px rgba(0,0,0,0.06);z-index:5;}
+  #insp-root .footer-bar{padding:8px 0 calc(8px + env(safe-area-inset-bottom));background:rgba(255,255,255,0.97);border-top:1px solid var(--border);}
   #insp-root .footer-bar .btn{padding:8px 14px;font-size:0.85rem;}
   #insp-root .status{padding:0;margin:0;}
   #insp-root .status.ok{color:var(--green,#28a745);}
@@ -207,9 +207,6 @@
     background: linear-gradient(135deg, var(--brand), var(--brand-dark));
     color: white;
     padding: 18px 16px 22px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
     box-shadow: 0 2px 8px rgba(0,0,0,.15);
   }
 #insp-root header h1 {
@@ -273,9 +270,7 @@
 #insp-root input:focus, #insp-root select:focus, #insp-root textarea:focus {
     outline: 2px solid var(--brand);
     outline-offset: 1px;
-  }
-#insp-root .search-select-wrap { position: relative; }
-#insp-root .info-grid {
+  }#insp-root .info-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 6px;
@@ -331,8 +326,6 @@
     margin-top: 8px;
   }
 #insp-root .footer-bar {
-    position: fixed;
-    left: 0; right: 0; bottom: 0;
     padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
     background: linear-gradient(to top, var(--bg) 70%, transparent);
   }
@@ -711,14 +704,9 @@
 
 <!-- TAB 2: BO INSPECTION -->
 <div class="tab-content" id="insp-tab">
-  <div id="insp-root" style="max-width:720px;margin:0 auto;padding:0 0 70px;">
+  <div id="insp-root" style="max-width:720px;margin:0 auto;padding:0 0 10px;">
 
 
-<div style="position:sticky;top:0;z-index:10;background:white;padding:8px 12px;border-bottom:1px solid #e2e5ea;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-  <button class="btn btn-primary" id="generateBtnTop" style="font-size:0.85rem;padding:8px 16px;">📄 रिपोर्ट बनाएं (Generate)</button>
-  <button class="btn btn-secondary" id="clearDraftBtnTop" type="button" style="font-size:0.82rem;padding:6px 10px;">🗑️ Clear</button>
-  <div id="statusMsgTop" style="flex:1;font-size:0.8rem;text-align:right;"></div>
-</div>
 <header style="padding-top:10px;">
   <h1>📮 BO निरीक्षण रिपोर्ट जनरेटर</h1>
   <p>बैरिया पूर्वी उपमण्डल, बलिया मंडल — पूरी तरह ऑफ़लाइन, आपके फ़ोन में ही चलता है</p>
@@ -728,11 +716,10 @@
 
   <div class="card">
     <h2><span class="step-badge">1</span> शाखा डाकघर चुनें</h2>
-    <div class="search-select-wrap">
-      <input type="text" id="boSearch" list="boListOptions" placeholder="BO नाम टाइप करें या सूची से चुनें...">
-      <datalist id="boListOptions"></datalist>
+    <select id="boSelect"></select>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;">
+      <button class="btn btn-primary" id="generateBtnQuick" type="button" style="font-size:0.85rem;padding:8px 16px;">📄 रिपोर्ट बनाएं (Generate)</button>
     </div>
-    <select id="boSelect" style="margin-top:8px;"></select>
   </div>
 
   <div class="card" id="autoFillCard" style="display:none;">
@@ -773,12 +760,22 @@
 
     <div class="row2">
       <div>
-        <label for="divisionalHeadVisitDate">मंडल प्रधान की अंतिम भ्रमण तिथि <span class="qref">(सारणी 1, क्रम — कृपया पुष्टि करें)</span></label>
-        <input type="text" id="divisionalHeadVisitDate" placeholder="dd.mm.yyyy — निरीक्षण के दौरान भरें">
+        <label for="supVisitDate">अधीक्षक द्वारा अंतिम निरीक्षण/यात्रा की तिथि <span class="qref">(सारणी 1, क्रम 7)</span></label>
+        <input type="text" id="supVisitDate" placeholder="dd.mm.yyyy">
       </div>
       <div>
-        <label for="mailOverseerVisitDate">मेल ओवरसियर की अंतिम भ्रमण तिथि <span class="qref">(सारणी 1, क्रम — कृपया पुष्टि करें)</span></label>
-        <input type="text" id="mailOverseerVisitDate" placeholder="dd.mm.yyyy — निरीक्षण के दौरान भरें">
+        <label for="boOpeningDate">शाखा डाकघर खोलने की तिथि <span class="qref">(सारणी 1, क्रम 6)</span></label>
+        <input type="text" id="boOpeningDate" placeholder="dd.mm.yyyy (ज्ञात हो तो)">
+      </div>
+    </div>
+    <div class="row2">
+      <div>
+        <label for="sdiVisitDates">उपमण्डलीय निरीक्षक द्वारा निरीक्षण के बाद दौरे की तारीखें <span class="qref">(सारणी 1, क्रम 10)</span></label>
+        <input type="text" id="sdiVisitDates" placeholder="जैसे 05.01.26, 12.02.26">
+      </div>
+      <div>
+        <label for="moVisitDates">मेल ओवरसियर द्वारा निरीक्षण के बाद दौरे की तारीखें <span class="qref">(सारणी 1, क्रम 11)</span></label>
+        <input type="text" id="moVisitDates" placeholder="जैसे 20.01.26, 08.03.26">
       </div>
     </div>
   </div>
@@ -816,7 +813,11 @@
   </div>
 
   <div class="card">
-    <h2><span class="step-badge">5</span> बैलेंस पावती — 6 तिथियाँ <span class="qref">(प्रश्न 27)</span></h2>
+    <h2><span class="step-badge">5</span> बैलेंस पावती — 7 तिथियाँ <span class="qref">(प्रश्न 27)</span></h2>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:600;margin-bottom:8px;">
+      <input type="checkbox" id="balSameChk" style="width:18px;height:18px;cursor:pointer;">
+      लेखा कार्यालय (SO) और शाखा डाकघर (BO) का शेष समान है — किसी एक में लिखें, दूसरा अपने आप भर जाएगा
+    </label>
     <p class="note" style="margin-top:0;">जितनी तिथियों की जानकारी है उतनी भरें, बाकी खाली छोड़ सकते हैं।</p>
     <div id="balanceAckList"></div>
   </div>
@@ -835,7 +836,7 @@
     </div>
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:600;margin-bottom:8px;">
       <input type="checkbox" id="sameBalanceChk" style="width:18px;height:18px;cursor:pointer;">
-      डीटीआर और बीओ अकाउंट बैलेंस समान हैं (DTR & BO Account balance same)
+      डीटीआर, बीओ अकाउंट और भौतिक नक़दी समान हैं (DTR, BO Account & Physical Cash same) — किसी एक में लिखें, बाकी अपने आप भर जाएंगे
     </label>
     <div class="row2">
       <div>
@@ -955,7 +956,7 @@
   <div class="inner" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;max-width:720px;margin:0 auto;">
     <button class="btn btn-primary" id="generateBtn" style="flex-shrink:0;font-size:0.85rem;padding:8px 16px;">📄 रिपोर्ट बनाएं (Generate)</button>
     <button class="btn btn-secondary" id="clearDraftBtn" type="button" style="flex-shrink:0;padding:6px 10px;font-size:0.82rem;">🗑️ Clear</button>
-    <div class="status" id="statusMsg" style="flex:1;min-width:120px;font-size:0.8rem;text-align:right;"></div>
+    <div class="status" id="statusMsg" style="flex:1;min-width:120px;font-size:0.8rem;text-align:left;"></div>
   </div>
   <div id="dlLinks" style="max-width:720px;margin:4px auto 0;"></div>
 </div>
@@ -3357,14 +3358,20 @@ function fillManualData(doc, bodyEl, manual) {
   if (manual.last_inspection_date) {
     setCellText(doc, getRowCells(t0rows[8])[2], manual.last_inspection_date);
   }
-  // TODO(Rahul): confirm actual row indices for these two rows against the
-  // physical Table 1 (सारणी 1) template before relying on this in production.
-  // Guessed as the rows immediately after "last inspector" (row 9) — rows 10 and 11.
-  if (manual.divisional_head_visit_date && t0rows.length > 10) {
-    setCellText(doc, getRowCells(t0rows[10])[2], manual.divisional_head_visit_date);
+  // सारणी 1 rows verified against the template:
+  // row 6 = क्रम 6 (BO opening date), row 7 = क्रम 7 (अधीक्षक),
+  // row 10 = क्रम 10 (उपमण्डलीय निरीक्षक दौरे), row 11 = क्रम 11 (मेल ओवरसियर)
+  if (manual.sup_visit_date && t0rows.length > 7) {
+    setCellText(doc, getRowCells(t0rows[7])[2], manual.sup_visit_date);
   }
-  if (manual.mail_overseer_visit_date && t0rows.length > 11) {
-    setCellText(doc, getRowCells(t0rows[11])[2], manual.mail_overseer_visit_date);
+  if (manual.bo_opening_date && t0rows.length > 6) {
+    setCellText(doc, getRowCells(t0rows[6])[2], manual.bo_opening_date);
+  }
+  if (manual.sdi_visit_dates && t0rows.length > 10) {
+    setCellText(doc, getRowCells(t0rows[10])[2], manual.sdi_visit_dates);
+  }
+  if (manual.mo_visit_dates && t0rows.length > 11) {
+    setCellText(doc, getRowCells(t0rows[11])[2], manual.mo_visit_dates);
   }
 
   // Table 4: balance acknowledgement
@@ -3541,7 +3548,10 @@ function fillBalanceAckTable(doc, bodyEl, entries) {
   (entries || []).forEach((entry, i) => {
     const col = i + 1; // column 0 is the row label
     if (!entry) return;
-    if (entry.date && dateCells[col]) setCellText(doc, dateCells[col], entry.date);
+    // Dates are auto-defaulted in the UI, so only write a date when the
+    // entry has some actual data alongside it
+    const hasData = !!(entry.lekha || entry.bo || entry.remark);
+    if (entry.date && hasData && dateCells[col]) setCellText(doc, dateCells[col], entry.date);
     if (entry.lekha && lekhaCells[col]) setCellText(doc, lekhaCells[col], entry.lekha);
     if (entry.bo && boCells[col]) setCellText(doc, boCells[col], entry.bo);
     if (entry.remark && remarkCells[col]) setCellText(doc, remarkCells[col], entry.remark);
@@ -3573,8 +3583,13 @@ function fillLotTable(doc, bodyEl, entries) {
     const rowIdx = LOT_DATA_START_ROW + i;
     if (rowIdx >= rows.length || i >= LOT_MAX_ROWS || !entry) return;
     const cells = getRowCells(rows[rowIdx]);
+    // LOT dates are auto-defaulted in the UI, so a date is only written
+    // when the quarter has some actual data to go with it
+    const hasData = LOT_FIELD_ORDER.some((f) => f !== "date" && entry[f]);
     LOT_FIELD_ORDER.forEach((field, ci) => {
-      if (entry[field] && cells[ci]) setCellText(doc, cells[ci], entry[field]);
+      if (entry[field] && cells[ci] && (field !== "date" || hasData)) {
+        setCellText(doc, cells[ci], entry[field]);
+      }
     });
   });
 }
@@ -3665,11 +3680,13 @@ function fillPassbookTable(doc, bodyEl, passbookData) {
       const rowIdx = section.startRow + i;
       if (rowIdx >= rows.length) break;
       const entry = entries[i];
-      if (!entry) continue;
+      if (!entry || !entry.acct) continue; // no account number → nothing meaningful to write
       const cells = getRowCells(rows[rowIdx]);
       if (cells.length < 5) continue;
       if (entry.acct) setCellText(doc, cells[0], entry.acct);
-      if (entry.dlt) setCellText(doc, cells[1], entry.dlt);
+      // DLT dates are auto-defaulted to today in the UI — only write a
+      // date when the account number is filled in
+      if (entry.dlt && entry.acct) setCellText(doc, cells[1], entry.dlt);
       if (entry.deposit) setCellText(doc, cells[2], entry.deposit);
       if (entry.withdrawal) setCellText(doc, cells[3], entry.withdrawal);
       if (entry.balance) setCellText(doc, cells[4], entry.balance);
@@ -3743,49 +3760,148 @@ function fillRDLoanRemark(doc, bodyEl, showRemark) {
   return false;
 }
 
-// Fill PLI/RPLI table (Q49.11) — Policy No, Paid Till, Amount
+// Fill PLI/RPLI table (Q49.11) — Policy No, Paid Till, Amount.
+// The template has no ready-made table for Q49.11 (verified: table 6 is
+// Q38's SB/SSA passbook dispatch table), so one is built here and
+// inserted right after the "49.11" paragraph. PLI and PRB entries
+// share the same table (up to 6 rows each).
 const PLI_MAX_ROWS = 6;
-const PLI_TABLE_INDEX = 6;
+const PRB_MAX_ROWS = 6;
+
+function hasPliEntryData(entry) {
+  return !!(entry && (entry.acct || entry.dlt || entry.deposit));
+}
+
+function makeQ4911Cell(doc, text, isHeader, widthDxa) {
+  const tc = doc.createElementNS(W_NS, "w:tc");
+  const tcPr = doc.createElementNS(W_NS, "w:tcPr");
+  const tcW = doc.createElementNS(W_NS, "w:tcW");
+  tcW.setAttribute("w:w", String(widthDxa));
+  tcW.setAttribute("w:type", "dxa");
+  tcPr.appendChild(tcW);
+  if (isHeader) {
+    const vAlign = doc.createElementNS(W_NS, "w:vAlign");
+    vAlign.setAttribute("w:val", "center");
+    tcPr.appendChild(vAlign);
+  }
+  tc.appendChild(tcPr);
+
+  const p = doc.createElementNS(W_NS, "w:p");
+  const pPr = doc.createElementNS(W_NS, "w:pPr");
+  const jc = doc.createElementNS(W_NS, "w:jc");
+  jc.setAttribute("w:val", "center");
+  pPr.appendChild(jc);
+  p.appendChild(pPr);
+
+  const r = doc.createElementNS(W_NS, "w:r");
+  const rPr = doc.createElementNS(W_NS, "w:rPr");
+  const rFonts = doc.createElementNS(W_NS, "w:rFonts");
+  rFonts.setAttribute("w:ascii", "Devanagari");
+  rFonts.setAttribute("w:hAnsi", "Devanagari");
+  rPr.appendChild(rFonts);
+  if (isHeader) rPr.appendChild(doc.createElementNS(W_NS, "w:b"));
+  const sz = doc.createElementNS(W_NS, "w:sz");
+  sz.setAttribute("w:val", "22");
+  rPr.appendChild(sz);
+  r.appendChild(rPr);
+
+  const t = doc.createElementNS(W_NS, "w:t");
+  t.setAttribute("xml:space", "preserve");
+  t.textContent = text;
+  r.appendChild(t);
+  p.appendChild(r);
+  tc.appendChild(p);
+  return tc;
+}
+
+function makeQ4911Row(doc, values, isHeader) {
+  const widths = [3400, 2600, 1800];
+  const tr = doc.createElementNS(W_NS, "w:tr");
+  for (let i = 0; i < 3; i++) {
+    tr.appendChild(makeQ4911Cell(doc, values[i] || "", isHeader, widths[i]));
+  }
+  return tr;
+}
+
+function findQ4911Paragraph(bodyEl) {
+  const paragraphs = getAllParagraphsInDoc(bodyEl);
+  for (const p of paragraphs) {
+    if (/^\s*49\s*\.\s*11/.test(getParagraphText(p))) return p;
+  }
+  return null;
+}
+
+// Returns the Q49.11 policy table, creating and inserting it after the
+// "49.11" paragraph if it does not exist yet (idempotent).
+function getQ4911Table(doc, bodyEl) {
+  const tables = getDocTables(bodyEl);
+  for (const t of tables) {
+    const rows = getTableRows(t);
+    if (!rows.length) continue;
+    const cells = getRowCells(rows[0]);
+    if (cells.length >= 3 && cellTextOf(cells[0]).indexOf("\u092a\u0949\u0932\u093f\u0938\u0940") >= 0) {
+      return t; // already inserted by an earlier call
+    }
+  }
+
+  const anchor = findQ4911Paragraph(bodyEl);
+  if (!anchor) return null;
+
+  const tbl = doc.createElementNS(W_NS, "w:tbl");
+  const tblPr = doc.createElementNS(W_NS, "w:tblPr");
+  const tblW = doc.createElementNS(W_NS, "w:tblW");
+  tblW.setAttribute("w:w", "0");
+  tblW.setAttribute("w:type", "auto");
+  tblPr.appendChild(tblW);
+  const tblBorders = doc.createElementNS(W_NS, "w:tblBorders");
+  ["top", "left", "bottom", "right", "insideH", "insideV"].forEach((side) => {
+    const b = doc.createElementNS(W_NS, "w:" + side);
+    b.setAttribute("w:val", "single");
+    b.setAttribute("w:sz", "4");
+    b.setAttribute("w:space", "0");
+    b.setAttribute("w:color", "auto");
+    tblBorders.appendChild(b);
+  });
+  tblPr.appendChild(tblBorders);
+  tbl.appendChild(tblPr);
+
+  tbl.appendChild(
+    makeQ4911Row(
+      doc,
+      ["\u092a\u0949\u0932\u093f\u0938\u0940 \u0938\u0902\u0916\u094d\u092f\u093e (Policy No.)", "\u092d\u0941\u0917\u0924\u093e\u0928 \u0915\u093f\u092f\u093e \u0917\u092f\u093e (\u092e\u093e\u0939)", "\u0930\u093e\u0936\u093f (\u0930\u0941.)"],
+      true
+    )
+  );
+
+  anchor.parentNode.insertBefore(tbl, anchor.nextSibling);
+  return tbl;
+}
+
 function fillPliTable(doc, bodyEl, passbookData) {
   const pliEntries = (passbookData && passbookData.pli) || [];
-  if (!pliEntries.length) return;
-  const tables = getDocTables(bodyEl);
-  const t6 = tables[PLI_TABLE_INDEX];
-  if (!t6) return;
-  const rows = getTableRows(t6);
-  for (let i = 0; i < PLI_MAX_ROWS; i++) {
-    const rowIdx = i + 1;
-    if (rowIdx >= rows.length) break;
-    const entry = pliEntries[i];
-    if (!entry) continue;
-    const cells = getRowCells(rows[rowIdx]);
-    if (cells.length < 3) continue;
-    if (entry.acct) setCellText(doc, cells[0], entry.acct);
-    if (entry.dlt) setCellText(doc, cells[1], entry.dlt);
-    if (entry.deposit) setCellText(doc, cells[2], entry.deposit);
+  const entries = pliEntries.filter(hasPliEntryData).slice(0, PLI_MAX_ROWS);
+  if (!entries.length) return;
+  const tbl = getQ4911Table(doc, bodyEl);
+  if (!tbl) return;
+  for (const entry of entries) {
+    tbl.appendChild(
+      makeQ4911Row(doc, [entry.acct, entry.dlt, entry.deposit], false)
+    );
   }
 }
 
-// Fill PRB table — only if PRB is enabled
-const PRB_TABLE_INDEX = 10;
-const PRB_MAX_ROWS = 6;
+// Fill PRB table — only if PRB is enabled; rows are appended to the
+// same Q49.11 policy table created above.
 function fillPrbTable(doc, bodyEl, passbookData) {
   const prbEntries = (passbookData && passbookData.prb) || [];
-  if (!prbEntries.length) return;
-  const tables = getDocTables(bodyEl);
-  const t10 = tables[PRB_TABLE_INDEX];
-  if (!t10) return;
-  const rows = getTableRows(t10);
-  for (let i = 0; i < PRB_MAX_ROWS; i++) {
-    const rowIdx = i + 1;
-    if (rowIdx >= rows.length) break;
-    const entry = prbEntries[i];
-    if (!entry) continue;
-    const cells = getRowCells(rows[rowIdx]);
-    if (cells.length < 3) continue;
-    if (entry.acct) setCellText(doc, cells[0], entry.acct);
-    if (entry.dlt) setCellText(doc, cells[1], entry.dlt);
-    if (entry.deposit) setCellText(doc, cells[2], entry.deposit);
+  const entries = prbEntries.filter(hasPliEntryData).slice(0, PRB_MAX_ROWS);
+  if (!entries.length) return;
+  const tbl = getQ4911Table(doc, bodyEl);
+  if (!tbl) return;
+  for (const entry of entries) {
+    tbl.appendChild(
+      makeQ4911Row(doc, [entry.acct, entry.dlt, entry.deposit], false)
+    );
   }
 }
 
@@ -6730,8 +6846,8 @@ const MASTER_DATA = {
   }
 
   // Sort BOs: pending (not done) first starting from current month, done at bottom
-  // Current month = September (9). Months wrap: Sept→Oct→...→Dec→Jan→...→Aug
-  var CURRENT_MONTH = 9; // September
+  // Current month is computed at load time so the sort stays correct all year
+  var CURRENT_MONTH = (new Date()).getMonth() + 1;
   var monthOrder = {"जनवरी":1,"फरवरी":2,"मार्च":3,"अप्रैल":4,"मई":5,"जून":6,"जुलाई":7,"अगस्त":8,"सितम्बर":9,"अक्टूबर":10,"नवम्बर":11,"दिसम्बर":12};
 
   function getMonthOffset(monthName) {
@@ -6744,65 +6860,89 @@ const MASTER_DATA = {
     return offset;
   }
 
-  var boIds = Object.keys(MASTER_DATA).sort((a, b) => {
-    var aDone = isBOInspected(a);
-    var bDone = isBOInspected(b);
-    // Pending BOs first, done BOs at bottom
-    if (aDone && !bDone) return 1;
-    if (!aDone && bDone) return -1;
-    // Within same group, sort by month offset (from September)
-    var aMonth = (MASTER_DATA[a].inspection_history || {}).proposed_inspection_month || "";
-    var bMonth = (MASTER_DATA[b].inspection_history || {}).proposed_inspection_month || "";
-    var aOff = getMonthOffset(aMonth);
-    var bOff = getMonthOffset(bMonth);
-    if (aOff !== bOff) return aOff - bOff;
-    // Same month → sort by name
-    return MASTER_DATA[a].bo_name_hi.localeCompare(MASTER_DATA[b].bo_name_hi, "hi");
-  });
+  // true if BO is pending AND its proposed inspection month falls between
+  // the current month and December of THIS year (the remaining inspection
+  // schedule). Overdue/earlier-year and next-year BOs come after these.
+  function isBoDueNow(boId) {
+    if (isBOInspected(boId)) return false;
+    var pm = ((MASTER_DATA[boId].inspection_history || {}).proposed_inspection_month || "").split(/\s+/);
+    var m = monthOrder[pm[0]] || 0;
+    var y = parseInt(pm[1], 10) || 0;
+    if (!m || !y) return false;
+    var now = new Date();
+    return y === now.getFullYear() && m >= now.getMonth() + 1;
+  }
+  // Sort order: pending BOs scheduled current month → December on top, then
+  // other pending BOs, then inspected BOs at the bottom — each group in
+  // English alphabetical order (by bo_name_en_raw)
+  function compareBOIds(a, b) {
+    var aDone = isBOInspected(a), bDone = isBOInspected(b);
+    if (aDone !== bDone) return aDone ? 1 : -1;
+    var aDue = isBoDueNow(a), bDue = isBoDueNow(b);
+    if (aDue !== bDue) return aDue ? -1 : 1;
+    var aEn = boEnName(MASTER_DATA[a]).sort;
+    var bEn = boEnName(MASTER_DATA[b]).sort;
+    return aEn.localeCompare(bEn, "en");
+  }
+  var boIds = Object.keys(MASTER_DATA).sort(compareBOIds);
 
   const boSelect = document.getElementById("boSelect");
-  const boSearch = document.getElementById("boSearch");
-  const boListOptions = document.getElementById("boListOptions");
 
   function rebuildBOSelect() {
     var currentVal = boSelect.value;
-    boIds = Object.keys(MASTER_DATA).sort(function(a, b) {
-      var aDone = isBOInspected(a);
-      var bDone = isBOInspected(b);
-      if (aDone && !bDone) return 1;
-      if (!aDone && bDone) return -1;
-      var aMonth = (MASTER_DATA[a].inspection_history || {}).proposed_inspection_month || "";
-      var bMonth = (MASTER_DATA[b].inspection_history || {}).proposed_inspection_month || "";
-      var aOff = getMonthOffset(aMonth);
-      var bOff = getMonthOffset(bMonth);
-      if (aOff !== bOff) return aOff - bOff;
-      return MASTER_DATA[a].bo_name_hi.localeCompare(MASTER_DATA[b].bo_name_hi, "hi");
-    });
+    boIds = Object.keys(MASTER_DATA).sort(compareBOIds);
     // Clear and rebuild options
     while (boSelect.firstChild) boSelect.removeChild(boSelect.firstChild);
-    while (boListOptions.firstChild) boListOptions.removeChild(boListOptions.firstChild);
     boIds.forEach(function(id) {
       var bo = MASTER_DATA[id];
       var opt = document.createElement("option");
       opt.value = id;
       opt.textContent = labelFor(bo);
       boSelect.appendChild(opt);
-      var dlOpt = document.createElement("option");
-      dlOpt.value = labelFor(bo);
-      boListOptions.appendChild(dlOpt);
     });
     // Restore selection
     boSelect.value = currentVal;
   }
 
+  // English spellings of the SOs in this sub-division. The dropdown/list is
+  // shown in ENGLISH for easy selection; the generated REPORT stays in Hindi.
+  var SO_NAME_EN = {
+    "बैरिया": "BAIRIYA",
+    "सहतवार": "SAHATWAR",
+    "लालगंज": "LALGANJ",
+    "मझुआ": "MAJHUA",
+    "रानी गंज बाजार": "RANI GANJ BAZAR",
+    "दल्लन छपरा": "DALLAN CHHAPRA",
+    "दुबे छपरा": "DUBE CHHAPRA",
+    "छाता": "CHHATA",
+    "करन छपरा": "KARAN CHHAPRA",
+    "हल्दी": "HALDI",
+    "रेवती": "REVATI"
+  };
+
+  // BO display/sort name in English. A few bo_name_en_raw entries carry a
+  // parenthesised SO prefix like "(Sahtwar) CHANDPUR" — display it as
+  // "CHANDPUR (SAHATWAR)" so alphabetical order stays clean.
+  function boEnName(bo) {
+    var raw = (bo.bo_name_en_raw || bo.bo_name_hi || "").trim();
+    var m = /^\((.+?)\)\s*(.*)$/.exec(raw);
+    if (m && m[2]) {
+      return { disp: (m[2].trim() + " (" + m[1].trim().toUpperCase() + ")").toUpperCase(),
+               sort: m[2].trim().toLowerCase() };
+    }
+    return { disp: raw.toUpperCase(), sort: raw.toLowerCase() };
+  }
+
   function labelFor(bo) {
     const pin = bo.pin_village_list || bo.pin_staff_sheet || "";
-    var label = bo.bo_name_hi + " BO — " + bo.so_name_hi + " SO — PIN " + pin;
+    const boName = boEnName(bo).disp;
+    const soName = SO_NAME_EN[bo.so_name_hi] || bo.so_name_hi;
+    var label = boName + " BO — " + soName + " SO — PIN " + pin;
     var inspHist = bo.inspection_history || {};
     var lastDate = inspHist.last_inspection_date || "";
     var finalDate = getInspFinalDate(bo["bo_id"] || "");
     if (finalDate) lastDate = finalDate;
-    if (lastDate) label += " — अंतिम: " + lastDate;
+    if (lastDate) label += " — Last: " + lastDate;
     return label;
   }
 
@@ -6812,19 +6952,6 @@ const MASTER_DATA = {
     opt.value = id;
     opt.textContent = labelFor(bo);
     boSelect.appendChild(opt);
-
-    const dlOpt = document.createElement("option");
-    dlOpt.value = labelFor(bo);
-    boListOptions.appendChild(dlOpt);
-  });
-
-  boSearch.addEventListener("change", () => {
-    const val = boSearch.value;
-    const match = boIds.find((id) => labelFor(MASTER_DATA[id]) === val);
-    if (match) {
-      boSelect.value = match;
-      renderAutoFill(match);
-    }
   });
 
   boSelect.addEventListener("change", () => renderAutoFill(boSelect.value));
@@ -6896,6 +7023,38 @@ const MASTER_DATA = {
         var confirmMsg = "इस BO (" + boName + ") का निरीक्षण IR Final के रूप मार्क करें?\n\nदिनांक: " + finalDate + "\nडाकघर: " + boTAName + " (दूरी: " + boDist + " किमी)\n\nइसे सूची में नीचे ले जाया जाएगा और लंबित BOs ऊपर दिखेंगे।\nTour Diary में इस दिनांक की ऑटो-जर्नी (HQ→" + boTAName + "→HQ, 10:00-17:00) बन जाएगी जिसे आप बाद में edit कर सकते हैं।\n\nClick OK to confirm, Cancel to abort.";
         if (confirm(confirmMsg)) {
           setBOInspected(boId, true, finalDate);
+
+          // Update the BO's last-inspection date in master data so the NEXT
+          // report auto-shows this inspection's date (and LOT quarters recalc)
+          try {
+            var boMd = MASTER_DATA[boId];
+            if (boMd) {
+              if (!boMd.inspection_history) boMd.inspection_history = {};
+              boMd.inspection_history.last_inspection_date = finalDate;
+            }
+            var rawMd = localStorage.getItem("sdi_master_data");
+            if (rawMd) {
+              var mdObj = JSON.parse(rawMd);
+              if (mdObj && mdObj.boRecords && mdObj.boRecords[boId]) {
+                mdObj.boRecords[boId].last_inspection = finalDate;
+                localStorage.setItem("sdi_master_data", JSON.stringify(mdObj));
+              }
+            }
+          } catch (e) { console.warn("Master data update failed:", e); }
+
+          // Refresh the form's last-inspection field + LOT quarter labels
+          if (typeof lastInspectionDateInput !== "undefined" && lastInspectionDateInput) {
+            lastInspectionDateInput.value = finalDate;
+          }
+          try {
+            lotQuarters = calculateLotQuarters(finalDate);
+            var lotSummaries = (typeof lotEntriesEl !== "undefined") ? lotEntriesEl.querySelectorAll("summary span:first-child") : [];
+            lotSummaries.forEach(function(s, i) {
+              s.textContent = "तिमाही " + (i + 1) + " — " + lotQuarters[i];
+            });
+            if (typeof applyDateDefaults === "function") applyDateDefaults();
+          } catch (e) {}
+
           updateMarkDoneBtn();
           rebuildBOSelect();
           // Create auto-journey in TA module
@@ -6976,6 +7135,13 @@ const MASTER_DATA = {
     } else {
       lastInspectionDateInput.value = "";
     }
+
+    // Pre-fill visit-history fields from master data, if present
+    // (a saved draft, restored just after, will override these)
+    document.getElementById("supVisitDate").value = hist.sup_visit_date || "";
+    document.getElementById("boOpeningDate").value = hist.bo_opening_date || "";
+    document.getElementById("sdiVisitDates").value = hist.sdi_visit_dates || "";
+    document.getElementById("moVisitDates").value = hist.mo_visit_dates || "";
   }
 
   // default select first BO
@@ -7171,6 +7337,27 @@ const MASTER_DATA = {
       details.appendChild(entry);
     }
     passbookSectionsEl.appendChild(details);
+  });
+
+  // Passbook DLT date defaults: today's date when empty. When a date is
+  // chosen for one account, other EMPTY dates in the SAME scheme follow
+  // it automatically (PLI/PRB use a text month field — no calendar there).
+  PASSBOOK_SECTIONS_UI.forEach(function(section) {
+    if (section.type === "pli_policy") return;
+    for (var i = 0; i < section.count; i++) {
+      (function(idx) {
+        var el = document.getElementById("pb_" + section.key + "_" + idx + "_dlt");
+        if (!el || el.type !== "date") return;
+        el.addEventListener("change", function() {
+          if (!this.value) return;
+          for (var j = 0; j < section.count; j++) {
+            if (j === idx) continue;
+            var other = document.getElementById("pb_" + section.key + "_" + j + "_dlt");
+            if (other && other.type === "date" && !other.value) other.value = this.value;
+          }
+        });
+      })(i);
+    }
   });
 
   // Add PRB optional checkbox section
@@ -7582,26 +7769,34 @@ const MASTER_DATA = {
     }
   }
 
-  if (sameBalChk && dtrBalInput && boBalInput) {
+  // Q24/Q25: "DTR / BO / physical cash same" checkbox — filling any one
+  // field fills the other two (works both ways, no field is locked)
+  function syncSameBalances(source) {
+    if (!sameBalChk || !sameBalChk.checked || !source) return;
+    var val = source.value || "";
+    if (dtrBalInput && dtrBalInput !== source) dtrBalInput.value = val;
+    if (boBalInput && boBalInput !== source) boBalInput.value = val;
+    if (physCashInput && physCashInput !== source) physCashInput.value = val;
+  }
+  if (sameBalChk) {
     sameBalChk.addEventListener("change", function() {
       if (sameBalChk.checked) {
-        boBalInput.value = dtrBalInput.value;
-        boBalInput.readOnly = true;
-        boBalInput.style.background = "#f0f0f0";
-      } else {
-        boBalInput.readOnly = false;
-        boBalInput.style.background = "";
+        // Seed all three from whichever field already has a value
+        var src = (dtrBalInput && dtrBalInput.value) ? dtrBalInput
+              : (boBalInput && boBalInput.value) ? boBalInput
+              : (physCashInput && physCashInput.value) ? physCashInput : null;
+        syncSameBalances(src);
       }
       checkCashMismatch();
     });
-    // When DTR balance changes and checkbox is checked, auto-update BO balance
-    dtrBalInput.addEventListener("input", function() {
-      if (sameBalChk.checked) { boBalInput.value = dtrBalInput.value; }
+  }
+  [dtrBalInput, boBalInput, physCashInput].forEach(function(el) {
+    if (!el) return;
+    el.addEventListener("input", function() {
+      syncSameBalances(el);
       checkCashMismatch();
     });
-  }
-  if (boBalInput) { boBalInput.addEventListener("input", checkCashMismatch); }
-  if (physCashInput) { physCashInput.addEventListener("input", checkCashMismatch); }
+  });
 
   const BALANCE_ACK_MAX = 7;
   const balanceAckListEl = document.getElementById("balanceAckList");
@@ -7637,11 +7832,24 @@ const MASTER_DATA = {
     return entries;
   }
 
+  // Q27: "SO & BO balance same" checkbox — typing in either the लेखा or
+  // the BO field of an entry fills the other one automatically
+  var balSameChk = document.getElementById("balSameChk");
+  balanceAckListEl.addEventListener("input", function(ev) {
+    if (!balSameChk || !balSameChk.checked) return;
+    var m = /^bal_(\d+)_(lekha|bo)$/.exec((ev.target && ev.target.id) || "");
+    if (!m) return;
+    var otherId = "bal_" + m[1] + "_" + (m[2] === "lekha" ? "bo" : "lekha");
+    var other = document.getElementById(otherId);
+    if (other) other.value = ev.target.value;
+  });
+
   // ---------------------------------------------------------------------
   // Q39 — quarterly LOT verification (4 quarters)
   // Quarters are calculated from last inspection date:
-  // Q1 starts 2 months after last inspection month
-  // e.g. last inspection July 2025 → Q1: Sep-Nov 2025, Q2: Dec-Feb, Q3: Mar-May, Q4: Jun-Aug
+  // Q1 starts the month AFTER the last inspection month, then every 3rd
+  // month — e.g. last inspection Sept 2025 → Q1: Oct-Dec 2025,
+  // Q2: Jan-Mar 2026, Q3: Apr-Jun 2026, Q4: Jul-Sep 2026
   // ---------------------------------------------------------------------
   const LOT_MAX_ENTRIES = 4;
   const lotEntriesEl = document.getElementById("lotEntries");
@@ -7663,9 +7871,9 @@ const MASTER_DATA = {
     var monthNames = ["जनवरी", "फरवरी", "मार्च", "अप्रैल", "मई", "जून",
                        "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"];
 
-    // Q1 starts 2 months after last inspection month
-    // e.g. July (7) → Sep (9)
-    var q1StartMonth = baseMonth + 2; // 0-indexed adjustment: +2
+    // Q1 starts the month AFTER the last inspection month
+    // e.g. September (9) → Oct (10)
+    var q1StartMonth = baseMonth + 1;
     var q1StartYear = baseYear;
 
     var quarters = [];
@@ -7751,7 +7959,65 @@ const MASTER_DATA = {
     summaries.forEach(function(s, i) {
       s.textContent = "तिमाही " + (i + 1) + " — " + lotQuarters[i];
     });
+    applyDateDefaults();
   });
+
+  // ---- Default-date helpers (LOT + balance acknowledgement + passbook) ----
+  // LOT check dates default to: month after last inspection, then every
+  // 3rd month (Oct → Jan → Apr → Jul for a Sept inspection).
+  // Balance-ack dates default to: month after last inspection, then every
+  // ALTERNATE month (Oct → Dec → Feb → Apr ...), 7 entries.
+  // Passbook DLT dates default to today (date-type fields only).
+  function monthAfter(baseY, baseM, addMonths) {
+    var total = baseY * 12 + (baseM - 1) + addMonths;
+    return { y: Math.floor(total / 12), m: (total % 12) + 1 };
+  }
+  function isoDateInMonth(y, m, day) {
+    var lastDay = new Date(y, m, 0).getDate();
+    var d = Math.min(day, lastDay);
+    return y + "-" + String(m).padStart(2, "0") + "-" + String(d).padStart(2, "0");
+  }
+  function lastInspParts() {
+    var s = (lastInspectionDateInput && lastInspectionDateInput.value) || "";
+    var parts = s ? s.split(".") : [];
+    if (parts.length === 3) {
+      return { d: parseInt(parts[0], 10), m: parseInt(parts[1], 10), y: parseInt(parts[2], 10) };
+    }
+    var now = new Date();
+    return { d: now.getDate(), m: now.getMonth() + 1, y: now.getFullYear() };
+  }
+  function applyLotDefaultDates() {
+    var p = lastInspParts();
+    for (var q = 0; q < LOT_MAX_ENTRIES; q++) {
+      var nm = monthAfter(p.y, p.m, 1 + q * 3);
+      var el = document.getElementById("lot_" + q + "_date");
+      if (el && !el.value) el.value = isoDateInMonth(nm.y, nm.m, p.d);
+    }
+  }
+  function applyBalanceAckDefaultDates() {
+    var p = lastInspParts();
+    for (var i = 0; i < BALANCE_ACK_MAX; i++) {
+      var nm = monthAfter(p.y, p.m, 1 + i * 2);
+      var el = document.getElementById("bal_" + i + "_date");
+      if (el && !el.value) el.value = isoDateInMonth(nm.y, nm.m, p.d);
+    }
+  }
+  function applyPassbookDateDefaults() {
+    var n = new Date();
+    var todayISO = n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0") + "-" + String(n.getDate()).padStart(2, "0");
+    PASSBOOK_SECTIONS_UI.forEach(function(section) {
+      if (section.type === "pli_policy") return; // text month field, no calendar
+      for (var i = 0; i < section.count; i++) {
+        var el = document.getElementById("pb_" + section.key + "_" + i + "_dlt");
+        if (el && el.type === "date" && !el.value) el.value = todayISO;
+      }
+    });
+  }
+  function applyDateDefaults() {
+    applyLotDefaultDates();
+    applyBalanceAckDefaultDates();
+    applyPassbookDateDefaults();
+  }
 
   function readLotData() {
     const entries = [];
@@ -8093,7 +8359,7 @@ const MASTER_DATA = {
   // ---------------------------------------------------------------------
   function resetInspFormFields() {
     const ids = [
-      "lastInspector", "divisionalHeadVisitDate", "mailOverseerVisitDate",
+      "lastInspector", "supVisitDate", "boOpeningDate", "sdiVisitDates", "moVisitDates",
       "dtrBalance", "boAccountBalance", "walletBalance", "physicalCash",
       "sameBalanceChk",
       "mailSp", "mailPl", "mailCod", "mailVpp", "mailOrdinary",
@@ -8163,6 +8429,13 @@ const MASTER_DATA = {
     const bo = MASTER_DATA[boSelect.value];
     const hist = (bo && bo.inspection_history) || {};
     lastInspectionDateInput.value = hist.last_inspection_date || "";
+    document.getElementById("supVisitDate").value = hist.sup_visit_date || "";
+    document.getElementById("boOpeningDate").value = hist.bo_opening_date || "";
+    document.getElementById("sdiVisitDates").value = hist.sdi_visit_dates || "";
+    document.getElementById("moVisitDates").value = hist.mo_visit_dates || "";
+
+    // Re-apply default dates (LOT / balance-ack / passbook) for the new BO
+    applyDateDefaults();
   }
 
   const clearDraftBtn = document.getElementById("clearDraftBtn");
@@ -8189,42 +8462,12 @@ const MASTER_DATA = {
     return bytes;
   }
 
-  // Top button triggers same as bottom
+  // Quick generate button (right after BO selection) triggers the same
+  // handler as the bottom one
   try{
-    var generateBtnTop = document.getElementById("generateBtnTop");
-    var clearDraftBtnTop = document.getElementById("clearDraftBtnTop");
-    var statusMsgTop = document.getElementById("statusMsgTop");
-    if (generateBtnTop) generateBtnTop.addEventListener("click", function(){ generateBtn.click(); });
-    if (clearDraftBtnTop) clearDraftBtnTop.addEventListener("click", function(){ clearDraftBtn.click(); });
-  }catch(e){ console.warn("Top bar setup failed:", e); }
-
-  // Sync status messages to top bar
-  function syncStatusTop(){
-    try{
-      if (statusMsgTop && statusMsg){
-        statusMsgTop.textContent = statusMsg.textContent;
-        statusMsgTop.className = statusMsg.className;
-      }
-    }catch(e){}
-  }
-
-  // Watch for status changes
-  try{
-    var statusObserver = new MutationObserver(function(){ syncStatusTop(); });
-    if (statusMsg) statusObserver.observe(statusMsg, {childList:true, characterData:true, subtree:true});
-  }catch(e){ console.warn("Status observer failed:", e); }
-
-  // Also sync download links to appear after the form
-  try{
-    var dlLinksObserver = new MutationObserver(function(){
-      if (dlLinks && dlLinks.style.display === "block" && dlLinks.innerHTML){
-        if (statusMsgTop){
-          statusMsgTop.innerHTML = dlLinks.innerHTML;
-        }
-      }
-    });
-    if (dlLinks) dlLinksObserver.observe(dlLinks, {childList:true, subtree:true, attributes:true, attributeFilter:["style"]});
-  }catch(e){ console.warn("dlLinks observer failed:", e); }
+    var generateBtnQuick = document.getElementById("generateBtnQuick");
+    if (generateBtnQuick) generateBtnQuick.addEventListener("click", function(){ generateBtn.click(); });
+  }catch(e){ console.warn("Quick button setup failed:", e); }
 
   generateBtn.addEventListener("click", async () => {
     const boId = boSelect.value;
@@ -8244,8 +8487,10 @@ const MASTER_DATA = {
         sb46Data: (typeof readSB46Data === "function") ? readSB46Data() : [],
         last_inspection_date: document.getElementById("lastInspectionDate").value,
         last_inspector: document.getElementById("lastInspector").value,
-        divisional_head_visit_date: document.getElementById("divisionalHeadVisitDate").value,
-        mail_overseer_visit_date: document.getElementById("mailOverseerVisitDate").value,
+        sup_visit_date: document.getElementById("supVisitDate").value,
+        bo_opening_date: document.getElementById("boOpeningDate").value,
+        sdi_visit_dates: document.getElementById("sdiVisitDates").value,
+        mo_visit_dates: document.getElementById("moVisitDates").value,
         dtr_balance: document.getElementById("dtrBalance").value,
         same_balance: sameBalChk ? sameBalChk.checked : false,
         bo_account_balance: document.getElementById("boAccountBalance").value,
@@ -8398,8 +8643,10 @@ const MASTER_DATA = {
       sb46Data: (typeof readSB46Data === "function") ? readSB46Data() : [],
       lastInspectionDate: document.getElementById("lastInspectionDate").value,
       lastInspector: document.getElementById("lastInspector").value,
-      divisionalHeadVisitDate: document.getElementById("divisionalHeadVisitDate").value,
-      mailOverseerVisitDate: document.getElementById("mailOverseerVisitDate").value,
+      supVisitDate: document.getElementById("supVisitDate").value,
+      boOpeningDate: document.getElementById("boOpeningDate").value,
+      sdiVisitDates: document.getElementById("sdiVisitDates").value,
+      moVisitDates: document.getElementById("moVisitDates").value,
       dtrBalance: document.getElementById("dtrBalance").value,
       boAccountBalance: document.getElementById("boAccountBalance").value,
       walletBalance: document.getElementById("walletBalance").value,
@@ -8549,7 +8796,7 @@ const MASTER_DATA = {
 
   function hasInspDraftData() {
     // Check if any field has data
-    const ids = ["lastInspectionDate","lastInspector","divisionalHeadVisitDate","mailOverseerVisitDate","dtrBalance","boAccountBalance","walletBalance","physicalCash","mailSp","mailPl","mailCod","mailVpp","mailOrdinary"];
+    const ids = ["lastInspectionDate","lastInspector","supVisitDate","boOpeningDate","sdiVisitDates","moVisitDates","dtrBalance","boAccountBalance","walletBalance","physicalCash","mailSp","mailPl","mailCod","mailVpp","mailOrdinary"];
     for (const id of ids) {
       if (document.getElementById(id) && document.getElementById(id).value) return true;
     }
@@ -8576,8 +8823,10 @@ const MASTER_DATA = {
       const fieldMap = {
         lastInspectionDate: d.lastInspectionDate,
         lastInspector: d.lastInspector,
-        divisionalHeadVisitDate: d.divisionalHeadVisitDate,
-        mailOverseerVisitDate: d.mailOverseerVisitDate,
+        supVisitDate: d.supVisitDate,
+        boOpeningDate: d.boOpeningDate,
+        sdiVisitDates: d.sdiVisitDates,
+        moVisitDates: d.moVisitDates,
         dtrBalance: d.dtrBalance,
         boAccountBalance: d.boAccountBalance,
         walletBalance: d.walletBalance,
@@ -8591,11 +8840,10 @@ const MASTER_DATA = {
       // Restore sameBalance checkbox
       if (d.same_balance && sameBalChk) {
         sameBalChk.checked = true;
-        if (boBalInput) {
-          boBalInput.value = d.dtrBalance || "";
-          boBalInput.readOnly = true;
-          boBalInput.style.background = "#f0f0f0";
-        }
+        var seedVal = d.dtrBalance || d.boAccountBalance || d.physicalCash || "";
+        if (dtrBalInput) dtrBalInput.value = seedVal;
+        if (boBalInput) boBalInput.value = seedVal;
+        if (physCashInput) physCashInput.value = seedVal;
       }
 
       // Restore inspection date
@@ -8715,6 +8963,8 @@ const MASTER_DATA = {
         sb46Entries = d.sb46Data.map(function(e) { return Object.assign({}, e); });
         renderSB46Entries();
       }
+      // Fill any date fields the draft left empty with the defaults
+      applyDateDefaults();
       return true;
     } catch(e) {
       console.warn("Insp restore failed:", e);
@@ -8753,6 +9003,9 @@ const MASTER_DATA = {
 
     _prevBoIdForDraft = newBoId;
   });
+
+  // Apply default dates once at load (LOT / balance-ack / passbook)
+  applyDateDefaults();
 
   // Also auto-save on input/change in any form field
   document.addEventListener("input", function(e) {
