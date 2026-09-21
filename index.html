@@ -1096,6 +1096,25 @@
             <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
             <button class="btn-sm btn-del" onclick="resetData()">Reset to Original</button>
           </div>
+          <div class="data-card" style="margin-top:0;margin-bottom:16px;background:#e3f2fd;border:1px solid #90caf9;">
+            <div style="padding:14px 18px;">
+              <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;font-weight:600;cursor:pointer;">
+                <input type="checkbox" id="autoBackupEnabled" onchange="toggleAutoBackup()">
+                Auto-backup to Downloads folder
+              </label>
+              <div style="margin-top:10px;display:flex;align-items:center;gap:8px;font-size:0.85rem;">
+                <label for="autoBackupFreq">Frequency:</label>
+                <select id="autoBackupFreq" onchange="toggleAutoBackup()">
+                  <option value="daily">Daily (first time the app opens each day)</option>
+                  <option value="weekly">Weekly</option>
+                </select>
+              </div>
+              <p class="info-text" id="autoBackupLastInfo" style="margin-top:8px;">No backup taken yet.</p>
+              <p class="info-text" style="margin-top:6px;color:#666;">
+                When due, a full backup JSON downloads automatically to your device's Downloads folder — same file as the manual "Full Backup" button. Your browser may ask once whether to allow automatic downloads from this page; choose "Allow".
+              </p>
+            </div>
+          </div>
           <div class="data-card" style="margin-top:16px;background:#fff8e1;border:1px solid #ffe082;">
             <div style="padding:14px 18px;">
               <b style="color:#e65100;">Storage Info</b>
@@ -1552,7 +1571,7 @@
   }
 
   // --- Backup / Restore ---
-  window.exportData=function(){
+  window.exportData=function(silent){
     var d=ensureData();
     // Collect ALL localStorage keys for full backup
     var allStorage={};
@@ -1577,7 +1596,10 @@
     var stamp=now.getFullYear()+'-'+pad2(now.getMonth()+1)+'-'+pad2(now.getDate())+'_'+pad2(now.getHours())+'-'+pad2(now.getMinutes());
     a.download='SDI_Bairiya_Backup_'+stamp+'.json';
     document.body.appendChild(a);a.click();document.body.removeChild(a);
-    showToast('Full backup downloaded! (TA + Inspection + Master Data)');
+    localStorage.setItem('auto_backup_last', now.toISOString());
+    if(silent){ showToast('🔄 Auto-backup saved to Downloads'); }
+    else { showToast('Full backup downloaded! (TA + Inspection + Master Data)'); }
+    if(typeof refreshAutoBackupInfo==='function') refreshAutoBackupInfo();
   };
   function pad2(n){return n<10?'0'+n:''+n;};
   window.importData=function(event){
@@ -1666,6 +1688,64 @@
     info.innerHTML='Master Data: '+(mdLen/1024).toFixed(1)+' KB | TA Data: '+(taLen/1024).toFixed(1)+' KB | Inspection Drafts: '+(inspLen/1024).toFixed(1)+' KB | <b>Total: '+(total/1024).toFixed(1)+' KB</b>';
   }
 
+  // --- Auto-Backup (downloads a full JSON backup automatically, on the
+  // schedule the user picks in Settings > Backup & Restore) ---
+  function getAutoBackupSettings(){
+    try{
+      var raw=localStorage.getItem('auto_backup_settings');
+      if(raw){
+        var cfg=JSON.parse(raw);
+        return {enabled:!!cfg.enabled, frequency:cfg.frequency==='weekly'?'weekly':'daily'};
+      }
+    }catch(e){}
+    return {enabled:false, frequency:'daily'};
+  }
+  function saveAutoBackupSettings(cfg){
+    localStorage.setItem('auto_backup_settings', JSON.stringify(cfg));
+  }
+  window.toggleAutoBackup=function(){
+    var enabledEl=document.getElementById('autoBackupEnabled');
+    var freqEl=document.getElementById('autoBackupFreq');
+    if(!enabledEl||!freqEl)return;
+    var cfg={enabled:enabledEl.checked, frequency:freqEl.value};
+    saveAutoBackupSettings(cfg);
+    refreshAutoBackupInfo();
+    if(cfg.enabled){
+      showToast('Auto-backup enabled — will download to your Downloads folder '+(cfg.frequency==='weekly'?'weekly':'daily')+'.');
+      maybeAutoBackup(); // run right away if one is already due
+    } else {
+      showToast('Auto-backup turned off.');
+    }
+  };
+  function refreshAutoBackupInfo(){
+    var enabledEl=document.getElementById('autoBackupEnabled');
+    var freqEl=document.getElementById('autoBackupFreq');
+    var infoEl=document.getElementById('autoBackupLastInfo');
+    if(!enabledEl||!freqEl||!infoEl)return;
+    var cfg=getAutoBackupSettings();
+    enabledEl.checked=cfg.enabled;
+    freqEl.value=cfg.frequency;
+    var last=localStorage.getItem('auto_backup_last');
+    infoEl.textContent = last
+      ? ('Last backup: '+new Date(last).toLocaleString())
+      : 'No backup taken yet.';
+  }
+  function maybeAutoBackup(){
+    try{
+      var cfg=getAutoBackupSettings();
+      if(!cfg.enabled)return;
+      var last=localStorage.getItem('auto_backup_last');
+      var intervalMs = cfg.frequency==='weekly' ? 7*24*60*60*1000 : 24*60*60*1000;
+      var due = !last || (Date.now()-new Date(last).getTime()) >= intervalMs;
+      if(due){
+        // Small delay so it never fires before the page has finished
+        // painting, and so it doesn't fire twice from init() + a manual
+        // toggle-on happening in the same tick.
+        setTimeout(function(){ window.exportData(true); }, 2500);
+      }
+    }catch(e){}
+  }
+
   // --- Sync functions ---
   function syncAllOffices(){
     var d=ensureData();
@@ -1710,6 +1790,7 @@
     renderStaffTable();
     renderVillageTable();
     updateStorageInfo();
+    refreshAutoBackupInfo();
   }
 
   // --- Init ---
@@ -1726,6 +1807,7 @@
     syncMasterData();
     loadSettingsFromTA();
     renderAll();
+    maybeAutoBackup();
   }
 
   if(document.readyState==='loading'){
@@ -8011,9 +8093,19 @@ const MASTER_DATA = {
     var todayISO = n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0") + "-" + String(n.getDate()).padStart(2, "0");
     PASSBOOK_SECTIONS_UI.forEach(function(section) {
       if (section.type === "pli_policy") return; // text month field, no calendar
+      // If an earlier account in this scheme already has a date (e.g. just
+      // restored from a saved draft), reuse that instead of today — so a
+      // draft that only saved account 1's date doesn't leave accounts 2-6
+      // stuck on today's date after restore.
+      var refDate = null;
+      for (var k = 0; k < section.count; k++) {
+        var refEl = document.getElementById("pb_" + section.key + "_" + k + "_dlt");
+        if (refEl && refEl.type === "date" && refEl.value) { refDate = refEl.value; break; }
+      }
+      var fillValue = refDate || todayISO;
       for (var i = 0; i < section.count; i++) {
         var el = document.getElementById("pb_" + section.key + "_" + i + "_dlt");
-        if (el && el.type === "date" && !el.value) el.value = todayISO;
+        if (el && el.type === "date" && !el.value) el.value = fillValue;
       }
     });
   }
