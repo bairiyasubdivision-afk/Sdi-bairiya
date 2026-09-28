@@ -885,6 +885,15 @@
 
   <div class="card">
     <h2><span class="step-badge">11</span> व्यवसाय विकास तुलना <span class="qref">(प्रश्न 53)</span></h2>
+    <div id="acctBaselineNote" style="display:none;font-size:0.85rem;padding:8px 12px;border-radius:8px;margin-bottom:10px;line-height:1.5;"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+      <select id="acctImportTarget" style="padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;">
+        <option value="curTill">वर्तमान वर्ष (Excel अब तक)</option>
+        <option value="prevYear">पिछले वर्ष</option>
+      </select>
+      <button type="button" class="btn btn-primary" style="font-size:0.85rem;padding:8px 16px;" onclick="document.getElementById('acctImportFile').click()">📥 Excel Import</button>
+      <input type="file" id="acctImportFile" accept=".xlsx" style="display:none" onchange="acctImportParse(this)">
+    </div>
     <div id="businessEntries"></div>
   </div>
 
@@ -1322,7 +1331,7 @@
   // tiered: (1) explicit alias map, (2) exact after normalisation,
   // (3) unique contains, (4) best fuzzy (dice bigrams >= 0.75).
   var PROG_ALIAS={
-    "बघौंच":"शाखा डाकघर — (स्कैन में अस्पष्ट)",
+    "जवाही डियार":"शाखा डाकघर — (स्कैन में अस्पष्ट)",
     "चांद डियार":"शाखा डाकघर चांददियर",
     "चंद पुर":"शाखा डाकघर चादपुर",
     "चंदपुर":"शाखा डाकघर चांदपुर",
@@ -1399,6 +1408,19 @@
     var rows=getProgRows();
     var row=progFindRow(boNameHi,rows);
     if(!row)return null;
+    row.inspDate=dateStr;
+    saveProgRows(rows);
+    if(document.getElementById('progTableWrap'))renderProgTable();
+    return row.name;
+  };
+  // Same as setProgInspectionDate, but never overwrites an existing date.
+  // Used by the one-time IR-Final seed so manually-entered dates are kept.
+  window.setProgInspectionDateIfEmpty=function(boNameHi,dateStr){
+    if(!boNameHi||!dateStr)return null;
+    var rows=getProgRows();
+    var row=progFindRow(boNameHi,rows);
+    if(!row)return null;
+    if(row.inspDate)return row.name;
     row.inspDate=dateStr;
     saveProgRows(rows);
     if(document.getElementById('progTableWrap'))renderProgTable();
@@ -2946,12 +2968,25 @@ function renderJourneyList(){
 // ============================================================
 // BUILD LEGS FOR DOCX
 // ============================================================
+// Journeys belonging to the SELECTED bill month/year only. All months are
+// kept in storage; the UI list, diary, TA bill and summary must all agree.
+function getMonthJourneys(){
+  var mi=getMonthIdx(),y=getYear();
+  return journeys.filter(function(j){
+    if(!j.date)return false;
+    var parts=j.date.split('.');
+    return parseInt(parts[1],10)===mi+1&&parseInt(parts[2],10)===y;
+  });
+}
 function buildLegs(){
   var legs=[];
-  journeys.forEach(function(j){
+  getMonthJourneys().forEach(function(j){
     j.legs.forEach(function(l){
       legs.push({from:l.from,departure:l.departure,to:l.to,arrival:l.arrival,mode:l.mode,dist:l.dist,purpose:l.purpose,da:l.isReturn?'':j.da.toFixed(1),halt:''});
     });
+  });
+  legs.sort(function(a,b){
+    return String(a.departure||'').localeCompare(String(b.departure||''));
   });
   return legs;
 }
@@ -3151,7 +3186,7 @@ function renderHolidayEditList(){
 function updateSummary(){autoSave();
   var mr=parseFloat(document.getElementById('mileageRate').value)||0,dr=parseFloat(document.getElementById('daRate').value)||0,dmd=parseFloat(document.getElementById('daMinDist').value)||8;
   var td=0,tf=0,tDA=0;
-  journeys.forEach(function(j){td+=j.dist;tf+=j.dist*mr;var od=getOfficeDist(j.office);if(od!==null&&od>dmd)tDA+=j.da;});
+  getMonthJourneys().forEach(function(j){td+=j.dist;tf+=j.dist*mr;var od=getOfficeDist(j.office);if(od!==null&&od>dmd)tDA+=j.da;});
   var daAmt=tDA*dr;var ha=0;if(document.getElementById('hasHotel').checked)ha=parseFloat(document.getElementById('hotelAmount').value)||0;
   var adv=0;if(document.getElementById('hasAdvance').checked)adv=parseFloat(document.getElementById('advanceAmount').value)||0;
   var tot=tf+daAmt+ha-adv;
@@ -3262,7 +3297,7 @@ async function generateTABill(){
     var name=document.getElementById('officerName').value,desig=document.getElementById('officerDesignation').value,pay=document.getElementById('officerPay').value,hq=document.getElementById('officerHQ').value;
     var mr=parseFloat(document.getElementById('mileageRate').value),dr=parseFloat(document.getElementById('daRate').value),dmd=parseFloat(document.getElementById('daMinDist').value)||8;
     var td=0,tf=0,tDA=0,billRows=[];
-    journeys.forEach(function(j){
+    getMonthJourneys().forEach(function(j){
       var od=getOfficeDist(j.office),adm=(od!==null&&od>dmd);
       j.legs.forEach(function(l){var ow=l.dist,fare=ow*mr;var daShow=l.isReturn?'':(adm?j.da.toFixed(1):'');billRows.push({from:l.from,dep:l.departure,to:l.to,arr:l.arrival,mode:l.mode,rate:mr.toFixed(2),fare:fare.toFixed(2),da:daShow,dist:ow,halt:'',purpose:l.purpose});td+=ow;tf+=ow*mr;});
       if(adm)tDA+=j.da;
@@ -4679,7 +4714,7 @@ const MASTER_DATA = {
     },
     "inspection_history": {
       "last_inspection_date": "24.09.2025",
-      "proposed_inspection_month": "सितम्बर 2026",
+      "proposed_inspection_month": "अक्टूबर 2026",
       "proposed_inspection_date": "",
       "compliance_received_date": ""
     },
@@ -5135,7 +5170,12 @@ const MASTER_DATA = {
       "imei": "351733713151166",
       "mobile_number": "9218426126"
     },
-    "inspection_history": {},
+    "inspection_history": {
+      "last_inspection_date": "04.09.2025",
+      "proposed_inspection_month": "सितम्बर 2026",
+      "proposed_inspection_date": "",
+      "compliance_received_date": ""
+    },
     "bo_name_en_raw": "CHANDPUR"
   },
   "BO30403102002": {
@@ -5168,8 +5208,8 @@ const MASTER_DATA = {
       "mobile_number": "8368118593"
     },
     "inspection_history": {
-      "last_inspection_date": "04.09.2025",
-      "proposed_inspection_month": "सितम्बर 2026",
+      "last_inspection_date": "09.08.2025",
+      "proposed_inspection_month": "अगस्त 2026",
       "proposed_inspection_date": "",
       "compliance_received_date": ""
     },
@@ -6214,7 +6254,7 @@ const MASTER_DATA = {
     },
     "inspection_history": {
       "last_inspection_date": "05.07.2025",
-      "proposed_inspection_month": "जुलाई 2026",
+      "proposed_inspection_month": "जून 2026",
       "proposed_inspection_date": "30.05.26",
       "compliance_received_date": ""
     },
@@ -7368,7 +7408,14 @@ const MASTER_DATA = {
         opt.style.display = match ? "" : "none";
         if (match && !firstMatch) firstMatch = opt;
       });
-      if (firstMatch && q) boSelect.value = firstMatch.value;
+      if (firstMatch && q && boSelect.value !== firstMatch.value) {
+        boSelect.value = firstMatch.value;
+        // Programmatic assignment fires NO change event, so the whole
+        // BO-switch flow (save old draft, reset fields, restore new draft)
+        // was skipped — the form kept showing the PREVIOUS BO's data.
+        // Dispatch a non-bubbling change so boSelect's own listeners run.
+        boSelect.dispatchEvent(new Event("change"));
+      }
     });
   }
 
@@ -7470,6 +7517,19 @@ const MASTER_DATA = {
           if (typeof lastInspectionDateInput !== "undefined" && lastInspectionDateInput) {
             lastInspectionDateInput.value = finalDate;
           }
+          // Keep the BO's draft in sync too — a programmatic field update does
+          // not fire an input event, so an old draft would otherwise restore a
+          // stale last-inspection date on the next visit.
+          try {
+            var rawDraft = localStorage.getItem(INSP_DRAFT_KEY_PREFIX + boId);
+            if (rawDraft) {
+              var draftObj = JSON.parse(rawDraft);
+              if (draftObj && draftObj.lastInspectionDate !== finalDate) {
+                draftObj.lastInspectionDate = finalDate;
+                localStorage.setItem(INSP_DRAFT_KEY_PREFIX + boId, JSON.stringify(draftObj));
+              }
+            }
+          } catch (e) { console.warn("Draft date sync failed:", e); }
           try {
             lotQuarters = calculateLotQuarters(finalDate);
             var lotSummaries = (typeof lotEntriesEl !== "undefined") ? lotEntriesEl.querySelectorAll("summary span:first-child") : [];
@@ -7543,10 +7603,13 @@ const MASTER_DATA = {
       row("Model", dev.device_model) + row("IMEI", dev.imei) + row("Mobile", dev.mobile_number);
 
     const hist = bo.inspection_history || {};
-    if (hist.last_inspection_date) {
-      lastInspectionDateInput.value = hist.last_inspection_date;
+    // Canonical "last inspection" date: IR Final date (authoritative) wins over
+    // master-data history, so the form ALWAYS agrees with the BO dropdown label.
+    const lastInspCanonical = getInspFinalDate(bo["bo_id"] || "") || hist.last_inspection_date;
+    if (lastInspCanonical) {
+      lastInspectionDateInput.value = lastInspCanonical;
       // Update LOT quarters based on last inspection date
-      lotQuarters = calculateLotQuarters(hist.last_inspection_date);
+      lotQuarters = calculateLotQuarters(lastInspCanonical);
       // Use setTimeout to defer DOM update until lotEntriesEl is initialized
       setTimeout(function() {
         try {
@@ -7572,6 +7635,7 @@ const MASTER_DATA = {
   if (boIds.length) {
     boSelect.value = boIds[0];
     renderAutoFill(boIds[0]);
+    setTimeout(function() { applyAcctBaseline(boIds[0]); }, 0);
   }
 
   // ---------------------------------------------------------------------
@@ -7904,7 +7968,28 @@ const MASTER_DATA = {
     });
   }
 
+  // Read the CURRENT input values back into sb46Entries BEFORE any
+  // re-render (v7.19). renderSB46Entries() rebuilds rows from the array,
+  // and the array only ever held the values from the LAST render — so
+  // without this sync, adding or removing a row wiped everything the user
+  // had typed into the other rows.
+  function syncSB46FromDOM() {
+    sb46Entries.forEach(function(entry, idx) {
+      var val = function(id, fallback) {
+        var el = document.getElementById(id);
+        return (el && el.value) ? el.value : fallback;
+      };
+      entry.scheme = val("sb46_" + idx + "_scheme", entry.scheme || "SB");
+      entry.acct = val("sb46_" + idx + "_acct", entry.acct || "");
+      entry.name = val("sb46_" + idx + "_name", entry.name || "");
+      entry.address = val("sb46_" + idx + "_address", entry.address || "");
+      entry.balance = val("sb46_" + idx + "_balance", entry.balance || "");
+      entry.dlt = val("sb46_" + idx + "_dlt", entry.dlt || "");
+    });
+  }
+
   window.removeSB46Entry = function(idx) {
+    syncSB46FromDOM();
     sb46Entries.splice(idx, 1);
     renderSB46Entries();
   };
@@ -7913,6 +7998,7 @@ const MASTER_DATA = {
     var addBtn = document.getElementById("sb46AddBtn");
     if (addBtn) {
       addBtn.addEventListener("click", function() {
+        syncSB46FromDOM();
         sb46Entries.push({ scheme: "SB", acct: "", name: "", address: "", balance: "", dlt: "" });
         renderSB46Entries();
       });
@@ -8516,36 +8602,310 @@ const MASTER_DATA = {
   // Q53 — business development comparison (fixed categories)
   // ---------------------------------------------------------------------
   const BUSINESS_CATEGORIES_UI = [
-    { key: "rd", label: "आवर्ती जमा (RD)" },
-    { key: "ssa", label: "सुकन्या समृद्धि (SSA)" },
-    { key: "td", label: "सावधि जमा (TD 1/2/3/5)" },
+    { key: "rd", label: "आवर्ती जमा (RD)", excel: "rd" },
+    { key: "ssa", label: "सुकन्या समृद्धि (SSA)", excel: "ssa" },
+    { key: "td", label: "सावधि जमा (TD 1/2/3/5)", excel: "td" },
     { key: "ippb", label: "आईपीपीबी" },
     { key: "pli", label: "पीएलआई" },
     { key: "rpli", label: "आरपीएलआई" },
     { key: "stamp_sales", label: "डाक टिकटों की बिक्री" },
-    { key: "sb_deposits", label: "बचत बैंक (SB) जमा" },
+    { key: "sb_deposits", label: "बचत बैंक (SB) जमा", excel: "sb" },
   ];
   const businessEntriesEl = document.getElementById("businessEntries");
   BUSINESS_CATEGORIES_UI.forEach((cat) => {
     const entry = document.createElement("div");
     entry.className = "passbook-entry";
+    // Excel-backed schemes (RD/SSA/TD/SB): पिछले वर्ष auto-filled from the
+    // BO Account Opening Report; वर्तमान वर्ष = Excel (अब तक) + बाद के खाते
+    let currentHtml;
+    if (cat.excel) {
+      currentHtml = `
+        <div style="display:flex;flex-direction:column;gap:4px;min-width:0;">
+          <input type="number" id="biz_${cat.key}_cur_excel" placeholder="Excel तक (संख्या)" inputmode="decimal" readonly style="background:#e8f6ec;font-weight:600;">
+          <input type="number" id="biz_${cat.key}_cur_after" placeholder="बाद के खाते — आप भरें" inputmode="decimal">
+          <div style="font-size:0.75rem;color:#0a7d33;font-weight:700;">वर्तमान वर्ष कुल: <span id="biz_${cat.key}_cur_total">—</span></div>
+        </div>`;
+    } else {
+      currentHtml = `<input type="number" id="biz_${cat.key}_current" placeholder="वर्तमान वर्ष (₹)" inputmode="decimal">`;
+    }
     entry.innerHTML = `
       <div class="entry-idx">${cat.label}</div>
       <div class="row3">
-        <input type="number" id="biz_${cat.key}_previous" placeholder="पिछले वर्ष (₹)" inputmode="decimal">
-        <input type="number" id="biz_${cat.key}_current" placeholder="वर्तमान वर्ष (₹)" inputmode="decimal">
+        <input type="number" id="biz_${cat.key}_previous" placeholder="${cat.excel ? "पिछले वर्ष संख्या (Excel)" : "पिछले वर्ष (₹)"}" inputmode="decimal"${cat.excel ? ' style="background:#f5f9f5;"' : ""}>
+        ${currentHtml}
         <input type="text" id="biz_${cat.key}_remark" placeholder="टिप्पणी (Remark)">
       </div>
     `;
     businessEntriesEl.appendChild(entry);
+    if (cat.excel) {
+      ["biz_" + cat.key + "_cur_excel", "biz_" + cat.key + "_cur_after"].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener("input", function () { updateBizTotal(cat.key); });
+      });
+    }
   });
+
+  // ---------------------------------------------------------------------
+  // Q53 — Account Opening Report baselines
+  // पिछले वर्ष (2025): embedded from BO_account_opening_report_bairia_2025.xlsx
+  // वर्तमान वर्ष: import karo jab tak ka Excel mile — phir report me
+  // (Excel ab tak) + (baad ke khate, UI se) ka JODA jaata hai.
+  // ---------------------------------------------------------------------
+  var ACCT_BASE_KEY = "sdi_acct_baseline_v1";
+  var ACCT_PREV_DEFAULT = {"BO30403125001": {"ssa": "12", "rd": "41", "sb": "6", "td": "3", "total": "62"}, "BO30403113001": {"ssa": "15", "rd": "48", "sb": "40", "td": "", "total": "103"}, "BO30403113002": {"ssa": "14", "rd": "64", "sb": "23", "td": "", "total": "101"}, "BO30403118001": {"ssa": "24", "rd": "57", "sb": "76", "td": "24", "total": "181"}, "BO30403112001": {"ssa": "17", "rd": "133", "sb": "2", "td": "19", "total": "171"}, "BO30403119001": {"ssa": "22", "rd": "101", "sb": "39", "td": "", "total": "162"}, "BO30403102001": {"ssa": "17", "rd": "105", "sb": "9", "td": "30", "total": "161"}, "BO30403125002": {"ssa": "11", "rd": "85", "sb": "29", "td": "", "total": "125"}, "BO30403125003": {"ssa": "13", "rd": "121", "sb": "9", "td": "", "total": "143"}, "BO30403126001": {"ssa": "9", "rd": "112", "sb": "6", "td": "69", "total": "196"}, "BO30403126002": {"ssa": "16", "rd": "126", "sb": "5", "td": "", "total": "147"}, "BO30403126003": {"ssa": "24", "rd": "106", "sb": "44", "td": "170", "total": "344"}, "BO30403123001": {"ssa": "10", "rd": "82", "sb": "9", "td": "8", "total": "109"}, "BO30403115001": {"ssa": "9", "rd": "60", "sb": "8", "td": "14", "total": "91"}, "BO30403102002": {"ssa": "20", "rd": "66", "sb": "30", "td": "", "total": "116"}, "BO30403125004": {"ssa": "31", "rd": "203", "sb": "34", "td": "", "total": "268"}, "BO30403109001": {"ssa": "12", "rd": "81", "sb": "32", "td": "34", "total": "159"}, "BO30403126004": {"ssa": "21", "rd": "94", "sb": "1", "td": "6", "total": "122"}, "BO30403125005": {"ssa": "17", "rd": "44", "sb": "11", "td": "", "total": "72"}, "BO30403112002": {"ssa": "3", "rd": "67", "sb": "1", "td": "24", "total": "95"}, "BO30403119002": {"ssa": "14", "rd": "39", "sb": "11", "td": "", "total": "64"}, "BO30403111001": {"ssa": "15", "rd": "101", "sb": "41", "td": "", "total": "157"}, "BO30403119003": {"ssa": "14", "rd": "72", "sb": "39", "td": "17", "total": "142"}, "BO30403126005": {"ssa": "13", "rd": "88", "sb": "25", "td": "11", "total": "137"}, "BO30403123002": {"ssa": "7", "rd": "89", "sb": "4", "td": "5", "total": "105"}, "BO30403125006": {"ssa": "20", "rd": "50", "sb": "8", "td": "", "total": "78"}, "BO30403112003": {"ssa": "16", "rd": "104", "sb": "14", "td": "8", "total": "142"}, "BO30403123003": {"ssa": "15", "rd": "87", "sb": "5", "td": "8", "total": "115"}, "BO30403123004": {"ssa": "17", "rd": "76", "sb": "1", "td": "", "total": "94"}, "BO30403125007": {"ssa": "19", "rd": "38", "sb": "7", "td": "37", "total": "101"}, "BO30403123005": {"ssa": "26", "rd": "136", "sb": "2", "td": "1", "total": "165"}, "BO30403115002": {"ssa": "20", "rd": "108", "sb": "9", "td": "5", "total": "142"}, "BO30403102003": {"ssa": "8", "rd": "43", "sb": "1", "td": "5", "total": "57"}, "BO30403111002": {"ssa": "32", "rd": "58", "sb": "32", "td": "61", "total": "183"}, "BO30403123006": {"ssa": "8", "rd": "171", "sb": "1", "td": "", "total": "180"}, "BO30403113003": {"ssa": "10", "rd": "64", "sb": "4", "td": "1", "total": "79"}, "BO30403113004": {"ssa": "8", "rd": "46", "sb": "5", "td": "", "total": "59"}, "BO30403125008": {"ssa": "12", "rd": "12", "sb": "7", "td": "31", "total": "62"}, "BO30403119004": {"ssa": "11", "rd": "54", "sb": "14", "td": "6", "total": "85"}, "BO30403123007": {"ssa": "8", "rd": "56", "sb": "2", "td": "25", "total": "91"}, "BO30403109002": {"ssa": "26", "rd": "54", "sb": "7", "td": "14", "total": "101"}, "BO30403111003": {"ssa": "9", "rd": "32", "sb": "6", "td": "19", "total": "66"}, "BO30403126006": {"ssa": "13", "rd": "98", "sb": "4", "td": "", "total": "115"}, "BO30403125009": {"ssa": "5", "rd": "63", "sb": "7", "td": "", "total": "75"}, "BO30403115003": {"ssa": "5", "rd": "55", "sb": "4", "td": "", "total": "64"}, "BO30403123008": {"ssa": "24", "rd": "67", "sb": "11", "td": "", "total": "102"}, "BO30403125010": {"ssa": "13", "rd": "57", "sb": "29", "td": "26", "total": "125"}, "BO30403125011": {"ssa": "15", "rd": "85", "sb": "1", "td": "", "total": "101"}, "BO30403111004": {"ssa": "15", "rd": "131", "sb": "9", "td": "", "total": "155"}, "BO30403123009": {"ssa": "10", "rd": "49", "sb": "17", "td": "289", "total": "365"}, "BO13203203009": {"ssa": "28", "rd": "53", "sb": "26", "td": "71", "total": "178"}, "BO30403102004": {"ssa": "13", "rd": "25", "sb": "7", "td": "61", "total": "106"}, "BO30403119005": {"ssa": "16", "rd": "104", "sb": "6", "td": "", "total": "126"}, "BO30403126007": {"ssa": "16", "rd": "96", "sb": "14", "td": "30", "total": "156"}, "BO30403111005": {"ssa": "20", "rd": "37", "sb": "42", "td": "31", "total": "130"}, "BO30403126008": {"ssa": "15", "rd": "46", "sb": "6", "td": "41", "total": "108"}, "BO30403113005": {"ssa": "11", "rd": "59", "sb": "16", "td": "", "total": "86"}, "BO30403109003": {"ssa": "23", "rd": "38", "sb": "4", "td": "8", "total": "73"}, "BO30403118002": {"ssa": "19", "rd": "58", "sb": "45", "td": "148", "total": "270"}, "BO30403118003": {"ssa": "19", "rd": "68", "sb": "179", "td": "", "total": "266"}, "BO30403115004": {"ssa": "7", "rd": "95", "sb": "", "td": "", "total": "102"}, "BO30403100009": {"ssa": "12", "rd": "73", "sb": "14", "td": "", "total": "99"}, "BO30403111006": {"ssa": "14", "rd": "71", "sb": "10", "td": "1", "total": "96"}, "BO30403123010": {"ssa": "24", "rd": "144", "sb": "39", "td": "30", "total": "237"}, "BO30403113006": {"ssa": "4", "rd": "36", "sb": "2", "td": "", "total": "42"}, "BO30403125012": {"ssa": "21", "rd": "51", "sb": "14", "td": "1", "total": "87"}, "BO30403118004": {"ssa": "14", "rd": "131", "sb": "41", "td": "1", "total": "187"}, "BO30403123011": {"ssa": "11", "rd": "69", "sb": "13", "td": "15", "total": "108"}, "BO30403118005": {"ssa": "12", "rd": "110", "sb": "29", "td": "", "total": "151"}, "BO30403102005": {"ssa": "14", "rd": "103", "sb": "14", "td": "", "total": "131"}};
+  var ACCT_EXCEL_CATS = { rd: "rd", ssa: "ssa", td: "td", sb_deposits: "sb" };
+  var ACCT_EN_ALIAS = { baghaunch: "banghauch", bigahi: "bighi", binaha: "binha", hariahankalan: "harihakalan", jaiprakashnagar: "rawarjpnagar", piyaraunta: "piyrauta", kusaura: "warkusaura" };
+  var ACCT_SO_ALIAS = { reoti: "revati" };
+
+  function getAcctBaseline() {
+    try {
+      var raw = localStorage.getItem(ACCT_BASE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return { prevYear: ACCT_PREV_DEFAULT, curTill: {} };
+  }
+  function saveAcctBaseline(b) {
+    localStorage.setItem(ACCT_BASE_KEY, JSON.stringify(b));
+  }
+  function updateBizTotal(catKey) {
+    var eEl = document.getElementById("biz_" + catKey + "_cur_excel");
+    var aEl = document.getElementById("biz_" + catKey + "_cur_after");
+    var span = document.getElementById("biz_" + catKey + "_cur_total");
+    if (!span) return;
+    var e = parseFloat(eEl && eEl.value) || 0;
+    var a = parseFloat(aEl && aEl.value) || 0;
+    span.textContent = e || a ? String(e + a) : "—";
+  }
+  function applyAcctBaseline(boId) {
+    var base = getAcctBaseline();
+    var prev = (base.prevYear || {})[boId] || null;
+    var cur = (base.curTill || {})[boId] || null;
+    Object.keys(ACCT_EXCEL_CATS).forEach(function (catKey) {
+      var col = ACCT_EXCEL_CATS[catKey];
+      var pEl = document.getElementById("biz_" + catKey + "_previous");
+      if (pEl && prev && prev[col] !== undefined && prev[col] !== "") pEl.value = prev[col];
+      var eEl = document.getElementById("biz_" + catKey + "_cur_excel");
+      if (eEl) eEl.value = cur && cur[col] !== undefined && cur[col] !== "" ? cur[col] : "";
+      updateBizTotal(catKey);
+    });
+    var note = document.getElementById("acctBaselineNote");
+    if (note) {
+      note.style.display = "block";
+      if (prev) {
+        note.textContent = cur
+          ? "पिछले वर्ष की संख्याएँ 2025 Excel से भर दी गई हैं। वर्तमान वर्ष: Excel (अब तक) + बाद के खाते — दोनों जुड़कर ही रिपोर्ट में जाएँगे।"
+          : "पिछले वर्ष की संख्याएँ 2025 Excel से भर दी गई हैं। वर्तमान वर्ष का Excel मिलने पर Import करें; तब तक 'बाद के खाते' में पूरी संख्या लिखें।";
+        note.style.background = "#e8f6ec";
+      } else {
+        note.textContent = "इस BO का 2025 Excel डेटा नहीं मिला — पिछले वर्ष की संख्याएँ स्वयं भरें।";
+        note.style.background = "#fdf3e7";
+      }
+    }
+  }
+
+  // --- Excel row -> BO matching (name + SO, with alias & fuzzy fallback) ---
+  function acctNorm(s) {
+    return String(s || "").toLowerCase().trim()
+      .replace(/^\([^)]*\)/, "")
+      .replace(/\s+bo$/, "")
+      .replace(/[^a-z0-9]/g, "");
+  }
+  function acctBigrams(s) {
+    var set = {};
+    for (var i = 0; i < s.length - 1; i++) set[s.substr(i, 2)] = true;
+    return Object.keys(set);
+  }
+  function acctDice(a, b) {
+    var A = acctBigrams(a), B = acctBigrams(b);
+    if (!A.length || !B.length) return 0;
+    var bset = {};
+    B.forEach(function (x) { bset[x] = 1; });
+    var inter = 0;
+    A.forEach(function (x) { if (bset[x]) inter++; });
+    return (2 * inter) / (A.length + B.length);
+  }
+  function acctSoMatch(excelSo, bid) {
+    var bo = MASTER_DATA[bid];
+    if (!bo) return 0;
+    var soEn = acctNorm(SO_NAME_EN[bo.so_name_hi] || bo.so_name_hi || "");
+    if (!soEn) return 0;
+    var words = String(excelSo || "").match(/[a-zA-Z]+/g) || [];
+    for (var i = 0; i < words.length; i++) {
+      var w = words[i].toLowerCase();
+      if (w === "so" || w === "ballia") continue;
+      w = acctNorm(ACCT_SO_ALIAS[w] || w);
+      if (!w) continue;
+      if (w === soEn || soEn.indexOf(w) !== -1 || w.indexOf(soEn) !== -1) return 1;
+      if (acctDice(w, soEn) >= 0.7) return 1;
+    }
+    return 0;
+  }
+  function acctFindBid(name, soName) {
+    var n = acctNorm(name);
+    var target = ACCT_EN_ALIAS[n] || n;
+    var cands = [];
+    Object.keys(MASTER_DATA).forEach(function (bid) {
+      if (acctNorm(MASTER_DATA[bid].bo_name_en_raw) === target) cands.push(bid);
+    });
+    if (cands.length > 1) {
+      var soOk = cands.filter(function (bid) { return acctSoMatch(soName, bid); });
+      if (soOk.length === 1) cands = soOk;
+    }
+    if (cands.length === 1) return cands[0];
+    if (cands.length > 1) return null;
+    var scored = [];
+    Object.keys(MASTER_DATA).forEach(function (bid) {
+      if (!acctSoMatch(soName, bid)) return;
+      scored.push([bid, acctDice(n, acctNorm(MASTER_DATA[bid].bo_name_en_raw))]);
+    });
+    scored.sort(function (a, b) { return b[1] - a[1]; });
+    if (scored.length && scored[0][1] >= 0.7 && (scored.length === 1 || scored[0][1] - scored[1][1] > 0.05)) return scored[0][0];
+    return null;
+  }
+  function acctColToIdx(letters) {
+    var n = 0;
+    for (var i = 0; i < letters.length; i++) n = n * 26 + (letters.charCodeAt(i) - 64);
+    return n - 1;
+  }
+  function acctCleanNum(v) {
+    var s = String(v === undefined || v === null ? "" : v).trim();
+    if (!s) return "";
+    var f = parseFloat(s);
+    if (isNaN(f)) return s;
+    return String(Math.round(f));
+  }
+  window.acctImportParse = function (input) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    var target = ((document.getElementById("acctImportTarget") || {}).value) || "curTill";
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var fail = function (err) {
+        alert("Excel import विफल: " + (err && err.message ? err.message : err));
+        input.value = "";
+      };
+      try {
+        JSZip.loadAsync(e.target.result).then(function (zip) {
+          var sheetName = null;
+          zip.forEach(function (relPath) {
+            if (/^xl\/worksheets\/sheet\d+\.xml$/.test(relPath)) {
+              if (!sheetName || relPath < sheetName) sheetName = relPath;
+            }
+          });
+          if (!sheetName) throw new Error("worksheet नहीं मिला");
+          var pShared = zip.file("xl/sharedStrings.xml") ? zip.file("xl/sharedStrings.xml").async("string") : Promise.resolve("");
+          return pShared.then(function (ssXml) {
+            var sharedMap = {};
+            if (ssXml) {
+              var dp = new DOMParser().parseFromString(ssXml, "application/xml");
+              var sis = dp.getElementsByTagName("si");
+              for (var i = 0; i < sis.length; i++) {
+                var ts = sis[i].getElementsByTagName("t");
+                var s = "";
+                for (var j = 0; j < ts.length; j++) s += ts[j].textContent || "";
+                sharedMap[i] = s;
+              }
+            }
+            return zip.file(sheetName).async("string").then(function (xml) {
+              var dp = new DOMParser().parseFromString(xml, "application/xml");
+              var rowEls = dp.getElementsByTagName("row");
+              var grid = [];
+              for (var ri = 0; ri < rowEls.length; ri++) {
+                var cells = rowEls[ri].getElementsByTagName("c");
+                var rowArr = [];
+                for (var ci = 0; ci < cells.length; ci++) {
+                  var c = cells[ci];
+                  var ref = c.getAttribute("r") || "";
+                  var colIdx = acctColToIdx(ref.replace(/[0-9]/g, ""));
+                  var type = c.getAttribute("t");
+                  var val = "";
+                  var vEls = c.getElementsByTagName("v");
+                  var tEls = c.getElementsByTagName("t");
+                  if (type === "inlineStr" && tEls.length) val = tEls[0].textContent || "";
+                  else if (vEls.length) {
+                    val = vEls[0].textContent || "";
+                    if (type === "s") val = sharedMap[parseInt(val, 10)] || "";
+                  }
+                  rowArr[colIdx] = val;
+                }
+                grid.push(rowArr);
+              }
+              var hIdx = -1;
+              for (var g = 0; g < grid.length; g++) {
+                var jn = (grid[g] || []).join("|").toLowerCase();
+                if (jn.indexOf("name") !== -1 && jn.indexOf("rd") !== -1 && jn.indexOf("total") !== -1) { hIdx = g; break; }
+              }
+              if (hIdx === -1) throw new Error("हेडर पंक्ति (Name / RD / Total) नहीं मिली");
+              var cm = {};
+              (grid[hIdx] || []).forEach(function (hT, ix) {
+                var h = String(hT || "").toLowerCase().trim();
+                if (!h) return;
+                if (h.indexOf("so name") !== -1) cm.so = ix;
+                else if (h.indexOf("sol") !== -1) return;
+                else if (h === "name" || h.indexOf("bo name") !== -1) cm.name = ix;
+                else if (h.indexOf("ssa") !== -1) cm.ssa = ix;
+                else if (h.indexOf("sbsgp") !== -1) cm.sb = ix;
+                else if (h.indexOf("rd") !== -1) cm.rd = ix;
+                else if (h.indexOf("td") !== -1) cm.td = ix;
+                else if (h.indexOf("total") !== -1) cm.total = ix;
+              });
+              if (cm.name === undefined) cm.name = 0;
+              if (cm.so === undefined) cm.so = 2;
+              var out = {};
+              var unmatchedList = [];
+              for (var r2 = hIdx + 1; r2 < grid.length; r2++) {
+                var g2 = grid[r2] || [];
+                var nm = String(g2[cm.name] || "").trim();
+                if (!nm) continue;
+                if (nm.toLowerCase() === "total") break;
+                var bid = acctFindBid(nm, String(g2[cm.so] || ""));
+                if (!bid) { unmatchedList.push(nm); continue; }
+                out[bid] = {
+                  ssa: cm.ssa !== undefined ? acctCleanNum(g2[cm.ssa]) : "",
+                  rd: cm.rd !== undefined ? acctCleanNum(g2[cm.rd]) : "",
+                  sb: cm.sb !== undefined ? acctCleanNum(g2[cm.sb]) : "",
+                  td: cm.td !== undefined ? acctCleanNum(g2[cm.td]) : "",
+                  total: cm.total !== undefined ? acctCleanNum(g2[cm.total]) : "",
+                };
+              }
+              var n2 = Object.keys(out).length;
+              if (!n2) throw new Error("कोई डाकघर पंक्ति नहीं मिली");
+              var tgtLabel = target === "prevYear" ? "पिछले वर्ष" : "वर्तमान वर्ष (अब तक)";
+              if (!confirm("Import करें? " + n2 + " डाकघर मिले" + (unmatchedList.length ? " (" + unmatchedList.length + " नाम नहीं मिले)" : "") + " — " + tgtLabel + " का डेटा बदल जाएगा।")) { input.value = ""; return; }
+              var base = getAcctBaseline();
+              base[target] = out;
+              saveAcctBaseline(base);
+              if (boSelect.value) applyAcctBaseline(boSelect.value);
+              statusMsg.className = "status ok";
+              statusMsg.textContent = "✅ " + tgtLabel + " import हो गया — " + n2 + " डाकघर";
+              setTimeout(function () { statusMsg.textContent = ""; statusMsg.className = "status"; }, 4000);
+              if (unmatchedList.length) console.warn("Account import unmatched:", unmatchedList);
+              input.value = "";
+            });
+          });
+        }).catch(fail);
+      } catch (err) { fail(err); }
+    };
+    reader.readAsArrayBuffer(file);
+  };
 
   function readBusinessData() {
     const data = {};
     BUSINESS_CATEGORIES_UI.forEach((cat) => {
+      let current = "";
+      if (cat.excel) {
+        // वर्तमान वर्ष = Excel (अब तक) + बाद में खोले गए खाते (UI)
+        const eEl = document.getElementById(`biz_${cat.key}_cur_excel`);
+        const aEl = document.getElementById(`biz_${cat.key}_cur_after`);
+        const e = parseFloat(eEl && eEl.value) || 0;
+        const a = parseFloat(aEl && aEl.value) || 0;
+        current = e || a ? String(e + a) : "";
+      } else {
+        current = document.getElementById(`biz_${cat.key}_current`).value;
+      }
       data[cat.key] = {
         previous: document.getElementById(`biz_${cat.key}_previous`).value,
-        current: document.getElementById(`biz_${cat.key}_current`).value,
+        current: current,
         remark: document.getElementById(`biz_${cat.key}_remark`).value,
       };
     });
@@ -8853,9 +9213,12 @@ const MASTER_DATA = {
     }
 
     BUSINESS_CATEGORIES_UI.forEach((cat) => {
-      ["previous", "current", "remark"].forEach((f) => {
-        document.getElementById(`biz_${cat.key}_${f}`).value = "";
+      ["previous", "current", "remark", "cur_excel", "cur_after"].forEach((f) => {
+        const el = document.getElementById(`biz_${cat.key}_${f}`);
+        if (el) el.value = "";
       });
+      const tSpan = document.getElementById(`biz_${cat.key}_cur_total`);
+      if (tSpan) tSpan.textContent = "—";
     });
 
     // Clear SB-46 entries and re-render so old rows disappear from the UI
@@ -8863,9 +9226,10 @@ const MASTER_DATA = {
     if (typeof renderSB46Entries === "function") renderSB46Entries();
 
     // reset last-inspection-date back to the selected BO's known history, if any
+    // (IR Final date wins over master-data history — same as the dropdown label)
     const bo = MASTER_DATA[boSelect.value];
     const hist = (bo && bo.inspection_history) || {};
-    lastInspectionDateInput.value = hist.last_inspection_date || "";
+    lastInspectionDateInput.value = getInspFinalDate(boSelect.value) || hist.last_inspection_date || "";
     document.getElementById("supVisitDate").value = hist.sup_visit_date || "";
     document.getElementById("boOpeningDate").value = hist.bo_opening_date || "";
     document.getElementById("sdiVisitDates").value = hist.sdi_visit_dates || "";
@@ -8878,6 +9242,7 @@ const MASTER_DATA = {
   const clearDraftBtn = document.getElementById("clearDraftBtn");
   clearDraftBtn.addEventListener("click", () => {
     resetInspFormFields();
+    applyAcctBaseline(boSelect.value);
     dlLinks.style.display = "none";
     dlLinks.innerHTML = "";
     statusMsg.className = "status";
@@ -9203,12 +9568,25 @@ const MASTER_DATA = {
       });
     }
 
-    // Business
+    // Business — Excel-backed schemes draft only their "बाद के खाते" count;
+    // the Excel-loaded part always comes from the live baseline, never a draft.
     draft.business = {};
     BUSINESS_CATEGORIES_UI.forEach((cat) => {
+      let prevVal = document.getElementById(`biz_${cat.key}_previous`) ? document.getElementById(`biz_${cat.key}_previous`).value : "";
+      if (cat.excel) {
+        // Excel schemes: draft the value ONLY when the user CHANGED it from
+        // the live baseline — so a re-imported Excel is never blocked by a
+        // stale draft that merely echoed the old baseline numbers.
+        try {
+          var bb = getAcctBaseline();
+          var pb = ((bb.prevYear || {})[boSelect.value] || {})[ACCT_EXCEL_CATS[cat.key]];
+          if (prevVal === String(pb === undefined ? "" : pb)) prevVal = "";
+        } catch (e) {}
+      }
       draft.business[cat.key] = {
-        previous: document.getElementById(`biz_${cat.key}_previous`) ? document.getElementById(`biz_${cat.key}_previous`).value : "",
-        current: document.getElementById(`biz_${cat.key}_current`) ? document.getElementById(`biz_${cat.key}_current`).value : "",
+        previous: prevVal,
+        current: cat.excel ? "" : (document.getElementById(`biz_${cat.key}_current`) ? document.getElementById(`biz_${cat.key}_current`).value : ""),
+        cur_after: cat.excel && document.getElementById(`biz_${cat.key}_cur_after`) ? document.getElementById(`biz_${cat.key}_cur_after`).value : "",
         remark: document.getElementById(`biz_${cat.key}_remark`) ? document.getElementById(`biz_${cat.key}_remark`).value : "",
       };
     });
@@ -9219,17 +9597,21 @@ const MASTER_DATA = {
   var _prevBoIdForDraft = boSelect.value || "";
 
   function saveInspDraft(targetBoId) {
-    // Lock in which BO this save belongs to RIGHT NOW — do not read
-    // boSelect.value inside the setTimeout below, since by the time it
-    // fires the user may already have switched to a different BO, which
-    // would silently save this BO's data under the wrong BO's key.
+    // Snapshot BOTH the BO id AND the form data RIGHT NOW (v7.19). Reading
+    // the form inside the setTimeout below was a bug: on a BO switch the
+    // fields are reset/re-rendered within ~100ms, so the deferred collection
+    // read the NEW BO's data and silently saved it under the OLD BO's draft
+    // key (draft cross-contamination). Only the localStorage write is
+    // debounced now.
     var boIdToSave = targetBoId || boSelect.value;
     if (!boIdToSave) return;
+    var draft;
+    try { draft = collectInspDraft(); }
+    catch (e) { console.warn("Insp auto-save failed:", e); return; }
+    draft.boId = boIdToSave;
     if (_inspSaveTimer) clearTimeout(_inspSaveTimer);
     _inspSaveTimer = setTimeout(function() {
       try {
-        const draft = collectInspDraft();
-        draft.boId = boIdToSave;
         localStorage.setItem(INSP_DRAFT_KEY_PREFIX + boIdToSave, JSON.stringify(draft));
       } catch(e) { console.warn("Insp auto-save failed:", e); }
     }, 1000);
@@ -9249,16 +9631,67 @@ const MASTER_DATA = {
       if (document.getElementById(`marks_${i}`) && document.getElementById(`marks_${i}`).value) return true;
       if (document.getElementById(`remark_${i}`) && document.getElementById(`remark_${i}`).value) return true;
     }
+    // Q53: only USER-entered values count as draft data — the Excel baseline
+    // (previous-year, cur_excel) must never trigger a phantom draft save.
+    for (const cat of BUSINESS_CATEGORIES_UI) {
+      if (cat.excel) {
+        const aEl = document.getElementById(`biz_${cat.key}_cur_after`);
+        if (aEl && aEl.value) return true;
+      } else {
+        const cEl = document.getElementById(`biz_${cat.key}_current`);
+        if (cEl && cEl.value) return true;
+      }
+      const rEl = document.getElementById(`biz_${cat.key}_remark`);
+      if (rEl && rEl.value) return true;
+    }
+    // v7.19: SB-46 entries, passbook, LOT, RD-closed and balance-ack rows
+    // are draft data too. Without this, filling ONLY these and switching
+    // BOs never saved a draft — the data was silently lost.
+    if (typeof readSB46Data === "function" && readSB46Data().length) return true;
+    for (let i = 0; i < BALANCE_ACK_MAX; i++) {
+      var balBoEl = document.getElementById(`bal_${i}_bo`);
+      if (balBoEl && balBoEl.value) return true;
+      var balRemEl = document.getElementById(`bal_${i}_remark`);
+      if (balRemEl && balRemEl.value) return true;
+    }
+    var pbHas = PASSBOOK_SECTIONS_UI.some(function(section) {
+      for (var i = 0; i < section.count; i++) {
+        var fields = ["acct", "deposit", "withdrawal", "balance"];
+        for (var k = 0; k < fields.length; k++) {
+          var el = document.getElementById(`pb_${section.key}_${i}_${fields[k]}`);
+          if (el && el.value) return true;
+        }
+      }
+      return false;
+    });
+    if (pbHas) return true;
+    var lotHas = false;
+    for (let i = 0; i < LOT_MAX_ENTRIES && !lotHas; i++) {
+      ["sb_deposit", "rd", "td_deposit", "final_balance"].forEach(function(f) {
+        var el = document.getElementById(`lot_${i}_${f}`);
+        if (el && el.value) lotHas = true;
+      });
+    }
+    if (lotHas) return true;
+    for (let i = 0; i < RD_CLOSED_MAX; i++) {
+      var rdcEl = document.getElementById(`rdc_${i}_acct`);
+      if (rdcEl && rdcEl.value) return true;
+    }
     return false;
   }
 
   function restoreInspDraft(boId) {
-  // Clear SB-46 entries
-  sb46Entries = [];
     const raw = localStorage.getItem(INSP_DRAFT_KEY_PREFIX + boId);
     if (!raw) return false;
+    // Clear SB-46 entries only now that a draft will actually be restored
+    sb46Entries = [];
     try {
       const d = JSON.parse(raw);
+
+      // The IR Final date (recorded completed inspection) is authoritative —
+      // a stale draft must never override it for "last inspection date".
+      var irFinalDt = getInspFinalDate(boId);
+      if (irFinalDt) d.lastInspectionDate = irFinalDt;
 
       // Restore simple fields
       const fieldMap = {
@@ -9388,21 +9821,39 @@ const MASTER_DATA = {
         });
       }
 
-      // Restore business
+      // Restore business — cur_excel is NOT restored (live Excel baseline wins);
+      // legacy drafts' manual "current" becomes "बाद के खाते" for excel schemes.
       if (d.business) {
         BUSINESS_CATEGORIES_UI.forEach((cat) => {
           if (d.business[cat.key]) {
-            ["previous","current","remark"].forEach((f) => {
-              const el = document.getElementById(`biz_${cat.key}_${f}`);
-              if (el) el.value = d.business[cat.key][f] || "";
-            });
+            const rec = d.business[cat.key];
+            const pEl = document.getElementById(`biz_${cat.key}_previous`);
+            // Excel schemes: an EMPTY draft value must not wipe the Excel
+            // baseline prefill (old drafts stored "" before this feature);
+            // a non-empty value (the user's manual fix) still wins.
+            if (pEl && (rec.previous || !cat.excel)) pEl.value = rec.previous || "";
+            const rEl = document.getElementById(`biz_${cat.key}_remark`);
+            if (rEl) rEl.value = rec.remark || "";
+            if (cat.excel) {
+              const aEl = document.getElementById(`biz_${cat.key}_cur_after`);
+              if (aEl) aEl.value = rec.cur_after || rec.current || "";
+              updateBizTotal(cat.key);
+            } else {
+              const cEl = document.getElementById(`biz_${cat.key}_current`);
+              if (cEl) cEl.value = rec.current || "";
+            }
           }
         });
       }
 
-      // Restore SB-46 entries
+      // Restore SB-46 entries (DLT is stored as dd.mm.yyyy; the date input
+      // needs ISO or the restored date silently shows blank)
       if (d.sb46Data && Array.isArray(d.sb46Data)) {
-        sb46Entries = d.sb46Data.map(function(e) { return Object.assign({}, e); });
+        sb46Entries = d.sb46Data.map(function(e) {
+          var c = Object.assign({}, e);
+          if (c.dlt) c.dlt = toISODate(c.dlt);
+          return c;
+        });
         renderSB46Entries();
       }
       // Fill any date fields the draft left empty with the defaults
@@ -9431,6 +9882,9 @@ const MASTER_DATA = {
     // shows data left over from whichever BO was selected before it.
     resetInspFormFields();
 
+    // Pre-fill Q53 baselines (previous-year + current-till-Excel) for the new BO
+    applyAcctBaseline(boSelect.value);
+
     // After auto-fill renders, try to restore a saved draft for the new BO
     setTimeout(function() {
       if (boSelect.value) {
@@ -9451,11 +9905,18 @@ const MASTER_DATA = {
 
   // Also auto-save on input/change in any form field
   document.addEventListener("input", function(e) {
+    // A <select> change fires "input" BEFORE "change" — at that instant
+    // boSelect.value is already the NEW BO while the form still shows the
+    // OLD BO's data. Saving there would file the old data under the new
+    // BO's key, so skip boSelect/boSearchBox entirely; the switch flow
+    // handles the save itself.
+    if (e.target === boSelect || e.target === boSearchBox) return;
     if (e.target && e.target.closest && e.target.closest("#insp-root")) {
       saveInspDraft();
     }
   });
   document.addEventListener("change", function(e) {
+    if (e.target === boSelect || e.target === boSearchBox) return;
     if (e.target && e.target.closest && e.target.closest("#insp-root")) {
       saveInspDraft();
     }
@@ -9485,6 +9946,77 @@ const MASTER_DATA = {
       return e.returnValue;
     }
   });
+
+  // ---------------------------------------------------------------------
+  // One-time IR-Final seed (v7.18): सेमरिया (24.09.2026), श्रीपालपुर
+  // (28.09.2026), बहुआरा (27.08.2026). Applies on first load after the
+  // update, then never again (flag sdi_insp_seed_v1). Live user data
+  // always wins: a BO already marked done keeps its existing date, and
+  // programme-table dates are only filled when empty.
+  // ---------------------------------------------------------------------
+  var INSP_DONE_SEED = {
+    "BO30403118003": "24.09.2026",
+    "BO30403118004": "28.09.2026",
+    "BO30403118001": "27.08.2026"
+  };
+  function applyInspDoneSeed() {
+    var FLAG = "sdi_insp_seed_v1";
+    try { if (localStorage.getItem(FLAG)) return; localStorage.setItem(FLAG, "1"); }
+    catch (e) { return; }
+    var marked = getInspectedBOs();
+    Object.keys(INSP_DONE_SEED).forEach(function(boId) {
+      if (marked[boId]) return;
+      var finalDate = INSP_DONE_SEED[boId];
+      var bo = MASTER_DATA[boId];
+      setBOInspected(boId, true, finalDate);
+      try {
+        if (bo) {
+          if (!bo.inspection_history) bo.inspection_history = {};
+          bo.inspection_history.last_inspection_date = finalDate;
+        }
+        var rawMd = localStorage.getItem("sdi_master_data");
+        if (rawMd) {
+          var mdObj = JSON.parse(rawMd);
+          if (mdObj && mdObj.boRecords && mdObj.boRecords[boId]) {
+            mdObj.boRecords[boId].last_inspection = finalDate;
+            localStorage.setItem("sdi_master_data", JSON.stringify(mdObj));
+          }
+        }
+      } catch (e) { console.warn("Seed master-data update failed:", e); }
+      try {
+        if (bo && bo.bo_name_hi && window.setProgInspectionDateIfEmpty) {
+          window.setProgInspectionDateIfEmpty(bo.bo_name_hi, finalDate);
+        }
+      } catch (e) { console.warn("Seed programme date failed:", e); }
+      try {
+        var rawDraft = localStorage.getItem("insp_draft_" + boId);
+        if (rawDraft) {
+          var draftObj = JSON.parse(rawDraft);
+          if (draftObj && draftObj.lastInspectionDate !== finalDate) {
+            draftObj.lastInspectionDate = finalDate;
+            localStorage.setItem("insp_draft_" + boId, JSON.stringify(draftObj));
+          }
+        }
+      } catch (e) {}
+      try {
+        if (window.createInspectionJourney && bo) {
+          var boEnRaw = (bo.bo_name_en_raw || "").toLowerCase().replace(/\s/g, "");
+          var officeMatch = null;
+          for (var oi = 0; oi < allOffices.length; oi++) {
+            var oname = allOffices[oi].name.toLowerCase().replace(/\s/g, "");
+            var onameHi = allOffices[oi].name_hi || "";
+            if (oname === boEnRaw || onameHi === bo.bo_name_hi) { officeMatch = allOffices[oi]; break; }
+          }
+          if (officeMatch) {
+            var iso = finalDate.split(".").reverse().join("-");
+            window.createInspectionJourney(iso, officeMatch.name, officeMatch.dist);
+          }
+        }
+      } catch (e) { console.warn("Seed journey failed:", e); }
+    });
+    rebuildBOSelect();
+  }
+  applyInspDoneSeed();
 
   // On page load, if there's a saved draft for the first BO, restore it
   setTimeout(function() {
