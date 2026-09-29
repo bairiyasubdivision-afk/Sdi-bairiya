@@ -2263,6 +2263,22 @@ function officeTypeLabel(n){var o=allOffices.find(function(x){return x.name===n;
 function buildPurpose(pt,off,custom){if(pt==='custom'||!pt)return custom||'';var tpl=purposeTemplates[pt];if(!tpl)return custom||'';return tpl.replace('{office}',off).replace('{office_type}',officeTypeLabel(off)).trim();}
 function buildOfficeDDL(){var h='<option value="">-- Select --</option>';var g={"SO":"Sub Post Offices","BO":"Branch Offices","Office":"Other Offices","Other":"Other Locations"};var o=["SO","BO","Office","Other"];for(var i=0;i<o.length;i++){var t=o[i],os=allOffices.filter(function(x){return x.type===t;});if(!os.length)continue;os.sort(function(a,b){return a.name.localeCompare(b.name);});h+='<optgroup label="'+g[t]+'">';for(var j=0;j<os.length;j++){var nm=os[j].name;var hi=os[j].name_hi||'';h+='<option value="'+nm+'">'+nm+' ('+os[j].dist+' km)'+(hi?' — '+hi:'')+'</option>';}h+='</optgroup>';}h+='<option value="__custom">Custom...</option>';return h;}
 function getOfficeDist(n){if(n===HQ_NAME)return 0;for(var i=0;i<allOffices.length;i++)if(allOffices[i].name===n)return allOffices[i].dist;return null;}
+// v7.20: one-way HQ distance for a SAVED journey. getOfficeDist() only knows
+// the built-in office list — user-added / custom destinations (Rasra, Mau, …)
+// returned null there, which silently DROPPED their DA from the summary and
+// the TA bill. Fall back to the journey's own outward leg distance instead.
+function getJourneyHqDist(j){
+  var od=getOfficeDist(j.office);
+  if(od!==null)return od;
+  var legs=j.legs||[];
+  for(var i=0;i<legs.length;i++){
+    if(!legs[i].isReturn&&legs[i].from===HQ_NAME&&legs[i].dist!==''&&legs[i].dist!==null&&legs[i].dist!==undefined){
+      var d=parseFloat(legs[i].dist);
+      if(!isNaN(d))return d;
+    }
+  }
+  return null;
+}
 
 // ============================================================
 // DOP UP HOLIDAYS 2026
@@ -2859,6 +2875,7 @@ function saveDayJourney(){
     var retFromOffice='';
     for(var i=0;i<currentLegs.length;i++){if(currentLegs[i].isReturn){retFromOffice=currentLegs[i].from;break;}}
     var retOd=getOfficeDist(retFromOffice);
+    if(retOd===null){for(var ri=0;ri<currentLegs.length;ri++){var rl=currentLegs[ri];if(rl.isReturn&&rl.from===retFromOffice&&rl.dist!==''&&rl.dist!==null&&rl.dist!==undefined){var rd2=parseFloat(rl.dist);if(!isNaN(rd2)){retOd=rd2;break;}}}}
     var retDmd=parseFloat(document.getElementById('daMinDist').value)||8;
     if(retOd!==null&&retOd<=retDmd){
       journey.da=0; // office within 8km, no DA
@@ -2872,7 +2889,9 @@ function saveDayJourney(){
     }
   }
   else{
-  var od=getOfficeDist(firstOffice);var dmd=parseFloat(document.getElementById('daMinDist').value)||8;
+  var od=getOfficeDist(firstOffice);
+  if(od===null){for(var oi2=0;oi2<currentLegs.length;oi2++){var ol=currentLegs[oi2];if(!ol.isReturn&&ol.to===firstOffice&&ol.dist!==''&&ol.dist!==null&&ol.dist!==undefined){var od2=parseFloat(ol.dist);if(!isNaN(od2)){od=od2;break;}}}}
+  var dmd=parseFloat(document.getElementById('daMinDist').value)||8;
   if(od!==null&&od<=dmd)journey.da=0;
   else{
     // Check if this is an overnight journey (return leg has returnDayOffset)
@@ -3186,7 +3205,7 @@ function renderHolidayEditList(){
 function updateSummary(){autoSave();
   var mr=parseFloat(document.getElementById('mileageRate').value)||0,dr=parseFloat(document.getElementById('daRate').value)||0,dmd=parseFloat(document.getElementById('daMinDist').value)||8;
   var td=0,tf=0,tDA=0;
-  getMonthJourneys().forEach(function(j){td+=j.dist;tf+=j.dist*mr;var od=getOfficeDist(j.office);if(od!==null&&od>dmd)tDA+=j.da;});
+  getMonthJourneys().forEach(function(j){td+=j.dist;tf+=j.dist*mr;var od=getJourneyHqDist(j);if(od===null||od>dmd)tDA+=j.da;});
   var daAmt=tDA*dr;var ha=0;if(document.getElementById('hasHotel').checked)ha=parseFloat(document.getElementById('hotelAmount').value)||0;
   var adv=0;if(document.getElementById('hasAdvance').checked)adv=parseFloat(document.getElementById('advanceAmount').value)||0;
   var tot=tf+daAmt+ha-adv;
@@ -3298,7 +3317,7 @@ async function generateTABill(){
     var mr=parseFloat(document.getElementById('mileageRate').value),dr=parseFloat(document.getElementById('daRate').value),dmd=parseFloat(document.getElementById('daMinDist').value)||8;
     var td=0,tf=0,tDA=0,billRows=[];
     getMonthJourneys().forEach(function(j){
-      var od=getOfficeDist(j.office),adm=(od!==null&&od>dmd);
+      var od=getJourneyHqDist(j),adm=(od===null||od>dmd);
       j.legs.forEach(function(l){var ow=l.dist,fare=ow*mr;var daShow=l.isReturn?'':(adm?j.da.toFixed(1):'');billRows.push({from:l.from,dep:l.departure,to:l.to,arr:l.arrival,mode:l.mode,rate:mr.toFixed(2),fare:fare.toFixed(2),da:daShow,dist:ow,halt:'',purpose:l.purpose});td+=ow;tf+=ow*mr;});
       if(adm)tDA+=j.da;
     });
