@@ -3283,9 +3283,9 @@ async function generateTourDiary(){
     var name=document.getElementById('officerName').value,desig=document.getElementById('officerDesignation').value,month=document.getElementById('billMonth').value;
     var f1=[],f2=[];
     legs.forEach(function(l){var placed=false;if(l.departure){var d=new Date(l.departure);if(d.getDate()<=15){f1.push(l);placed=true;}else{f2.push(l);placed=true;}}if(!placed&&l.arrival){var d2=new Date(l.arrival);if(d2.getDate()<=15)f1.push(l);else f2.push(l);}});
-    var jcw=[2200,1300,2200,1300,1000,900,4500],jtw=13400;
+    var jcw=[2364,1397,2364,1397,1075,967,4836],jtw=14400;
     function bJT(list){var rows=[new D.TableRow({tableHeader:true,children:[mkHdr('From',jcw[0]),mkHdr('Departure',jcw[1]),mkHdr('To',jcw[2]),mkHdr('Arrival',jcw[3]),mkHdr('Mode',jcw[4]),mkHdr('Dist(Km)',jcw[5]),mkHdr('Purpose of Journey',jcw[6])]})];list.forEach(function(l){rows.push(new D.TableRow({children:[mkCell(l.from,jcw[0]),mkCell(fmtDT(l.departure),jcw[1]),mkCell(l.to,jcw[2]),mkCell(fmtDT(l.arrival),jcw[3]),mkCell(l.mode,jcw[4]),mkCell(l.dist,jcw[5]),mkCell(l.purpose,jcw[6])]}));});return mkTable(rows,jcw,jtw);}
-    var wlcw=[1800,12000],wltw=13800;
+    var wlcw=[1878,12522],wltw=14400;
     function bWT(fn){
       var sd=fn===1?1:16,ed=fn===1?15:dim;
       var rows=[new D.TableRow({tableHeader:true,children:[mkHdr('Date',wlcw[0]),mkHdr('Details of Work',wlcw[1])]})];
@@ -3344,7 +3344,7 @@ async function generateTABill(){
     if(document.getElementById('hasHotel').checked){ha=parseFloat(document.getElementById('hotelAmount').value)||0;hf=document.getElementById('hotelFrom').value;ht=document.getElementById('hotelTo').value;}
     var adv=0;if(document.getElementById('hasAdvance').checked)adv=parseFloat(document.getElementById('advanceAmount').value)||0;
     var tot=tf+daAmt+ha-adv,totR=Math.round(tot);
-    var tcw=[1700,1300,1700,1300,1200,900,1100,900,900,900,3400],ttw=15300,cfs=16;
+    var tcw=[1600,1224,1600,1224,1129,847,1035,847,847,847,3200],ttw=14400,cfs=16;
     var hdr=new D.TableRow({tableHeader:true,children:[mkHdr('From',tcw[0],cfs),mkHdr('Departure',tcw[1],cfs),mkHdr('To',tcw[2],cfs),mkHdr('Arrival',tcw[3],cfs),mkHdr('Mode',tcw[4],cfs),mkHdr('Rate/Km',tcw[5],cfs),mkHdr('Fare Paid',tcw[6],cfs),mkHdr('DA',tcw[7],cfs),mkHdr('Dist(Km)',tcw[8],cfs),mkHdr('Halt(days)',tcw[9],cfs),mkHdr('Purpose of Journey',tcw[10],cfs)]});
     var dRows=billRows.map(function(j){return new D.TableRow({children:[mkCell(j.from,tcw[0],{size:cfs}),mkCell(fmtDT(j.dep),tcw[1],{size:cfs}),mkCell(j.to,tcw[2],{size:cfs}),mkCell(fmtDT(j.arr),tcw[3],{size:cfs}),mkCell(j.mode,tcw[4],{size:cfs}),mkCell(j.rate,tcw[5],{size:cfs}),mkCell(j.fare,tcw[6],{size:cfs}),mkCell(j.da,tcw[7],{size:cfs}),mkCell(j.dist,tcw[8],{size:cfs}),mkCell(j.halt,tcw[9],{size:cfs}),mkCell(j.purpose,tcw[10],{size:cfs})]});});
     var tRow=new D.TableRow({children:[mkCell('',tcw[0],{size:cfs}),mkCell('',tcw[1],{size:cfs}),mkCell('',tcw[2],{size:cfs}),mkCell('',tcw[3],{size:cfs}),mkCell('',tcw[4],{size:cfs}),mkCell('',tcw[5],{size:cfs}),mkCell(tf.toFixed(2),tcw[6],{size:cfs,bold:true}),mkCell(tDA.toFixed(1),tcw[7],{size:cfs,bold:true}),mkCell('',tcw[8],{size:cfs}),mkCell('',tcw[9],{size:cfs}),mkCell('Total',tcw[10],{size:cfs,bold:true})]});
@@ -3367,10 +3367,10 @@ async function generateTABill(){
     // (hotel under item 4, higher-class under item 5, road/rail under
     // item 6) instead of being dumped after the signature ---
     var tblHotel=null;
-    if(ha>0){var hcw=[1600,2200,1800,2200,2200],htw=10000;tblHotel=mkTable([new D.TableRow({tableHeader:true,children:[mkHdr('Period of Stay (From)',hcw[0],18),mkHdr('Period of Stay (To)',hcw[1],18),mkHdr('Name of Hotel',hcw[2],18),mkHdr('Daily rate of Lodging charged',hcw[3],18),mkHdr('Total amount paid',hcw[4],18)]}),new D.TableRow({children:[mkCell(fmtD(hf),hcw[0]),mkCell(fmtD(ht),hcw[1]),mkCell(document.getElementById('hotelName').value,hcw[2]),mkCell('',hcw[3]),mkCell(String(ha),hcw[4])]})],hcw,htw);}
-    var hccw=[1000,1600,1600,1600,1400,1400,1600],hctw=10200;var hcR=[new D.TableRow({tableHeader:true,children:[mkHdr('Date',hccw[0],18),mkHdr('From',hccw[1],18),mkHdr('To',hccw[2],18),mkHdr('Mode of conveyance',hccw[3],18),mkHdr('Class entitled',hccw[4],18),mkHdr('Class travelled',hccw[5],18),mkHdr('Fare of entitled class (Rs.)',hccw[6],18)]})];for(var r=0;r<3;r++)hcR.push(new D.TableRow({children:[mkCell('',hccw[0]),mkCell('',hccw[1]),mkCell('',hccw[2]),mkCell('',hccw[3]),mkCell('',hccw[4]),mkCell('',hccw[5]),mkCell('',hccw[6])]}));
+    if(ha>0){var hcw=[1613,2218,1814,2218,2217],htw=10080;tblHotel=mkTable([new D.TableRow({tableHeader:true,children:[mkHdr('Period of Stay (From)',hcw[0],18),mkHdr('Period of Stay (To)',hcw[1],18),mkHdr('Name of Hotel',hcw[2],18),mkHdr('Daily rate of Lodging charged',hcw[3],18),mkHdr('Total amount paid',hcw[4],18)]}),new D.TableRow({children:[mkCell(fmtD(hf),hcw[0]),mkCell(fmtD(ht),hcw[1]),mkCell(document.getElementById('hotelName').value,hcw[2]),mkCell('',hcw[3]),mkCell(String(ha),hcw[4])]})],hcw,htw);}
+    var hccw=[988,1581,1581,1581,1383,1383,1583],hctw=10080;var hcR=[new D.TableRow({tableHeader:true,children:[mkHdr('Date',hccw[0],18),mkHdr('From',hccw[1],18),mkHdr('To',hccw[2],18),mkHdr('Mode of conveyance',hccw[3],18),mkHdr('Class entitled',hccw[4],18),mkHdr('Class travelled',hccw[5],18),mkHdr('Fare of entitled class (Rs.)',hccw[6],18)]})];for(var r=0;r<3;r++)hcR.push(new D.TableRow({children:[mkCell('',hccw[0]),mkCell('',hccw[1]),mkCell('',hccw[2]),mkCell('',hccw[3]),mkCell('',hccw[4]),mkCell('',hccw[5]),mkCell('',hccw[6])]}));
     var tblHC=mkTable(hcR,hccw,hctw);
-    var rrcw=[1800,2800,2800,1800],rrtw=9200;var rrR=[new D.TableRow({tableHeader:true,children:[mkHdr('Date',rrcw[0],18),mkHdr('From',rrcw[1],18),mkHdr('To',rrcw[2],18),mkHdr('Fare Paid (Rs.)',rrcw[3],18)]})];for(var r=0;r<3;r++)rrR.push(new D.TableRow({children:[mkCell('',rrcw[0]),mkCell('',rrcw[1]),mkCell('',rrcw[2]),mkCell('',rrcw[3])]}));
+    var rrcw=[1972,3068,3068,1972],rrtw=10080;var rrR=[new D.TableRow({tableHeader:true,children:[mkHdr('Date',rrcw[0],18),mkHdr('From',rrcw[1],18),mkHdr('To',rrcw[2],18),mkHdr('Fare Paid (Rs.)',rrcw[3],18)]})];for(var r=0;r<3;r++)rrR.push(new D.TableRow({children:[mkCell('',rrcw[0]),mkCell('',rrcw[1]),mkCell('',rrcw[2]),mkCell('',rrcw[3])]}));
     var tblRR=mkTable(rrR,rrcw,rrtw);
     for(var i=0;i<annex.length;i++){
       var at=annex[i][0];
