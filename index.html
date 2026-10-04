@@ -567,6 +567,238 @@
   #insp-root .passbook-entry input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;}
 
   </style>
+<style id="v8ui">
+/* =====================================================================
+   v8 UI OVERHAUL — modern, mobile-first, postal red-navy identity kept
+   ===================================================================== */
+:root{
+  --brand:#c8102e; --brand-dark:#9c0c23; --brand-soft:#fdecef;
+  --navy:#16213e; --navy-2:#22304f; --navy-soft:#eef1f7;
+  --ink:#111827; --muted:#667085; --line:#e6e8ee; --line-2:#d5d9e0;
+  --bg:#f5f6f9; --surface:#ffffff;
+  --ok:#0f7b39; --ok-soft:#e9f7ee; --warn:#b45309; --warn-soft:#fff4e5;
+  --info:#1d4ed8; --info-soft:#eaf1ff;
+  --r:16px; --r-sm:10px; --r-xs:8px;
+  --sh-1:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.07);
+  --sh-2:0 8px 24px rgba(16,24,40,.10);
+  --tap:44px;
+}
+html{-webkit-text-size-adjust:100%;}
+body{background:var(--bg)!important;color:var(--ink);
+  font-family:"Noto Sans Devanagari","Nirmala UI",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif!important;
+  font-size:15px;line-height:1.55;}
+
+/* ---------- App bar ---------- */
+.appbar{background:var(--surface);border-bottom:1px solid var(--line);position:relative;}
+.appbar::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--brand) 0%,var(--brand-dark) 45%,var(--navy) 100%);}
+.appbar-inner{max-width:1180px;margin:0 auto;padding:12px 16px 10px;display:flex;flex-direction:column;gap:10px;}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;}
+.brand-mark{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--brand),var(--brand-dark));
+  display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:var(--sh-1);flex:0 0 auto;}
+.brand-title{font-size:1.03rem;font-weight:800;color:var(--navy);letter-spacing:-.2px;line-height:1.2;}
+.brand-sub{font-size:.73rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tab-nav{display:flex;gap:6px;background:var(--navy-soft);border-radius:13px;padding:4px;overflow-x:auto;scrollbar-width:none;}
+.tab-nav::-webkit-scrollbar{display:none;}
+.tab-btn{flex:1 0 auto;padding:10px 14px;border:none;background:transparent;color:var(--muted);font-weight:700;
+  font-size:.85rem;border-radius:10px;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s,box-shadow .15s;font-family:inherit;}
+.tab-btn:hover{color:var(--navy);background:#fff;}
+.tab-btn.active{background:var(--surface);color:var(--brand);box-shadow:var(--sh-1);}
+@media(min-width:900px){
+  .appbar{position:sticky;top:0;z-index:60;box-shadow:0 1px 0 var(--line),0 6px 18px rgba(16,24,40,.04);}
+  .appbar-inner{flex-direction:row;align-items:center;justify-content:space-between;padding:12px 20px;gap:16px;}
+  .tab-nav{flex:0 1 auto;}
+  .tab-btn{flex:0 0 auto;}
+}
+
+/* ---------- Layout ---------- */
+.container{max-width:1180px;margin:0 auto;padding:18px 16px 40px;}
+@media(min-width:900px){.container{padding:22px 20px 56px;}}
+#insp-root{background:transparent!important;max-width:820px!important;padding-bottom:24px!important;}
+#data-tab{background:transparent!important;min-height:0!important;}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:16px;box-shadow:var(--sh-1);transition:box-shadow .18s,border-color .18s;}
+.card:hover{box-shadow:var(--sh-2);}
+@media(max-width:520px){.card{padding:14px;border-radius:14px;margin-bottom:12px;}}
+.card-title,.card>h2{font-size:1.0rem;font-weight:800;color:var(--navy);margin:0 0 14px;padding:0;border:none;
+  display:flex;align-items:center;gap:9px;letter-spacing:-.2px;line-height:1.35;}
+.card-title{justify-content:space-between;}
+.card-title::after{content:"";display:none;}
+.card>h2{position:relative;padding-bottom:10px;}
+.card>h2::after{content:"";position:absolute;left:0;bottom:0;width:42px;height:3px;border-radius:2px;background:var(--brand);}
+.card-body{padding:0;}
+
+/* ---------- Forms ---------- */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:6px;min-width:0;}
+.form-group label{font-size:.8rem;font-weight:700;color:#475467;text-transform:none;letter-spacing:0;}
+input,select,textarea{font-family:inherit;}
+input:not([type=checkbox]):not([type=radio]):not([type=color]),select,textarea{
+  font-size:16px;min-height:var(--tap);padding:10px 12px;border:1px solid var(--line-2);border-radius:var(--r-sm);
+  background:#fff;color:var(--ink);width:100%;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;appearance:none;}
+select{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2.4'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:34px;}
+textarea{min-height:96px;line-height:1.5;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3.5px rgba(200,16,46,.12);}
+input[readonly]{background:#f2f4f7;color:#475467;}
+input::placeholder,textarea::placeholder{color:#98a2b3;}
+
+/* ---------- Buttons ---------- */
+.btn{min-height:var(--tap);padding:10px 18px;border:none;border-radius:var(--r-sm);font-size:.9rem;font-weight:700;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:transform .08s,filter .15s,background .15s;font-family:inherit;}
+.btn:active{transform:translateY(1px);}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 1px 2px rgba(200,16,46,.25);}
+.btn-primary:hover{background:var(--brand-dark);}
+.btn-secondary{background:#eef0f4;color:#344054;}
+.btn-secondary:hover{background:#e3e6ec;}
+.btn-success{background:var(--ok);color:#fff;}
+.btn-blue{background:var(--info);color:#fff;}
+.btn-outline{background:#fff;color:var(--brand);border:1.5px solid var(--brand);}
+.btn-danger{background:#d92d20;color:#fff;}
+.btn-sm{min-height:36px;padding:7px 13px;font-size:.82rem;border-radius:9px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ---------- Callouts / notes ---------- */
+.info-banner{background:var(--info-soft);border:1px solid #cddffd;border-left:4px solid var(--info);
+  border-radius:var(--r-sm);padding:12px 14px;margin-bottom:16px;font-size:.88rem;color:#1e3a8a;line-height:1.6;}
+.info-banner b{color:#1e40af;}
+.info-banner ol{margin:6px 0 0 18px;padding:0;}
+.info-banner li{margin:2px 0;}
+.note{background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:var(--r-xs);padding:9px 12px;font-size:.85rem;color:#7c3a06;line-height:1.55;}
+.small-muted{color:var(--muted);font-size:.82rem;}
+
+/* ---------- Pills ---------- */
+.step-badge{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 6px;
+  border-radius:9px;background:var(--brand);color:#fff;font-size:.82rem;font-weight:800;flex:0 0 auto;box-shadow:0 1px 2px rgba(200,16,46,.3);}
+.qref{font-size:.72rem;color:var(--brand-dark);font-weight:700;background:var(--brand-soft);padding:2px 8px;border-radius:999px;margin-left:4px;white-space:nowrap;}
+
+/* ---------- Wizard ---------- */
+.wz-bar{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;box-shadow:var(--sh-1);}
+.wz-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px;}
+.wz-count{font-size:.82rem;font-weight:800;color:var(--navy);}
+.wz-title{font-size:.86rem;font-weight:700;color:var(--brand);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.wz-track{height:7px;background:var(--navy-soft);border-radius:999px;overflow:hidden;}
+.wz-fill{height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--navy));border-radius:999px;transition:width .25s ease;}
+.wz-chips{display:flex;gap:6px;overflow-x:auto;margin-top:10px;padding-bottom:2px;scrollbar-width:none;}
+.wz-chips::-webkit-scrollbar{display:none;}
+.wz-chip{flex:0 0 auto;min-width:30px;height:30px;padding:0 8px;border-radius:9px;border:1px solid var(--line-2);background:#fff;
+  color:var(--muted);font-weight:700;font-size:.78rem;cursor:pointer;font-family:inherit;}
+.wz-chip.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+.wz-chip.done{border-color:var(--ok);color:var(--ok);background:var(--ok-soft);}
+.wz-nav{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:2px 0 18px;}
+.wz-nav .btn{flex:1 1 0;}
+.wz-nav .wz-hint{font-size:.78rem;color:var(--muted);text-align:center;flex:1 1 auto;}
+.wz-hide{display:none!important;}
+.wz-mode{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-bottom:10px;}
+@keyframes wzIn{from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:none;}}
+.wz-anim{animation:wzIn .22s ease;}
+.wz-nav .btn{font-size:.88rem;}
+@media(max-width:520px){
+  .wz-title{display:block;font-size:.8rem;max-width:100%;white-space:normal;}
+  .wz-top{flex-wrap:wrap;gap:4px;}
+  .wz-count{font-size:.8rem;}
+  .wz-nav .btn{font-size:.86rem;padding:10px 8px;}
+  .wz-nav .wz-hint{font-size:.74rem;}
+}
+
+</style>
+<style id="v8b">
+/* ============ v8b: scoped fixes ============ */
+.lbl-short{display:none;}
+@media(max-width:640px){
+  .lbl-full{display:none;}
+  .lbl-short{display:inline;}
+  .tab-btn{font-size:.8rem;padding:9px 11px;}
+}
+/* --- inspection tab (beats legacy #insp-root rules) --- */
+#insp-root input:not([type=checkbox]):not([type=radio]),#insp-root select,#insp-root textarea{
+  font-size:16px!important;min-height:44px!important;padding:10px 12px!important;
+  border:1px solid var(--line-2)!important;border-radius:10px!important;background:#fff!important;}
+#insp-root select{padding-right:34px!important;background-repeat:no-repeat!important;background-position:right 12px center!important;}
+#insp-root input:focus,#insp-root select:focus,#insp-root textarea:focus{
+  border-color:var(--brand)!important;box-shadow:0 0 0 3.5px rgba(200,16,46,.12)!important;outline:none!important;}
+#insp-root input[readonly]{background:#f2f4f7!important;}
+#insp-root .btn{min-height:44px;}
+#insp-root .btn-sm{min-height:36px;}
+#insp-root header{background:transparent!important;color:var(--ink)!important;padding:14px 2px 6px!important;box-shadow:none!important;border:none!important;}
+#insp-root header h1{font-size:1.12rem!important;font-weight:800!important;color:var(--navy)!important;margin:0 0 3px!important;letter-spacing:-.2px;}
+#insp-root header p{font-size:.82rem!important;color:var(--muted)!important;margin:0!important;opacity:1!important;}
+#insp-root .card>h2{font-size:1.0rem!important;}
+#insp-root .note{font-size:.85rem;}
+#insp-root .info-grid>div,#insp-root .info-grid>*{font-size:.88rem;}
+/* --- master data tab --- */
+#data-tab .data-header{background:transparent!important;color:var(--ink)!important;padding:16px 0 6px!important;}
+#data-tab .data-header h1{color:var(--navy)!important;font-size:1.12rem!important;font-weight:800;}
+#data-tab .data-header p{color:var(--muted)!important;font-size:.84rem!important;opacity:1!important;}
+#data-tab .data-body{max-width:1180px!important;padding:0 16px 44px!important;}
+#data-tab .stats-grid{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(132px,1fr))!important;gap:10px!important;margin-bottom:18px!important;}
+#data-tab .stats-grid>div{background:#fff!important;border:1px solid var(--line)!important;border-radius:14px!important;padding:12px 14px!important;box-shadow:var(--sh-1)!important;}
+#data-tab .sub-tabs{display:flex!important;gap:6px!important;background:var(--navy-soft);border-radius:13px;padding:4px;overflow-x:auto;flex-wrap:nowrap!important;margin-bottom:18px!important;scrollbar-width:none;}
+#data-tab .sub-tabs::-webkit-scrollbar{display:none;}
+#data-tab .sub-tab{padding:9px 14px!important;background:transparent!important;border-radius:10px!important;font-size:.84rem!important;font-weight:700!important;color:var(--muted)!important;white-space:nowrap!important;font-family:inherit;}
+#data-tab .sub-tab:hover{background:#fff!important;color:var(--navy)!important;}
+#data-tab .sub-tab.active{background:#fff!important;color:var(--brand)!important;box-shadow:var(--sh-1);}
+#data-tab .data-card{border:1px solid var(--line)!important;border-radius:16px!important;box-shadow:var(--sh-1)!important;background:#fff!important;}
+#data-tab .data-card-title{background:#fff!important;border-bottom:1px solid var(--line)!important;padding:14px 18px!important;font-weight:800!important;color:var(--navy)!important;font-size:.98rem!important;}
+#data-tab .data-card-body{padding:16px 18px!important;}
+#data-tab th{padding:10px 12px!important;background:#f2f4f8!important;}
+#data-tab td{padding:9px 12px!important;}
+#data-tab td .btn-sm,#data-tab td button{margin:2px 4px 2px 0;}
+#data-tab .search-box{margin-bottom:12px!important;}
+#data-tab input:not([type=checkbox]):not([type=radio]),#data-tab select{font-size:16px!important;}
+#data-tab table{font-size:.85rem!important;}
+/* --- auto-fill info rows: let long values wrap instead of clipping --- */
+#insp-root .info-grid .row{align-items:baseline;}
+#insp-root .info-grid .k{overflow-wrap:anywhere;flex:0 1 auto;}
+#insp-root .info-grid .v{overflow-wrap:anywhere;word-break:break-word;min-width:0;}
+/* --- sort row --- */
+.acct-sortrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.acct-sortrow .acct-sortlbl{font-size:.82rem;font-weight:700;color:var(--navy);}
+.acct-sortrow select{padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:.85rem;font-family:inherit;background:#fff;max-width:100%;}
+.acct-tbl th.acct-rank,.acct-tbl td.acct-rank{width:44px;text-align:center;color:var(--muted);font-size:.8rem;}
+/* --- monthly / quarterly upload --- */
+.acct-period-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--line);
+  border-radius:10px;padding:8px 12px;margin-bottom:6px;background:#fff;}
+.acct-period-row .apr-l{font-weight:700;color:var(--navy);font-size:.9rem;min-width:170px;}
+.acct-period-row .apr-m{color:var(--muted);font-size:.82rem;flex:1 1 auto;}
+.acct-period-row .apr-x{border:1px solid #f5c2c7;background:#fdecec;color:#8a1c1c;border-radius:8px;
+  padding:4px 10px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;}
+.acct-period-row .apr-x:hover{background:#f9d7da;}
+/* --- account opening controls --- */
+.acct-controls{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
+.acct-segrow{display:flex;gap:4px;background:var(--navy-soft);border-radius:12px;padding:4px;}
+.acct-seg{border:none;background:transparent;color:var(--muted);font-weight:700;font-size:.83rem;
+  padding:8px 13px;border-radius:9px;cursor:pointer;white-space:nowrap;font-family:inherit;}
+.acct-seg:hover{background:#fff;color:var(--navy);}
+.acct-seg.active{background:#fff;color:var(--brand);box-shadow:var(--sh-1);}
+.acct-empty{background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:10px;padding:12px 14px;font-size:.88rem;color:#7c3a06;line-height:1.6;}
+/* --- v9.2: Master Data टेबल के अंक-बॉक्स पूरी चौड़ाई पाएँ (पहले सिकुड़कर 26px रह जाते थे) --- */
+#data-tab .acct-tbl{table-layout:auto!important;}
+#data-tab .acct-tbl th,#data-tab .acct-tbl td{white-space:nowrap!important;}
+#data-tab .acct-tbl .acct-cell{width:72px!important;min-width:72px!important;font-size:15px!important;
+  padding:5px 6px!important;text-align:center;box-sizing:border-box;}
+#data-tab .acct-tbl .acct-name{min-width:150px;}
+#data-tab .acct-tbl .acct-so{min-width:78px;}
+#data-tab .acct-tbl .acct-total{min-width:56px;}
+#data-tab table td input,#data-tab table th input{min-width:52px;}
+#data-tab table td input[type="date"]{min-width:132px;}
+#sub-programme table input[type="text"]{min-width:192px!important;}
+#sub-programme table input[type="date"]{min-width:134px!important;}
+/* --- v9.1: Master Data — सब सब-टैब एक साथ दिखें + पूरी टेबल एक साथ --- */
+#data-tab .sub-tabs{flex-wrap:wrap!important;overflow:visible!important;}
+#data-tab .sub-tab{flex:0 1 auto;}
+#data-tab .data-table-wrap{max-height:none!important;overflow-y:visible!important;overflow-x:auto;}
+@media(min-width:900px){ #data-tab .data-table-wrap thead{position:static;} }
+@media(max-width:899px){
+  #data-tab .data-table-wrap thead{position:sticky;top:0;z-index:2;}
+  #data-tab .sub-tab{padding:8px 12px!important;font-size:.8rem!important;}
+}
+/* --- duplicate account warning --- */
+.dup-warn{background:#fdecec;border:1px solid #f5c2c7;border-left:4px solid #d92d20;color:#8a1c1c;
+  border-radius:12px;padding:11px 14px;font-size:.86rem;line-height:1.55;margin:0 0 14px;}
+input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-shadow:0 0 0 3px rgba(217,45,32,.12)!important;}
+/* --- wizard chips scroll hint --- */
+.wz-chips{-webkit-overflow-scrolling:touch;mask-image:linear-gradient(90deg,#000 88%,transparent);}
+
+</style>
 </head>
 <body>
 
@@ -576,23 +808,36 @@
 </div>
 
 
-<div class="tab-bar">
-  <h1>SDI Bairiya Office Toolkit</h1>
-  <div class="subtitle">Department of Posts &mdash; Ballia East Sub Division (Bairiya)</div>
-  <div class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('ta')">Tour Diary & TA Bill</button>
-    <button class="tab-btn" onclick="switchTab('insp')">BO Inspection Report</button>
-    <button class="tab-btn" onclick="switchTab('data')">Master Data & Settings</button>
+<header class="appbar">
+  <div class="appbar-inner">
+    <div class="brand">
+      <div class="brand-mark">📮</div>
+      <div style="min-width:0;">
+        <div class="brand-title">SDI Bairiya Office Toolkit</div>
+        <div class="brand-sub">डाक विभाग &middot; बैरिया पूर्वी उपमण्डल, बलिया</div>
+      </div>
+    </div>
+    <nav class="tab-nav" role="tablist">
+      <button class="tab-btn active" onclick="switchTab('ta')"><span class="lbl-full">📋 Tour Diary &amp; TA Bill</span><span class="lbl-short">📋 TA / Diary</span></button>
+      <button class="tab-btn" onclick="switchTab('insp')"><span class="lbl-full">🔍 BO Inspection Report</span><span class="lbl-short">🔍 Inspection</span></button>
+      <button class="tab-btn" onclick="switchTab('data')"><span class="lbl-full">⚙️ Master Data &amp; Settings</span><span class="lbl-short">⚙️ Data</span></button>
+    </nav>
   </div>
-</div>
+</header>
 
 <!-- TAB 1: TOUR DIARY & TA BILL -->
 <div class="tab-content active" id="ta-tab">
   <div class="container">
 
-<div class="header"><div><h1>TA Bill & Tour Diary Generator</h1><div class="subtitle">Department of Posts &mdash; Ballia East Sub Division (Bairiya)</div></div></div>
 <div class="container">
-  <div class="info-banner"><b>How it works:</b> Select month &rarr; click a date &rarr; enter departure time &rarr; select office visited (arrival auto-calculated from distance + random 24-30 kmph speed) &rarr; select purpose &rarr; click "Add Stop" to visit more offices (enter inter-office distance manually, time auto-calculated) &rarr; click "Plan Return to HQ" &rarr; Save Day's Journey. Work log auto-generates combined purpose text for multi-stop days.</div>
+  <div class="info-banner"><b>How to use</b>
+    <ol>
+      <li>Select the month &rarr; tap a date on the calendar.</li>
+      <li>Enter the departure time &rarr; choose the office visited (arrival time is computed automatically from distance + speed).</li>
+      <li>Choose the purpose &rarr; to visit another office use <b>Add Stop</b> (enter the inter-office distance).</li>
+      <li>Press <b>Plan Return to HQ</b> &rarr; then <b>Save Day's Journey</b>.</li>
+      <li>The Work Log for a multi-office day is generated automatically.</li>
+    </ol></div>
 
   <div class="card"><div class="card-title">Officer Details</div><div class="form-grid">
     <div class="form-group"><label>Name</label><input type="text" id="officerName" value="RAHUL SINGH"></div>
@@ -712,16 +957,19 @@
   <p>बैरिया पूर्वी उपमण्डल, बलिया मंडल — पूरी तरह ऑफ़लाइन, आपके फ़ोन में ही चलता है</p>
 </header>
 
+<div id="backupRemind" style="display:none;margin:10px 0;padding:10px 12px;border-radius:10px;background:#fff4e5;border:1px solid #ffcc80;font-size:0.85rem;line-height:1.6;"></div>
+
 <main>
 
   <div class="card">
     <h2><span class="step-badge">1</span> शाखा डाकघर चुनें</h2>
-    <input type="text" id="boSearchBox" placeholder="🔍 नाम टाइप करें — सूची अपने आप छँटेगी (English/Hindi)...">
+    <input type="text" id="boSearchBox" placeholder="🔍 नाम टाइप करें (English/हिंदी)">
     <select id="boSelect" style="margin-top:8px;"></select>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;">
       <button class="btn btn-primary" id="generateBtnQuick" type="button" style="font-size:0.85rem;padding:8px 16px;">📄 रिपोर्ट बनाएं (Generate)</button>
     </div>
   </div>
+
 
   <div class="card" id="autoFillCard" style="display:none;">
     <h2><span class="step-badge">✓</span> स्वतः भरी गई जानकारी</h2>
@@ -886,6 +1134,7 @@
   <div class="card">
     <h2><span class="step-badge">11</span> व्यवसाय विकास तुलना <span class="qref">(प्रश्न 53)</span></h2>
     <div id="acctBaselineNote" style="display:none;font-size:0.85rem;padding:8px 12px;border-radius:8px;margin-bottom:10px;line-height:1.5;"></div>
+    <div id="acctFyNote" style="display:none;font-size:0.85rem;padding:8px 12px;border-radius:8px;margin-bottom:10px;line-height:1.5;background:#eef3fb;border:1px solid #cdd9ee;"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
       <select id="acctImportTarget" style="padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;">
         <option value="curTill">वर्तमान वर्ष (Excel अब तक)</option>
@@ -968,6 +1217,13 @@
 
 </main>
 
+  <div class="card" id="syncCard">
+    <h2><span style="font-size:1.05rem;">🔎</span> लंबित-सिंक जाँच <span class="qref">(रिपोर्ट बनी पर चिह्न नहीं)</span></h2>
+    <p class="note" style="margin-top:0;">जिन BO की रिपोर्ट बन चुकी है पर &ldquo;निरीक्षण पूर्ण&rdquo; चिह्न नहीं लगा, वे यहाँ दिखेंगे &mdash; तारीख़ जाँचकर एक टैप में चिह्न लगाएँ। <b>ध्यान दें:</b> निरीक्षण तिथि अपने-आप आज की तारीख़ से भर जाती है, इसलिए तारीख़ ज़रूर जाँच लें; और सूची में ऊपर वे BO हैं जिनके फ़ील्ड सबसे ज़्यादा भरे हैं।</p>
+    <button type="button" class="btn btn-secondary" id="syncScanBtn" style="font-size:0.85rem;">🔎 जाँच करें</button>
+    <div id="syncList" style="margin-top:10px;"></div>
+  </div>
+
 <div class="footer-bar">
   <div class="inner" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;max-width:720px;margin:0 auto;">
     <button class="btn btn-primary" id="generateBtn" style="flex-shrink:0;font-size:0.85rem;padding:8px 16px;">📄 रिपोर्ट बनाएं (Generate)</button>
@@ -1001,9 +1257,64 @@
       <button class="sub-tab active" onclick="switchDataTab('offices')">Offices & Distances</button>
       <button class="sub-tab" onclick="switchDataTab('staff')">Staff Directory</button>
       <button class="sub-tab" onclick="switchDataTab('villages')">Villages</button>
-      <button class="sub-tab" onclick="switchDataTab('programme')">निरीक्षण कार्यक्रम 2026</button>
+      <button class="sub-tab" onclick="switchDataTab('programme')">Inspection Programme 2026</button>
+      <button class="sub-tab" onclick="switchDataTab('accounts')">Account Opening</button>
       <button class="sub-tab" onclick="switchDataTab('settings')">Settings</button>
       <button class="sub-tab" onclick="switchDataTab('backup')">Backup & Restore</button>
+    </div>
+
+    <!-- ACCOUNT OPENING -->
+    <style>
+      .acct-tbl{width:100%;border-collapse:collapse;font-size:0.8rem;}
+      .acct-tbl th,.acct-tbl td{border:1px solid var(--border);padding:3px 5px;text-align:center;white-space:nowrap;}
+      .acct-tbl thead th{background:#eef2ff;font-weight:700;}
+      .acct-tbl tfoot td{background:#f6f8ff;font-weight:700;}
+      .acct-tbl .acct-name{text-align:left;font-weight:600;}
+      .acct-tbl .acct-so{text-align:left;color:var(--muted);}
+      .acct-tbl .acct-total{font-weight:700;color:#0a7d33;}
+      .acct-cell{width:56px;padding:3px 4px;border:1px solid var(--border);border-radius:5px;font-size:0.8rem;text-align:center;}
+    </style>
+    <div class="sub-tab-content" id="sub-accounts">
+      <div class="data-card">
+        <div class="data-card-title" onclick="toggleDataCard(this)">
+          📥 Monthly / Quarterly Account-Opening Upload
+          <span class="data-card-toggle">click to collapse</span>
+        </div>
+        <div class="data-card-body">
+          <p class="note" style="margin:0 0 10px;">
+            Upload the department's <b>monthly</b> or <b>quarterly</b> report here (same Product-Wise format). The figures are
+            <b>added</b> to the table below (new accounts), kept separately period-wise, and flow automatically into
+            <b>Question 53</b> and the generated <b>report</b>. If a wrong file is uploaded, remove it below.
+          </p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <select id="acctPeriodSel" style="min-width:230px;"></select>
+            <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('acctMonthlyFile').click()">📥 Choose Excel</button>
+            <input type="file" id="acctMonthlyFile" accept=".xlsx" style="display:none" onchange="acctMonthlyParse(this)">
+          </div>
+          <div id="acctPeriodList" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <div class="data-card">
+        <div class="data-card-title" onclick="toggleDataCard(this)">
+          Account Opening &mdash; CY 2025 / CY 2026 / FY 2026-27
+          <span class="data-card-toggle">click to collapse</span>
+        </div>
+        <div class="data-card-body">
+          <p style="font-size:0.9rem;margin-bottom:14px;color:var(--muted);line-height:1.6;">
+            For <b>Branch Offices (BO)</b> the four applicable schemes (SSA, RD, SB, TD) are shown, and for <b>Sub Offices (SO)</b> all schemes.
+            Choose the period above &mdash; <b>CY 2025</b> (calendar year 2025), <b>CY 2026</b> (calendar year 2026, Jan&ndash;Sep) or
+            <b>FY 2026-27</b> (financial year, Apr 2026 onwards) &mdash; and the office type.
+            Any figure can be edited directly &mdash; changes save instantly and flow into <b>Question 53</b> (business-development comparison).
+            Accounts opened after 30 September are entered in the Inspection tab&rsquo;s Question 53 card under &ldquo;later accounts &mdash; enter here&rdquo;,
+            or uploaded above as a monthly/quarterly report (which adds to both CY 2026 and FY 2026-27).
+          </p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+            <input type="text" class="search-box" id="acctOfficeSearch" placeholder="Search BO / SO by name or code..." oninput="renderAcctTable()" style="flex:1;min-width:200px;">
+          </div>
+          <div class="data-table-wrap" id="acctTableWrap"></div>
+        </div>
+      </div>
     </div>
 
     <!-- OFFICES -->
@@ -1058,17 +1369,17 @@
     <div class="sub-tab-content" id="sub-programme">
       <div class="data-card">
         <div class="data-card-title" onclick="toggleDataCard(this)">
-          निरीक्षण कार्यक्रम — वर्ष 2026 (Editable)
+          Inspection Programme &mdash; 2026 (Editable)
           <span class="data-card-toggle">click to collapse</span>
         </div>
         <div class="data-card-body">
-          <input type="text" class="search-box" id="progSearch" placeholder="डाकघर खोजें (BO/SO नाम टाइप करें)..." oninput="renderProgTable()">
+          <input type="text" class="search-box" id="progSearch" placeholder="Search post office (type BO/SO name)..." oninput="renderProgTable()">
           <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn-sm btn-add" onclick="document.getElementById('progImportFile').click()">📥 Excel Import</button>
             <input type="file" id="progImportFile" accept=".xlsx" style="display:none" onchange="progImportParse(this)">
           </div>
           <div class="data-table-wrap" id="progTableWrap"></div>
-          <p class="info-text" style="margin-top:8px;color:#666;">निरीक्षण की तिथि (2026): IR Final मार्क होने पर अपने आप भर जाती है — हाथ से भी बदली जा सकती है। वाली सेल हरी पृष्ठभूमि में दिखती है।</p>
+          <p class="info-text" style="margin-top:8px;color:#666;">Inspection date (2026): auto-filled when IR Final is marked &mdash; can also be edited by hand. Auto-filled cells appear with a green background.</p>
         </div>
       </div>
     </div>
@@ -1247,6 +1558,7 @@
 
   // --- Toast ---
   var toastTimer=null;
+  try { window.showToast = showToast; } catch (e) {}
   function showToast(msg){
     var t=document.getElementById('dataToast');
     if(!t){
@@ -1278,6 +1590,10 @@
     document.querySelector('.sub-tab[onclick*="'+tab+'"]').classList.add('active');
     document.getElementById('sub-'+tab).classList.add('active');
     if(tab==='programme'&&typeof renderProgTable==='function')renderProgTable();
+    if(tab==='accounts'){
+      if(typeof window.renderAcctTable==='function')window.renderAcctTable();
+      if(typeof window.renderAcctPeriods==='function')window.renderAcctPeriods();
+    }
   };
 
   // ============================================================
@@ -1285,7 +1601,7 @@
   // Inspection_Programme_2026_Bairia_1.xlsx register)
   // ============================================================
   var PROG_KEY='sdi_prog_2026_v1';
-  var PROG_DEFAULT=[{"sn": 1, "name": "शाखा डाकघर बलिहार", "ao": "उप डाकघर दुबेछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "15.02.2025", "days": "1", "month": "जनवरी 2026", "inspDate": "14/02/26", "remark": ""}, {"sn": 2, "name": "शाखा डाकघर बेलहरी", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "01.03.2025", "days": "1", "month": "जनवरी 2026", "inspDate": "17/02/26", "remark": ""}, {"sn": 3, "name": "शाखा डाकघर कुसौरा", "ao": "उप डाकघर सहतवार", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "03.03.2025", "days": "1", "month": "फरवरी 2026", "inspDate": "02/03/26", "remark": ""}, {"sn": 4, "name": "शाखा डाकघर भोपालपुर", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.03.2025", "days": "1", "month": "फरवरी 2026", "inspDate": "03/03/26", "remark": ""}, {"sn": 5, "name": "शाखा डाकघर भोजछपरा", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "17.03.2025", "days": "1", "month": "फरवरी 2026", "inspDate": "16/03/26", "remark": ""}, {"sn": 6, "name": "शाखा डाकघर रोहुआ", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "22.03.2025", "days": "1", "month": "मार्च 2026", "inspDate": "21/03/26", "remark": ""}, {"sn": 7, "name": "शाखा डाकघर चेरीडीह", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "29.03.2025", "days": "1", "month": "मार्च 2026", "inspDate": "17/03/26", "remark": ""}, {"sn": 8, "name": "शाखा डाकघर जयप्रकाश नगर", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "01.04.2025", "days": "1", "month": "मार्च 2026", "inspDate": "06/03/26", "remark": ""}, {"sn": 9, "name": "शाखा डाकघर बिनहा", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "05.04.2025", "days": "1", "month": "मार्च 2026", "inspDate": "12/03/26", "remark": ""}, {"sn": 10, "name": "शाखा डाकघर केवरा", "ao": "उप डाकघर छाता", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "08.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "08/04/26", "remark": ""}, {"sn": 11, "name": "शाखा डाकघर डुमरिया", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "20/03/26", "remark": ""}, {"sn": 12, "name": "शाखा डाकघर नौरंगा", "ao": "उप डाकघर दुबेछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "09.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "13/03/26", "remark": ""}, {"sn": 13, "name": "शाखा डाकघर गोपालनगर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "11.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "24/03/26", "remark": ""}, {"sn": 14, "name": "शाखा डाकघर लक्ष्मणछपरा", "ao": "उप डाकघर करनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "15.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "01/04/26", "remark": ""}, {"sn": 15, "name": "शाखा डाकघर हडिहांकला", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "30.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "23/03/26", "remark": ""}, {"sn": 16, "name": "शाखा डाकघर बाबूबेल", "ao": "उप डाकघर हल्दी", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "02.05.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "29/04/26", "remark": ""}, {"sn": 17, "name": "शाखा डाकघर पुरास", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "07.05.2025", "days": "1", "month": "मई 2026", "inspDate": "18/04/26", "remark": ""}, {"sn": 18, "name": "शाखा डाकघर श्रीनगर", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.05.2025", "days": "1", "month": "मई 2026", "inspDate": "18/05/26", "remark": ""}, {"sn": 19, "name": "शाखा डाकघर सूर्यभानपुर", "ao": "उप डाकघर लालगंज", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "09.05.2025", "days": "1", "month": "मई 2026", "inspDate": "03/04/26", "remark": ""}, {"sn": 20, "name": "शाखा डाकघर शोभाछपरा", "ao": "उप डाकघर करनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "15.05.2025", "days": "1", "month": "मई 2026", "inspDate": "30/03/26", "remark": ""}, {"sn": 21, "name": "शाखा डाकघर सोनबरसा", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "19.05.2025", "days": "1", "month": "मई 2026", "inspDate": "11/04/26", "remark": ""}, {"sn": 22, "name": "शाखा डाकघर सोनवानी", "ao": "उप डाकघर हल्दी", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "29.05.2025", "days": "1", "month": "मई 2026", "inspDate": "", "remark": ""}, {"sn": 23, "name": "शाखा डाकघर गयाघाट", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "30.05.2025", "days": "1", "month": "मई 2026", "inspDate": "11/05/26", "remark": ""}, {"sn": 24, "name": "शाखा डाकघर दलछपरा", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "11.06.2025", "days": "1", "month": "जून 2026", "inspDate": "13/05/26", "remark": ""}, {"sn": 25, "name": "शाखा डाकघर रामनगर", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "14.06.2025", "days": "1", "month": "जून 2026", "inspDate": "19/05/26", "remark": ""}, {"sn": 26, "name": "शाखा डाकघर जगदेवा", "ao": "उप डाकघर बैरिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "19.06.2025", "days": "1", "month": "जून 2026", "inspDate": "08/05/26", "remark": ""}, {"sn": 27, "name": "उप डाकघर बैरिया", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "25.06.2025", "days": "2", "month": "जून 2026", "inspDate": "21–23/05/26", "remark": ""}, {"sn": 28, "name": "शाखा डाकघर इब्राहिमाबाद", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "30.06.2025", "days": "1", "month": "जून 2026", "inspDate": "16/05/26", "remark": ""}, {"sn": 29, "name": "शाखा डाकघर कुसौरी", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "05.07.2025", "days": "1", "month": "जून 2026", "inspDate": "30/05/26", "remark": ""}, {"sn": 30, "name": "उप डाकघर दलनछपरा", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "18.07.2025", "days": "2", "month": "जुलाई 2026", "inspDate": "30/05/26", "remark": ""}, {"sn": 31, "name": "शाखा डाकघर इब्राहिमाबाद उपरवार", "ao": "उप डाकघर करनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "21.07.2025", "days": "1", "month": "जुलाई 2026", "inspDate": "22/05/26", "remark": ""}, {"sn": 32, "name": "शाखा डाकघर टेरही", "ao": "उप डाकघर बैरिया", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "31.07.2025", "days": "1", "month": "जुलाई 2026", "inspDate": "25/05/26", "remark": ""}, {"sn": 33, "name": "शाखा डाकघर दयाछपरा", "ao": "उप डाकघर दुबेछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "06.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 34, "name": "शाखा डाकघर दुधैलाकला", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 35, "name": "शाखा डाकघर चांदपुर", "ao": "उप डाकघर बैरिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "09.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 36, "name": "शाखा डाकघर गंगापुर", "ao": "उप डाकघर दुबेछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "12.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 37, "name": "शाखा डाकघर अचलगढ़", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "14.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 38, "name": "शाखा डाकघर पाण्डेयपुर", "ao": "उप डाकघर बैरिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "23.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 39, "name": "उप डाकघर हल्दी", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "25.08.2025", "days": "2", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 40, "name": "शाखा डाकघर बिसौली", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "26.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 41, "name": "शाखा डाकघर भगवानपुर", "ao": "उप डाकघर बैरिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "28.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 42, "name": "शाखा डाकघर कोडहरा उपरवार", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "01.09.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 43, "name": "शाखा डाकघर सीताकुण्ड", "ao": "उप डाकघर हल्दी", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "02.09.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 44, "name": "शाखा डाकघर छोटी शेरिया", "ao": "उप डाकघर छाता", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "03.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 45, "name": "शाखा डाकघर चादपुर", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "04.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 46, "name": "शाखा डाकघर — (स्कैन में अस्पष्ट)", "ao": "उप डाकघर हल्दी", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "11.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 47, "name": "शाखा डाकघर सेमरिया", "ao": "उप डाकघर लालगंज", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "13.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 48, "name": "शाखा डाकघर सुरेमनपुर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "16.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 49, "name": "शाखा डाकघर डोकटी", "ao": "उप डाकघर दलनछपरा", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "22.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 50, "name": "शाखा डाकघर पियरोटा", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "23.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 51, "name": "शाखा डाकघर बहुआरा", "ao": "उप डाकघर लालगंज", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "24.09.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 52, "name": "शाखा डाकघर दिघार", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "25.09.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 53, "name": "शाखा डाकघर मुडाडीह", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "03.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 54, "name": "शाखा डाकघर श्रीपालपुर", "ao": "उप डाकघर लालगंज", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "04.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 55, "name": "शाखा डाकघर मुनछपरा", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "06.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 56, "name": "शाखा डाकघर जमालपुर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "07.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 57, "name": "शाखा डाकघर करमानपुर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 58, "name": "शाखा डाकघर मगभनी", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "09.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 59, "name": "शाखा डाकघर जवही", "ao": "उप डाकघर हल्दी", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "25.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 60, "name": "शाखा डाकघर मुरलीछपरा", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "27.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 61, "name": "उप डाकघर मझौवा", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "28.10.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 62, "name": "शाखा डाकघर नारायणगढ़", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "31.10.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 63, "name": "शाखा डाकघर दुर्जनपुर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "31.10.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 64, "name": "शाखा डाकघर सावनछपरा", "ao": "उप डाकघर लालगंज", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "04.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 65, "name": "शाखा डाकघर गोहियाछपरा", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "06.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 66, "name": "उप डाकघर रेवती", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "07.11.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 67, "name": "शाखा डाकघर कचनपुर", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "10.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 68, "name": "शाखा डाकघर चकिया", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "11.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 69, "name": "उप डाकघर रानीगंज बाजार", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "13.11.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 70, "name": "उप डाकघर तालगंज", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "15.11.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 71, "name": "शाखा डाकघर सोनकीभट", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "17.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 72, "name": "उप डाकघर करनछपरा", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "20.11.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 73, "name": "शाखा डाकघर चांददियर", "ao": "उप डाकघर करनछपरा", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "22.12.2025", "days": "1", "month": "दिसम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 74, "name": "उप डाकघर छाता", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "23.12.2025", "days": "2", "month": "दिसम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 75, "name": "उप डाकघर दुबेछपरा", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "26.12.2025", "days": "2", "month": "दिसम्बर 2026", "inspDate": "", "remark": ""}];
+  var PROG_DEFAULT=[{"sn": 1, "name": "शाखा डाकघर बलिहार", "ao": "उप डाकघर दुबेछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "15.02.2025", "days": "1", "month": "जनवरी 2026", "inspDate": "14/02/26", "remark": ""}, {"sn": 2, "name": "शाखा डाकघर बेलहरी", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "01.03.2025", "days": "1", "month": "जनवरी 2026", "inspDate": "17/02/26", "remark": ""}, {"sn": 3, "name": "शाखा डाकघर कुसौरा", "ao": "उप डाकघर सहतवार", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "03.03.2025", "days": "1", "month": "फरवरी 2026", "inspDate": "02/03/26", "remark": ""}, {"sn": 4, "name": "शाखा डाकघर भोपालपुर", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.03.2025", "days": "1", "month": "फरवरी 2026", "inspDate": "03/03/26", "remark": ""}, {"sn": 5, "name": "शाखा डाकघर भोजछपरा", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "17.03.2025", "days": "1", "month": "फरवरी 2026", "inspDate": "16/03/26", "remark": ""}, {"sn": 6, "name": "शाखा डाकघर रोहुआ", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "22.03.2025", "days": "1", "month": "मार्च 2026", "inspDate": "21/03/26", "remark": ""}, {"sn": 7, "name": "शाखा डाकघर चेरीडीह", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "29.03.2025", "days": "1", "month": "मार्च 2026", "inspDate": "17/03/26", "remark": ""}, {"sn": 8, "name": "शाखा डाकघर जयप्रकाश नगर", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "01.04.2025", "days": "1", "month": "मार्च 2026", "inspDate": "06/03/26", "remark": ""}, {"sn": 9, "name": "शाखा डाकघर बिनहा", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "05.04.2025", "days": "1", "month": "मार्च 2026", "inspDate": "12/03/26", "remark": ""}, {"sn": 10, "name": "शाखा डाकघर केवरा", "ao": "उप डाकघर छाता", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "08.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "08/04/26", "remark": ""}, {"sn": 11, "name": "शाखा डाकघर डुमरिया", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "20/03/26", "remark": ""}, {"sn": 12, "name": "शाखा डाकघर नौरंगा", "ao": "उप डाकघर दुबेछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "09.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "13/03/26", "remark": ""}, {"sn": 13, "name": "शाखा डाकघर गोपालनगर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "11.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "24/03/26", "remark": ""}, {"sn": 14, "name": "शाखा डाकघर लक्ष्मणछपरा", "ao": "उप डाकघर करनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "15.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "01/04/26", "remark": ""}, {"sn": 15, "name": "शाखा डाकघर हडिहांकला", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "30.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "23/03/26", "remark": ""}, {"sn": 16, "name": "शाखा डाकघर बाबूबेल", "ao": "उप डाकघर हल्दी", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "02.05.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "29/04/26", "remark": ""}, {"sn": 17, "name": "शाखा डाकघर पुरास", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "07.05.2025", "days": "1", "month": "मई 2026", "inspDate": "18/04/26", "remark": ""}, {"sn": 18, "name": "शाखा डाकघर श्रीनगर", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.05.2025", "days": "1", "month": "मई 2026", "inspDate": "18/05/26", "remark": ""}, {"sn": 19, "name": "शाखा डाकघर सूर्यभानपुर", "ao": "उप डाकघर लालगंज", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "09.05.2025", "days": "1", "month": "मई 2026", "inspDate": "03/04/26", "remark": ""}, {"sn": 20, "name": "शाखा डाकघर शोभाछपरा", "ao": "उप डाकघर करनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "15.05.2025", "days": "1", "month": "मई 2026", "inspDate": "30/03/26", "remark": ""}, {"sn": 21, "name": "शाखा डाकघर सोनबरसा", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "19.05.2025", "days": "1", "month": "मई 2026", "inspDate": "11/04/26", "remark": ""}, {"sn": 22, "name": "शाखा डाकघर सोनवानी", "ao": "उप डाकघर हल्दी", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "29.05.2025", "days": "1", "month": "मई 2026", "inspDate": "", "remark": ""}, {"sn": 23, "name": "शाखा डाकघर गयाघाट", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "30.05.2025", "days": "1", "month": "मई 2026", "inspDate": "11/05/26", "remark": ""}, {"sn": 24, "name": "शाखा डाकघर दलछपरा", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "11.06.2025", "days": "1", "month": "जून 2026", "inspDate": "13/05/26", "remark": ""}, {"sn": 25, "name": "शाखा डाकघर रामनगर", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "14.06.2025", "days": "1", "month": "जून 2026", "inspDate": "19/05/26", "remark": ""}, {"sn": 26, "name": "शाखा डाकघर जगदेवा", "ao": "उप डाकघर बैरिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "19.06.2025", "days": "1", "month": "जून 2026", "inspDate": "08/05/26", "remark": ""}, {"sn": 27, "name": "उप डाकघर बैरिया", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "25.06.2025", "days": "2", "month": "जून 2026", "inspDate": "21–23/05/26", "remark": ""}, {"sn": 28, "name": "शाखा डाकघर इब्राहिमाबाद", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "30.06.2025", "days": "1", "month": "जून 2026", "inspDate": "16/05/26", "remark": ""}, {"sn": 29, "name": "शाखा डाकघर कुसौरी", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "05.07.2025", "days": "1", "month": "जून 2026", "inspDate": "30/05/26", "remark": ""}, {"sn": 30, "name": "उप डाकघर दलनछपरा", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "18.07.2025", "days": "2", "month": "जुलाई 2026", "inspDate": "30/05/26", "remark": ""}, {"sn": 31, "name": "शाखा डाकघर इब्राहिमाबाद उपरवार", "ao": "उप डाकघर करनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "21.07.2025", "days": "1", "month": "जुलाई 2026", "inspDate": "22/05/26", "remark": ""}, {"sn": 32, "name": "शाखा डाकघर टेरही", "ao": "उप डाकघर बैरिया", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "31.07.2025", "days": "1", "month": "जुलाई 2026", "inspDate": "25/05/26", "remark": ""}, {"sn": 33, "name": "शाखा डाकघर दयाछपरा", "ao": "उप डाकघर दुबेछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "06.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 34, "name": "शाखा डाकघर दुधैलाकला", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 35, "name": "शाखा डाकघर चांदपुर", "ao": "उप डाकघर बैरिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "09.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 36, "name": "शाखा डाकघर गंगापुर", "ao": "उप डाकघर दुबेछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "12.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 37, "name": "शाखा डाकघर अचलगढ़", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "14.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 38, "name": "शाखा डाकघर पाण्डेयपुर", "ao": "उप डाकघर बैरिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "23.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 39, "name": "उप डाकघर हल्दी", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "25.08.2025", "days": "2", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 40, "name": "शाखा डाकघर बिसौली", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "26.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 41, "name": "शाखा डाकघर भगवानपुर", "ao": "उप डाकघर बैरिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "28.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 42, "name": "शाखा डाकघर कोडहरा उपरवार", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "01.09.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 43, "name": "शाखा डाकघर सीताकुण्ड", "ao": "उप डाकघर हल्दी", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "02.09.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 44, "name": "शाखा डाकघर छोटी शेरिया", "ao": "उप डाकघर छाता", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "03.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 45, "name": "शाखा डाकघर चादपुर", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "04.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 46, "name": "शाखा डाकघर — (स्कैन में अस्पष्ट)", "ao": "उप डाकघर हल्दी", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "11.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 47, "name": "शाखा डाकघर सेमरिया", "ao": "उप डाकघर लालगंज", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "13.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 48, "name": "शाखा डाकघर सुरेमनपुर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "16.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 49, "name": "शाखा डाकघर डोकटी", "ao": "उप डाकघर दलनछपरा", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "22.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 50, "name": "शाखा डाकघर पियरोटा", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "23.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 51, "name": "शाखा डाकघर बहुआरा", "ao": "उप डाकघर लालगंज", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "24.09.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 52, "name": "शाखा डाकघर दिघार", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "25.09.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 53, "name": "शाखा डाकघर मुडाडीह", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "03.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 54, "name": "शाखा डाकघर श्रीपालपुर", "ao": "उप डाकघर लालगंज", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "04.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 55, "name": "शाखा डाकघर मुनछपरा", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "06.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 56, "name": "शाखा डाकघर जमालपुर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "07.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 57, "name": "शाखा डाकघर करमानपुर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 58, "name": "शाखा डाकघर मधुबनी", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "09.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 59, "name": "शाखा डाकघर जवही", "ao": "उप डाकघर हल्दी", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "25.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 60, "name": "शाखा डाकघर मुरलीछपरा", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "27.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 61, "name": "उप डाकघर मझौवा", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "28.10.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 62, "name": "शाखा डाकघर नारायणगढ़", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "31.10.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 63, "name": "शाखा डाकघर दुर्जनपुर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "31.10.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 64, "name": "शाखा डाकघर सावनछपरा", "ao": "उप डाकघर लालगंज", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "04.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 65, "name": "शाखा डाकघर गोहियाछपरा", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "06.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 66, "name": "उप डाकघर रेवती", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "07.11.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 67, "name": "शाखा डाकघर कचनपुर", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "10.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 68, "name": "शाखा डाकघर चकिया", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "11.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 69, "name": "उप डाकघर रानीगंज बाजार", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "13.11.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 70, "name": "उप डाकघर तालगंज", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "15.11.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 71, "name": "शाखा डाकघर सोनकीभट", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "17.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 72, "name": "उप डाकघर करनछपरा", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "20.11.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 73, "name": "शाखा डाकघर चांददियर", "ao": "उप डाकघर करनछपरा", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "22.12.2025", "days": "1", "month": "दिसम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 74, "name": "उप डाकघर छाता", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "23.12.2025", "days": "2", "month": "दिसम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 75, "name": "उप डाकघर दुबेछपरा", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "26.12.2025", "days": "2", "month": "दिसम्बर 2026", "inspDate": "", "remark": ""}];
   function getProgRows(){
     try{var raw=localStorage.getItem(PROG_KEY);if(raw)return JSON.parse(raw);}catch(e){}
     return JSON.parse(JSON.stringify(PROG_DEFAULT));
@@ -1299,7 +1615,7 @@
     var rows=getProgRows();
     var q=((document.getElementById('progSearch')||{}).value||'').trim().toLowerCase();
     var inSt='style="width:100%;min-width:90px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:0.82rem;font-family:inherit;"';
-    var h='<table><thead><tr><th>#</th><th>डाकघर का नाम</th><th>लेखा कार्यालय</th><th>निरीक्षकर्ता</th><th>विगत निरीक्षण (2025)</th><th>दिन</th><th>प्रस्तावित माह (2026)</th><th>निरीक्षण तिथि (2026)</th><th>रिमार्क</th></tr></thead><tbody>';
+    var h='<table><thead><tr><th>#</th><th>Post Office Name</th><th>Accounts Office</th><th>Inspector</th><th>Last Inspection (2025)</th><th>Days</th><th>Proposed Month (2026)</th><th>Inspection Date (2026)</th><th>Remark</th></tr></thead><tbody>';
     var shown=0;
     rows.forEach(function(r,i){
       var nm=(r.name||'').toLowerCase();
@@ -1319,7 +1635,7 @@
       h+='</tr>';
     });
     h+='</tbody></table>';
-    if(!shown)h='<div class="empty-msg">कोई डाकघर नहीं मिला</div>';
+    if(!shown)h='<div class="empty-msg">No post office found</div>';
     wrap.innerHTML=h;
   };
   window.progCellEdit=function(idx,field,val){
@@ -1342,7 +1658,7 @@
     "हरियाहन कलां":"शाखा डाकघर हडिहांकला",
     "जवाही":"शाखा डाकघर जवही",
     "कंचनपुर":"शाखा डाकघर कचनपुर",
-    "मधुबनी":"शाखा डाकघर मगभनी",
+    "मधुबनी":"शाखा डाकघर मधुबनी",
     "मूनछपरा":"शाखा डाकघर मुनछपरा",
     "मुरादीह":"शाखा डाकघर मुडाडीह",
     "पांडेयपुर":"शाखा डाकघर पाण्डेयपुर",
@@ -1439,13 +1755,13 @@
     if(!file)return;
     var reader=new FileReader();
     reader.onload=function(e){
-      var fail=function(err){alert('Excel import विफल: '+(err&&err.message?err.message:err));input.value='';};
+      var fail=function(err){alert('Excel import failed: '+(err&&err.message?err.message:err));input.value='';};
       try{
         var zip=new JSZip();
         zip.loadAsync(e.target.result).then(function(){
           var sheetName=null;
           zip.forEach(function(relPath){ if(/^xl\/worksheets\/sheet\d+\.xml$/.test(relPath)){ if(!sheetName||relPath<sheetName)sheetName=relPath; } });
-          if(!sheetName)throw new Error('worksheet नहीं मिला');
+          if(!sheetName)throw new Error('worksheet not found');
           var pShared=zip.file('xl/sharedStrings.xml')?zip.file('xl/sharedStrings.xml').async('string'):Promise.resolve('');
           return pShared.then(function(ssXml){
             var sharedMap={};
@@ -1488,7 +1804,7 @@
                 var joined=(grid[g]||[]).join('|');
                 if(joined.indexOf('क्रम')!==-1&&joined.indexOf('डाकघर')!==-1){headerIdx=g;break;}
               }
-              if(headerIdx===-1)throw new Error('हेडर पंक्ति (क्रम सं. / डाकघर) नहीं मिली');
+              if(headerIdx===-1)throw new Error('Header row (Sr. No. / Post Office) not found');
               var head=grid[headerIdx];
               var cm={};
               head.forEach(function(hT,ix){
@@ -1515,11 +1831,11 @@
                 sn++;
                 out.push({sn:gv(g2,'sn')||sn,name:nm,ao:gv(g2,'ao'),inspector:gv(g2,'inspector'),lastDate:gv(g2,'lastDate'),days:gv(g2,'days'),month:gv(g2,'month'),inspDate:gv(g2,'inspDate'),remark:gv(g2,'remark')});
               }
-              if(!out.length)throw new Error('कोई डाकघर पंक्ति नहीं मिली');
-              if(!confirm('Import करें? '+out.length+' पंक्तियाँ मिलीं — मौजूदा कार्यक्रम डेटा बदल जाएगा।')){input.value='';return;}
+              if(!out.length)throw new Error('No post-office row found');
+              if(!confirm('Import? '+out.length+' rows found — the existing programme data will be replaced.')){input.value='';return;}
               saveProgRows(out);
               renderProgTable();
-              showToast('✅ निरीक्षण कार्यक्रम import हो गया — '+out.length+' पंक्तियाँ');
+              showToast('✅ Inspection programme imported — '+out.length+' rows');
               input.value='';
             });
           });
@@ -2442,6 +2758,7 @@ function loadJourneyForEdit(idx){
       departure:depTime,
       arrival:arrTime,
       mode:l.mode||'Motorcycle',
+      fare:l.fare||'',
       dist:l.dist,
       purposeType:pt,
       customPurpose:cp,
@@ -2474,7 +2791,7 @@ function cancelForm(){document.getElementById('journeyForm').style.display='none
 function addLeg(){
   var fromName=HQ_NAME;
   if(currentLegs.length>0){var lastLeg=currentLegs[currentLegs.length-1];fromName=lastLeg.to||HQ_NAME;}
-  currentLegs.push({from:fromName,to:'',departure:'',arrival:'',mode:'Motorcycle',dist:'',purposeType:'',customPurpose:'',isReturn:false,speed:randomSpeed(),isCustom:false});
+  currentLegs.push({from:fromName,to:'',departure:'',arrival:'',mode:'Motorcycle',fare:'',dist:'',purposeType:'',customPurpose:'',isReturn:false,speed:randomSpeed(),isCustom:false});
   renderLegs();document.getElementById('addReturnBtn').disabled=false;
 }
 
@@ -2484,7 +2801,7 @@ function addReturnLeg(){
   // Distance for return = HQ dist of the office we're returning from
   // If office is known, auto-fill; otherwise leave blank for manual entry
   var retDist=getOfficeDist(fromName);
-  currentLegs.push({from:fromName,to:HQ_NAME,departure:'',arrival:'',mode:'Motorcycle',dist:retDist!==null?retDist:'',purposeType:'',customPurpose:'',isReturn:true,speed:randomSpeed(),knownTime:'arr',distAutoCalc:retDist!==null,isCustom:false,returnDayOffset:0});
+  currentLegs.push({from:fromName,to:HQ_NAME,departure:'',arrival:'',mode:'Motorcycle',fare:'',dist:retDist!==null?retDist:'',purposeType:'',customPurpose:'',isReturn:true,speed:randomSpeed(),knownTime:'arr',distAutoCalc:retDist!==null,isCustom:false,returnDayOffset:0});
   renderLegs();document.getElementById('addReturnBtn').disabled=true;
   // Show info message
   var info=document.getElementById('jfInfo');
@@ -2531,11 +2848,14 @@ function renderLegs(){
     var arrReadonly=leg.arrival&&leg.knownTime==='dep'?'auto-calc':'';
     var arrHTML='<div class="lf"><label>Arrival</label><input type="time" id="legArr_'+idx+'" value="'+leg.arrival+'" class="'+arrReadonly+'" '+(arrReadonly?'readonly':'')+' onchange="onLegTimeChange('+idx+',\'arr\')"></div>';
     // Mode
-    var modeHTML='<div class="lf"><label>Mode</label><select id="legMode_'+idx+'" onchange="onLegModeChange('+idx+')"><option'+(leg.mode==='Motorcycle'?' selected':'')+'>Motorcycle</option><option'+(leg.mode==='Bus'?' selected':'')+'>Bus</option><option'+(leg.mode==='Car'?' selected':'')+'>Car</option><option'+(leg.mode==='Train'?' selected':'')+'>Train</option></select></div>';
+    var modeHTML='<div class="lf"><label>Mode</label><select id="legMode_'+idx+'" onchange="onLegModeChange('+idx+')"><option'+(leg.mode==='Motorcycle'?' selected':'')+'>Motorcycle</option><option'+(leg.mode==='Bus'?' selected':'')+'>Bus</option><option'+(leg.mode==='Car'?' selected':'')+'>Car</option><option'+(leg.mode==='Train'?' selected':'')+'>Train</option><option'+(leg.mode==='Other'?' selected':'')+'>Other</option></select></div>';
     // Distance
     var distClass=leg.distAutoCalc?'auto-calc':'manual-dist';
     var distLabel=leg.isReturn?(leg.distAutoCalc?'Km (auto)':'Km (enter manually)'):(idx===0?(leg.distAutoCalc?'Km (auto)':'Km (enter manually)'):'Km (enter manually)');
     var distHTML='<div class="lf"><label>'+distLabel+'</label><input type="number" id="legDist_'+idx+'" value="'+leg.dist+'" step="0.5" class="'+distClass+'" onchange="onLegDistChange('+idx+')"'+(leg.distAutoCalc?' readonly':'')+'></div>';
+    // Bus / Train / Other → mileage नहीं; असली किराया (fare) भरा जाएगा
+    var fareMode=(leg.mode==='Bus'||leg.mode==='Train'||leg.mode==='Other');
+    var fareHTML=fareMode?'<div class="lf"><label>Fare (₹) — actual</label><input type="number" id="legFare_'+idx+'" value="'+(leg.fare===undefined?'':leg.fare)+'" step="1" placeholder="असली किराया" onchange="onLegFareChange('+idx+')"></div>':'';
 
     var purposeHTML='';
     if(!isRet){
@@ -2544,7 +2864,7 @@ function renderLegs(){
     }
 
     var delBtn=idx>0?'<button class="btn btn-danger btn-sm" onclick="removeLeg('+idx+')" style="float:right;">X</button>':'';
-    div.innerHTML='<div class="leg-row-header"><span class="leg-num">Leg '+(idx+1)+'</span><span class="leg-type '+legTypeClass+'">'+legTypeLabel+'</span>'+delBtn+'</div><div class="leg-fields">'+fromHTML+toHTML+depHTML+arrHTML+modeHTML+distHTML+purposeHTML+'</div>';
+    div.innerHTML='<div class="leg-row-header"><span class="leg-num">Leg '+(idx+1)+'</span><span class="leg-type '+legTypeClass+'">'+legTypeLabel+'</span>'+delBtn+'</div><div class="leg-fields">'+fromHTML+toHTML+depHTML+arrHTML+modeHTML+distHTML+fareHTML+purposeHTML+'</div>';
     container.appendChild(div);
 
     // Set selected values
@@ -2673,7 +2993,14 @@ function addReturnOnlyLeg(){
 function onLegModeChange(idx){
   var mSel=document.getElementById('legMode_'+idx);
   if(mSel)currentLegs[idx].mode=mSel.value;
+  if(currentLegs[idx].fare===undefined)currentLegs[idx].fare='';
+  renderLegs();           // Bus/Train/Other चुनने पर Fare का बॉक्स दिखे/छिपे
   autoSave();
+}
+function onLegFareChange(idx){
+  var el=document.getElementById('legFare_'+idx);
+  currentLegs[idx].fare=el?el.value:'';
+  updateLegInfo();autoSave();
 }
 
 function onLegDistChange(idx){
@@ -2869,7 +3196,13 @@ function saveDayJourney(){
   for(var i=0;i<currentLegs.length;i++){
     var l=currentLegs[i];
     if(!l.to){err.textContent='Leg '+(i+1)+': select an office.';err.classList.add('show');return;}
-    if(!l.dist&&l.dist!==0){err.textContent='Leg '+(i+1)+': enter distance.';err.classList.add('show');return;}
+    var _isFM=(l.mode==='Bus'||l.mode==='Train'||l.mode==='Other');
+    if(_isFM){
+      // Bus / Train / Other → mileage नहीं, असली किराया ज़रूरी
+      if(l.fare===''||l.fare===undefined||l.fare===null||isNaN(parseFloat(l.fare))){err.textContent='Leg '+(i+1)+': enter the actual fare (₹).';err.classList.add('show');return;}
+    } else {
+      if(!l.dist&&l.dist!==0){err.textContent='Leg '+(i+1)+': enter distance.';err.classList.add('show');return;}
+    }
     if(!l.departure&&!l.arrival){err.textContent='Leg '+(i+1)+': enter departure or arrival time.';err.classList.add('show');return;}
     if(!l.isReturn){hasOutward=true;if(!l.purposeType){err.textContent='Leg '+(i+1)+': select a purpose.';err.classList.add('show');return;}}
   }
@@ -2894,7 +3227,7 @@ function saveDayJourney(){
     var purpose=l.isReturn?'':buildPurpose(l.purposeType,l.to,l.customPurpose);
     if(purpose&&!l.isReturn)outwardPurposes.push({office:l.to,purpose:purpose,purposeType:l.purposeType});
 
-    journey.legs.push({from:l.from,to:l.to,departure:depDT,arrival:arrDT,mode:l.mode,dist:oneWay,purpose:purpose,isReturn:l.isReturn});
+    journey.legs.push({from:l.from,to:l.to,departure:depDT,arrival:arrDT,mode:l.mode,dist:oneWay,purpose:purpose,isReturn:l.isReturn,fare:(l.fare===undefined?'':l.fare)});
   });
 
   // Build combined purpose for the outward leg (first row in table)
@@ -3020,7 +3353,7 @@ function buildLegs(){
   getMonthJourneys().forEach(function(j){
     var jda=recalcJourneyDA(j);
     j.legs.forEach(function(l){
-      legs.push({from:l.from,departure:l.departure,to:l.to,arrival:l.arrival,mode:l.mode,dist:l.dist,purpose:l.purpose,da:l.isReturn?'':jda.toFixed(1),halt:''});
+      legs.push({from:l.from,departure:l.departure,to:l.to,arrival:l.arrival,mode:l.mode,dist:l.dist,purpose:l.purpose,da:l.isReturn?'':jda.toFixed(1),halt:'',fare:(l.fare===undefined?'':l.fare)});
     });
   });
   legs.sort(function(a,b){
@@ -3224,11 +3557,11 @@ function renderHolidayEditList(){
 function updateSummary(){autoSave();
   var mr=parseFloat(document.getElementById('mileageRate').value)||0,dr=parseFloat(document.getElementById('daRate').value)||0,dmd=parseFloat(document.getElementById('daMinDist').value)||8;
   var td=0,tf=0,tDA=0;
-  getMonthJourneys().forEach(function(j){td+=j.dist;tf+=j.dist*mr;tDA+=recalcJourneyDA(j);});
+  getMonthJourneys().forEach(function(j){td+=(parseFloat(j.dist)||0);tf+=(j.legs||[]).reduce(function(s,l){var isFM=(l.mode==='Bus'||l.mode==='Train'||l.mode==='Other');return s+(isFM?(parseFloat(l.fare)||0):((parseFloat(l.dist)||0)*mr));},0);tDA+=recalcJourneyDA(j);});
   var daAmt=tDA*dr;var ha=0;if(document.getElementById('hasHotel').checked)ha=parseFloat(document.getElementById('hotelAmount').value)||0;
   var adv=0;if(document.getElementById('hasAdvance').checked)adv=parseFloat(document.getElementById('advanceAmount').value)||0;
   var tot=tf+daAmt+ha-adv;
-  document.getElementById('summaryGrid').innerHTML='<div class="summary-item"><span class="label">Total Distance</span><span class="value">'+td+' km</span></div><div class="summary-item"><span class="label">Road Mileage</span><span class="value">Rs. '+tf.toFixed(2)+'</span></div><div class="summary-item"><span class="label">DA (days)</span><span class="value">'+tDA.toFixed(1)+' days</span></div><div class="summary-item"><span class="label">DA Amount</span><span class="value">Rs. '+daAmt.toFixed(2)+'</span></div><div class="summary-item"><span class="label">Hotel</span><span class="value">Rs. '+ha.toFixed(2)+'</span></div><div class="summary-item"><span class="label">Advance</span><span class="value">Rs. '+adv.toFixed(2)+'</span></div><div class="summary-total"><span class="label">TOTAL CLAIMABLE</span><span class="value">Rs. '+tot.toFixed(2)+'</span></div>';
+  document.getElementById('summaryGrid').innerHTML='<div class="summary-item"><span class="label">Total Distance</span><span class="value">'+td+' km</span></div><div class="summary-item"><span class="label">Fare / Mileage</span><span class="value">Rs. '+tf.toFixed(2)+'</span></div><div class="summary-item"><span class="label">DA (days)</span><span class="value">'+tDA.toFixed(1)+' days</span></div><div class="summary-item"><span class="label">DA Amount</span><span class="value">Rs. '+daAmt.toFixed(2)+'</span></div><div class="summary-item"><span class="label">Hotel</span><span class="value">Rs. '+ha.toFixed(2)+'</span></div><div class="summary-item"><span class="label">Advance</span><span class="value">Rs. '+adv.toFixed(2)+'</span></div><div class="summary-total"><span class="label">TOTAL CLAIMABLE</span><span class="value">Rs. '+tot.toFixed(2)+'</span></div>';
 }
 
 // ============================================================
@@ -3283,8 +3616,24 @@ async function generateTourDiary(){
     var name=document.getElementById('officerName').value,desig=document.getElementById('officerDesignation').value,month=document.getElementById('billMonth').value;
     var f1=[],f2=[];
     legs.forEach(function(l){var placed=false;if(l.departure){var d=new Date(l.departure);if(d.getDate()<=15){f1.push(l);placed=true;}else{f2.push(l);placed=true;}}if(!placed&&l.arrival){var d2=new Date(l.arrival);if(d2.getDate()<=15)f1.push(l);else f2.push(l);}});
-    var jcw=[2364,1397,2364,1397,1075,967,4836],jtw=14400;
-    function bJT(list){var rows=[new D.TableRow({tableHeader:true,children:[mkHdr('From',jcw[0]),mkHdr('Departure',jcw[1]),mkHdr('To',jcw[2]),mkHdr('Arrival',jcw[3]),mkHdr('Mode',jcw[4]),mkHdr('Dist(Km)',jcw[5]),mkHdr('Purpose of Journey',jcw[6])]})];list.forEach(function(l){rows.push(new D.TableRow({children:[mkCell(l.from,jcw[0]),mkCell(fmtDT(l.departure),jcw[1]),mkCell(l.to,jcw[2]),mkCell(fmtDT(l.arrival),jcw[3]),mkCell(l.mode,jcw[4]),mkCell(l.dist,jcw[5]),mkCell(l.purpose,jcw[6])]}));});return mkTable(rows,jcw,jtw);}
+    // Bus / Train / Other की यात्रा हो तो Tour Diary में "Fare (₹)" कॉलम भी जुड़े
+    var anyFareLeg=legs.some(function(l){return (l.mode==='Bus'||l.mode==='Train'||l.mode==='Other');});
+    var jcw=anyFareLeg?[2184,1297,2184,1297,975,867,900,4696]:[2364,1397,2364,1397,1075,967,4836];
+    var jtw=14400;
+    function bJT(list){
+      var hdr=[mkHdr('From',jcw[0]),mkHdr('Departure',jcw[1]),mkHdr('To',jcw[2]),mkHdr('Arrival',jcw[3]),mkHdr('Mode',jcw[4]),mkHdr('Dist(Km)',jcw[5])];
+      if(anyFareLeg)hdr.push(mkHdr('Fare (₹)',jcw[6]));
+      hdr.push(mkHdr('Purpose of Journey',jcw[anyFareLeg?7:6]));
+      var rows=[new D.TableRow({tableHeader:true,children:hdr})];
+      list.forEach(function(l){
+        var isFM=(l.mode==='Bus'||l.mode==='Train'||l.mode==='Other');
+        var cells=[mkCell(l.from,jcw[0]),mkCell(fmtDT(l.departure),jcw[1]),mkCell(l.to,jcw[2]),mkCell(fmtDT(l.arrival),jcw[3]),mkCell(l.mode,jcw[4]),mkCell(l.dist,jcw[5])];
+        if(anyFareLeg)cells.push(mkCell(isFM?((l.fare===''||l.fare===undefined||l.fare===null)?'':parseFloat(l.fare).toFixed(2)):'',jcw[6]));
+        cells.push(mkCell(l.purpose,jcw[anyFareLeg?7:6]));
+        rows.push(new D.TableRow({children:cells}));
+      });
+      return mkTable(rows,jcw,jtw);
+    }
     var wlcw=[1878,12522],wltw=14400;
     function bWT(fn){
       var sd=fn===1?1:16,ed=fn===1?15:dim;
@@ -3337,7 +3686,7 @@ async function generateTABill(){
     var td=0,tf=0,tDA=0,billRows=[];
     getMonthJourneys().forEach(function(j){
       var jda=recalcJourneyDA(j),adm=jda>0;
-      j.legs.forEach(function(l){var ow=l.dist,fare=ow*mr;var daShow=l.isReturn?'':(adm?jda.toFixed(1):'');billRows.push({from:l.from,dep:l.departure,to:l.to,arr:l.arrival,mode:l.mode,rate:mr.toFixed(2),fare:fare.toFixed(2),da:daShow,dist:ow,halt:'',purpose:l.purpose});td+=ow;tf+=ow*mr;});
+      j.legs.forEach(function(l){var isFM=(l.mode==='Bus'||l.mode==='Train'||l.mode==='Other');var ow=parseFloat(l.dist)||0;var fare=isFM?(parseFloat(l.fare)||0):(ow*mr);var rateShow=isFM?'\u2014':mr.toFixed(2);var daShow=l.isReturn?'':(adm?jda.toFixed(1):'');billRows.push({from:l.from,dep:l.departure,to:l.to,arr:l.arrival,mode:l.mode,rate:rateShow,fare:fare.toFixed(2),da:daShow,dist:(isFM?(l.dist||''):ow),halt:'',purpose:l.purpose});td+=ow;tf+=fare;});
       if(adm)tDA+=jda;
     });
     var daAmt=tDA*dr,ha=0,hf='',ht='';
@@ -3354,7 +3703,7 @@ async function generateTABill(){
     s0.push(mkPara('03.PAY- '+pay,{bold:true,size:22}));s0.push(mkPara('04. HQ- '+hq,{bold:true,size:22}));
     s0.push(mkPara('05. Details and purpose of Journey(s) as per diary',{bold:true,size:22,after:100}));
     s0.push(mkTable([hdr].concat(dRows,[tRow]),tcw,ttw));
-    s0.push(mkPara('Road mileage = '+tf.toFixed(2),{size:22,before:200}));
+    s0.push(mkPara('Road mileage / actual fare = '+tf.toFixed(2),{size:22,before:200}));
     s0.push(mkPara('DA claimed = '+tDA.toFixed(1)+'*'+dr+'='+Math.round(daAmt).toLocaleString('en-IN'),{size:22}));
     if(ha>0)s0.push(mkPara('Hotel Accomodation for the date '+fmtD(hf)+' to '+fmtD(ht)+' = '+ha,{size:22}));
     s0.push(mkPara('Advance taken = '+(adv>0?'Rs. '+adv:'Nil'),{size:22}));
@@ -3404,7 +3753,10 @@ function saveState(){
 function loadState(){
   var raw=localStorage.getItem('ta_tour_data');if(!raw){alert('No saved data.');return;}
   var d=JSON.parse(raw);
-  document.getElementById('officerName').value=d.officer.name;document.getElementById('officerDesignation').value=d.officer.designation;document.getElementById('officerPay').value=d.officer.pay;document.getElementById('officerHQ').value=d.officer.hq;document.getElementById('billMonth').value=d.officer.month;document.getElementById('billYear').value=d.officer.year;document.getElementById('mileageRate').value=d.officer.mileageRate;document.getElementById('daRate').value=d.officer.daRate;if(d.officer.daMinDist)document.getElementById('daMinDist').value=d.officer.daMinDist;
+  // किसी फ़ील्ड के लिए: केवल तभी भरें जब सहेजे गए डेटा में वह मौजूद हो —
+  // वरना अधूरी/पुरानी backup से साल (year) जैसी चीज़ें खाली हो जाती हैं।
+  function setIf(id, v){ if(v===undefined||v===null||v==='') return; var el=document.getElementById(id); if(el) el.value=v; }
+  setIf('officerName',d.officer.name);setIf('officerDesignation',d.officer.designation);setIf('officerPay',d.officer.pay);setIf('officerHQ',d.officer.hq);setIf('billMonth',d.officer.month);setIf('billYear',d.officer.year);setIf('mileageRate',d.officer.mileageRate);setIf('daRate',d.officer.daRate);setIf('daMinDist',d.officer.daMinDist);
   journeys=d.journeys||[];if(d.holidays)holidays=d.holidays;
   leaves=d.leaves||[];
   renderLeaveList();
@@ -3707,6 +4059,161 @@ function stripAllHighlighting(bodyEl) {
     for (const h of highlights) rPr.removeChild(h);
   }
 }
+
+    // ------------------------------------------------------------------
+    // Report look & feel (v9): typography, section headings, question
+    // headings and table styling. Content/59 questions untouched.
+    // ------------------------------------------------------------------
+    var W_PPR_ORDER = ["pStyle","keepNext","keepLines","pageBreakBefore","framePr","widowControl","numPr","suppressLineNumbers","pBdr","shd","tabs","suppressAutoHyphens","kinsoku","wordWrap","overflowPunct","topLinePunct","autoSpaceDE","autoSpaceDN","bidi","adjustRightInd","snapToGrid","spacing","ind","contextualSpacing","mirrorIndents","suppressOverlap","jc","textDirection","textAlignment","textboxTightWrap","outlineLvl","divId","cnfStyle","rPr","sectPr","pPrChange"];
+    var W_RPR_ORDER = ["rStyle","rFonts","b","bCs","i","iCs","caps","smallCaps","strike","dstrike","outline","shadow","emboss","imprint","noProof","snapToGrid","vanish","webHidden","color","spacing","w","kern","position","sz","szCs","highlight","u","effect","bdr","shd","fitText","vertAlign","rtl","cs","em","lang","eastAsianLayout","specVanish","oMath"];
+    var W_TBLPR_ORDER = ["tblStyle","tblpPr","tblOverlap","bidiVisual","tblStyleRowBandSize","tblStyleColBandSize","tblW","jc","tblCellSpacing","tblInd","tblBorders","shd","tblLayout","tblCellMar","tblLook","tblCaption","tblDescription"];
+    var W_TCPR_ORDER = ["cnfStyle","tcW","gridSpan","hMerge","vMerge","tcBorders","shd","noWrap","tcMar","textDirection","tcFitText","vAlign","hideMark"];
+    var W_TRPR_ORDER = ["cnfStyle","divId","gridBefore","gridAfter","wBefore","wAfter","cantSplit","trHeight","tblHeader","tblCellSpacing","jc","hidden"];
+
+    function wEl(doc, name) { return doc.createElementNS(W_NS, "w:" + name); }
+    function wInsertOrdered(parent, node, order) {
+      var name = String(node.nodeName).replace(/^w:/, "");
+      var idx = order.indexOf(name);
+      if (idx < 0) { parent.appendChild(node); return; }
+      var kids = Array.prototype.slice.call(parent.childNodes);
+      for (var i = 0; i < kids.length; i++) {
+        var k = String(kids[i].nodeName).replace(/^w:/, "");
+        var ki = order.indexOf(k);
+        if (ki >= 0 && ki > idx) { parent.insertBefore(node, kids[i]); return; }
+      }
+      parent.appendChild(node);
+    }
+    function wEnsure(parent, doc, name, order) {
+      var e = parent.getElementsByTagNameNS(W_NS, name)[0];
+      if (e) return e;
+      e = wEl(doc, name);
+      wInsertOrdered(parent, e, order);
+      return e;
+    }
+    function wParaPr(p, doc) {
+      var e = p.getElementsByTagNameNS(W_NS, "pPr")[0];
+      if (!e) { e = wEl(doc, "pPr"); p.insertBefore(e, p.firstChild); }
+      return e;
+    }
+    function wStylePara(p, doc, opts) {
+      var pPr = wParaPr(p, doc);
+      if (opts.before !== undefined || opts.after !== undefined) {
+        var sp = wEnsure(pPr, doc, "spacing", W_PPR_ORDER);
+        if (opts.before !== undefined) sp.setAttribute("w:before", String(opts.before));
+        if (opts.after !== undefined) sp.setAttribute("w:after", String(opts.after));
+      }
+      if (opts.jc) { wEnsure(pPr, doc, "jc", W_PPR_ORDER).setAttribute("w:val", opts.jc); }
+      if (opts.shade) {
+        var shd = wEnsure(pPr, doc, "shd", W_PPR_ORDER);
+        shd.setAttribute("w:val", "clear"); shd.setAttribute("w:color", "auto"); shd.setAttribute("w:fill", opts.shade);
+      }
+      if (opts.rule) {
+        var pBdr = wEnsure(pPr, doc, "pBdr", W_PPR_ORDER);
+        if (!pBdr.getElementsByTagNameNS(W_NS, "bottom").length) {
+          var bot = wEl(doc, "bottom");
+          bot.setAttribute("w:val", "single"); bot.setAttribute("w:sz", "12");
+          bot.setAttribute("w:space", "2"); bot.setAttribute("w:color", "C8102E");
+          pBdr.appendChild(bot);
+        }
+      }
+    }
+    function wStyleRuns(el, doc, opts) {
+      var runs = el.getElementsByTagNameNS(W_NS, "r");
+      for (var i = 0; i < runs.length; i++) {
+        var r = runs[i];
+        var rPr = r.getElementsByTagNameNS(W_NS, "rPr")[0];
+        if (!rPr) { rPr = wEl(doc, "rPr"); r.insertBefore(rPr, r.firstChild); }
+        if (opts.bold) { wEnsure(rPr, doc, "b", W_RPR_ORDER); }
+        if (opts.color) { wEnsure(rPr, doc, "color", W_RPR_ORDER).setAttribute("w:val", opts.color); }
+        if (opts.sz) {
+          var sz = wEnsure(rPr, doc, "sz", W_RPR_ORDER);
+          sz.setAttribute("w:val", String(opts.sz));
+          var szCs = wEnsure(rPr, doc, "szCs", W_RPR_ORDER);
+          szCs.setAttribute("w:val", String(opts.sz));
+        }
+      }
+    }
+    function wParaText(p) {
+      var ts = p.getElementsByTagNameNS(W_NS, "t"), s = "";
+      for (var i = 0; i < ts.length; i++) s += ts[i].textContent || "";
+      return s.replace(/\s+/g, " ").trim();
+    }
+
+    function restyleReport(doc, bodyEl) {
+      // ---- paragraphs: title / section headings / numbered questions ----
+      var paras = Array.prototype.slice.call(bodyEl.getElementsByTagNameNS(W_NS, "p"));
+      paras.forEach(function (p) {
+        var t = wParaText(p);
+        if (!t) return;
+        var inCell = false, n = p.parentNode;
+        while (n && n.nodeName !== "w:body") {
+          if (n.nodeName === "w:tc") { inCell = true; break; }
+          n = n.parentNode;
+        }
+        if (/निरीक्षण रिपोर्ट\s*दिनांक/.test(t) || /^_BONAME_/.test(t)) {
+          wStylePara(p, doc, { jc: "center", before: 0, after: 140 });
+          wStyleRuns(p, doc, { sz: 30, bold: true, color: "16213E" });
+        } else if (!inCell && /^[\u0900-\u097F]{1,4}\.\s/.test(t) && (t.length <= 48 || /:\s*$/.test(t))) {
+          wStylePara(p, doc, { before: 240, after: 130, rule: true });
+          wStyleRuns(p, doc, { sz: 27, bold: true, color: "9C0C23" });
+        } else if (!inCell && /^\d{1,2}\.\s/.test(t)) {
+          wStylePara(p, doc, { before: 150, after: 80 });
+          wStyleRuns(p, doc, { sz: 22, bold: true, color: "16213E" });
+        }
+      });
+
+      // ---- tables: header shading, repeat header row, borders, padding ----
+      var tbls = [];
+      for (var ti = 0; ti < bodyEl.childNodes.length; ti++) {
+        var ch = bodyEl.childNodes[ti];
+        if (ch.nodeType === 1 && ch.nodeName === "w:tbl") tbls.push(ch);
+      }
+      tbls.forEach(function (tbl) {
+        var tblPr = tbl.getElementsByTagNameNS(W_NS, "tblPr")[0];
+        if (!tblPr) { tblPr = wEl(doc, "tblPr"); tbl.insertBefore(tblPr, tbl.firstChild); }
+        if (!tblPr.getElementsByTagNameNS(W_NS, "tblBorders").length) {
+          var b = wEl(doc, "tblBorders");
+          ["top", "left", "bottom", "right", "insideH", "insideV"].forEach(function (side) {
+            var e = wEl(doc, side);
+            e.setAttribute("w:val", "single"); e.setAttribute("w:sz", "4");
+            e.setAttribute("w:space", "0"); e.setAttribute("w:color", "9AA5B1");
+            b.appendChild(e);
+          });
+          wInsertOrdered(tblPr, b, W_TBLPR_ORDER);
+        }
+        if (!tblPr.getElementsByTagNameNS(W_NS, "tblCellMar").length) {
+          var cm = wEl(doc, "tblCellMar");
+          [["top", "45"], ["left", "85"], ["bottom", "45"], ["right", "85"]].forEach(function (pr) {
+            var e = wEl(doc, pr[0]);
+            e.setAttribute("w:w", pr[1]); e.setAttribute("w:type", "dxa");
+            cm.appendChild(e);
+          });
+          wInsertOrdered(tblPr, cm, W_TBLPR_ORDER);
+        }
+        var rows = tbl.getElementsByTagNameNS(W_NS, "tr");
+        if (!rows.length) return;
+        var hr = rows[0];
+        var trPr = hr.getElementsByTagNameNS(W_NS, "trPr")[0];
+        if (!trPr) { trPr = wEl(doc, "trPr"); hr.insertBefore(trPr, hr.firstChild); }
+        if (!trPr.getElementsByTagNameNS(W_NS, "tblHeader").length) {
+          wInsertOrdered(trPr, wEl(doc, "tblHeader"), W_TRPR_ORDER);
+        }
+        var cells = hr.getElementsByTagNameNS(W_NS, "tc");
+        for (var c = 0; c < cells.length; c++) {
+          var tcPr = cells[c].getElementsByTagNameNS(W_NS, "tcPr")[0];
+          if (!tcPr) { tcPr = wEl(doc, "tcPr"); cells[c].insertBefore(tcPr, cells[c].firstChild); }
+          if (!tcPr.getElementsByTagNameNS(W_NS, "shd").length) {
+            var shd = wEl(doc, "shd");
+            shd.setAttribute("w:val", "clear"); shd.setAttribute("w:color", "auto"); shd.setAttribute("w:fill", "DCE4F2");
+            wInsertOrdered(tcPr, shd, W_TCPR_ORDER);
+          }
+          var va = wEnsure(tcPr, doc, "vAlign", W_TCPR_ORDER);
+          va.setAttribute("w:val", "center");
+          wStyleRuns(cells[c], doc, { bold: true, color: "16213E", sz: 21 });
+        }
+      });
+    }
+
 
 function cellTextOf(tc) {
   const ps = getDirectChildren(tc, "p");
@@ -4536,7 +5043,7 @@ function addSpecialRemark(doc, bodyEl, text) {
   if (!text) return;
   var lines = String(text).split(/\n/).map(function (s) { return s.trim(); }).filter(Boolean);
   if (!lines.length) return;
-  var children = getDirectChildren(bodyEl);
+  var children = getDirectChildren(bodyEl, "p");
   var anchor = null;
   for (var i = 0; i < children.length; i++) {
     var el = children[i];
@@ -5231,7 +5738,7 @@ const MASTER_DATA = {
       "proposed_inspection_date": "",
       "compliance_received_date": ""
     },
-    "bo_name_en_raw": "CHANDPUR"
+    "bo_name_en_raw": "(Sahtwar) CHANDPUR"
   },
   "BO30403102002": {
     "bo_id": "BO30403102002",
@@ -5268,7 +5775,7 @@ const MASTER_DATA = {
       "proposed_inspection_date": "",
       "compliance_received_date": ""
     },
-    "bo_name_en_raw": "(Sahtwar) CHANDPUR"
+    "bo_name_en_raw": "(Bairia) CHANDPUR"
   },
   "BO30403125004": {
     "bo_id": "BO30403125004",
@@ -7506,6 +8013,7 @@ const MASTER_DATA = {
     }
     updateMarkDoneBtn();
     boSelect.addEventListener("change", updateMarkDoneBtn);
+    try { window.updateMarkDoneBtn = updateMarkDoneBtn; } catch (e) {}
 
     markDoneBtn.addEventListener("click", function() {
       var boId = boSelect.value;
@@ -7540,75 +8048,7 @@ const MASTER_DATA = {
         var boDist = officeMatch ? officeMatch.dist : 0;
         var confirmMsg = "इस BO (" + boName + ") का निरीक्षण IR Final के रूप मार्क करें?\n\nदिनांक: " + finalDate + "\nडाकघर: " + boTAName + " (दूरी: " + boDist + " किमी)\n\nइसे सूची में नीचे ले जाया जाएगा और लंबित BOs ऊपर दिखेंगे।\nTour Diary में इस दिनांक की ऑटो-जर्नी (HQ→" + boTAName + "→HQ, 10:00-17:00) बन जाएगी जिसे आप बाद में edit कर सकते हैं।\n\nClick OK to confirm, Cancel to abort.";
         if (confirm(confirmMsg)) {
-          setBOInspected(boId, true, finalDate);
-
-          // Update the BO's last-inspection date in master data so the NEXT
-          // report auto-shows this inspection's date (and LOT quarters recalc)
-          try {
-            var boMd = MASTER_DATA[boId];
-            if (boMd) {
-              if (!boMd.inspection_history) boMd.inspection_history = {};
-              boMd.inspection_history.last_inspection_date = finalDate;
-            }
-            var rawMd = localStorage.getItem("sdi_master_data");
-            if (rawMd) {
-              var mdObj = JSON.parse(rawMd);
-              if (mdObj && mdObj.boRecords && mdObj.boRecords[boId]) {
-                mdObj.boRecords[boId].last_inspection = finalDate;
-                localStorage.setItem("sdi_master_data", JSON.stringify(mdObj));
-              }
-            }
-          } catch (e) { console.warn("Master data update failed:", e); }
-
-          // IR Final: populate the inspection-completion date in the
-          // Inspection Programme 2026 table (Master Data tab)
-          try {
-            if (window.setProgInspectionDate && bo && bo.bo_name_hi) {
-              window.setProgInspectionDate(bo.bo_name_hi, finalDate);
-            }
-          } catch (e) { console.warn("Programme date update failed:", e); }
-
-          // Refresh the form's last-inspection field + LOT quarter labels
-          if (typeof lastInspectionDateInput !== "undefined" && lastInspectionDateInput) {
-            lastInspectionDateInput.value = finalDate;
-          }
-          // Keep the BO's draft in sync too — a programmatic field update does
-          // not fire an input event, so an old draft would otherwise restore a
-          // stale last-inspection date on the next visit.
-          try {
-            var rawDraft = localStorage.getItem(INSP_DRAFT_KEY_PREFIX + boId);
-            if (rawDraft) {
-              var draftObj = JSON.parse(rawDraft);
-              if (draftObj && draftObj.lastInspectionDate !== finalDate) {
-                draftObj.lastInspectionDate = finalDate;
-                localStorage.setItem(INSP_DRAFT_KEY_PREFIX + boId, JSON.stringify(draftObj));
-              }
-            }
-          } catch (e) { console.warn("Draft date sync failed:", e); }
-          try {
-            lotQuarters = calculateLotQuarters(finalDate);
-            var lotSummaries = (typeof lotEntriesEl !== "undefined") ? lotEntriesEl.querySelectorAll("summary span:first-child") : [];
-            lotSummaries.forEach(function(s, i) {
-              s.textContent = "तिमाही " + (i + 1) + " — " + lotQuarters[i];
-            });
-            if (typeof applyDateDefaults === "function") applyDateDefaults();
-          } catch (e) {}
-
-          updateMarkDoneBtn();
-          rebuildBOSelect();
-          // Create auto-journey in TA module
-          if (window.createInspectionJourney) {
-            var result = window.createInspectionJourney(inspDateISO, boTAName, boDist);
-            if (result.ok) {
-              if (statusMsg) { statusMsg.textContent = "✅ " + boName + " IR Final — Tour Diary में " + result.date + " की जर्नी जोड़ दी गई"; statusMsg.className = "status ok"; }
-            } else if (result.reason === 'exists') {
-              if (statusMsg) { statusMsg.textContent = "✅ " + boName + " IR Final चिह्नित। यादृच्छिक रूप से " + result.date + " की जर्नी पहले से मौजूद है।"; statusMsg.className = "status"; }
-            } else {
-              if (statusMsg) { statusMsg.textContent = "✅ " + boName + " IR Final चिह्नित।"; statusMsg.className = "status"; }
-            }
-          } else {
-            if (statusMsg) { statusMsg.textContent = "✅ " + boName + " IR Final चिह्नित"; statusMsg.className = "status"; }
-          }
+          markBOInspFinal(boId, finalDate, inspDateISO, boTAName, boDist, boName);
         }
       }
     });
@@ -8712,6 +9152,516 @@ const MASTER_DATA = {
   var ACCT_EN_ALIAS = { baghaunch: "banghauch", bigahi: "bighi", binaha: "binha", hariahankalan: "harihakalan", jaiprakashnagar: "rawarjpnagar", piyaraunta: "piyrauta", kusaura: "warkusaura" };
   var ACCT_SO_ALIAS = { reoti: "revati" };
 
+  // ---------------------------------------------------------------------
+  // Account Opening — per-office store (BO + SO), 12 products
+  // वर्तमान वर्ष (1 जनवरी – 30 सितम्बर 2026): embedded from
+  // Product_Wise_AC_Report_35.xlsx (70 BO + 10 SO). Master Data →
+  // "Account Opening" tab से देखें/बदलें; Q53 इसी से भरता है।
+  // ---------------------------------------------------------------------
+  var ACCT_OFFICES_KEY = "sdi_acct_offices_v1";   // कैलेंडर वर्ष 2026 (जन–सित)
+  var ACCT_FY_KEY = "sdi_acct_fy_offices_v1";     // वित्तीय वर्ष 2026-27 (अप्रैल–सित)
+  var ACCT_PRODUCTS = [
+    { key: "mis", label: "MIS" }, { key: "ppfgp", label: "PPFGP" },
+    { key: "ssa", label: "SSA" }, { key: "rd", label: "RD" },
+    { key: "sbbas", label: "SBBAS" }, { key: "sbsgp", label: "SBSGP" },
+    { key: "scss", label: "SCSS" }, { key: "td", label: "TD" },
+    { key: "prfts", label: "PRFTS" }, { key: "kvn", label: "KVN" },
+    { key: "nsc8", label: "NSC8" }, { key: "msc", label: "MSSC" }
+  ];
+  var ACCT_OFFICES_DEFAULT = {"BO30403125001":{"p":{"mis":0,"ppfgp":0,"ssa":4,"rd":17,"sbbas":0,"sbsgp":4,"scss":0,"td":75,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403113001":{"p":{"mis":0,"ppfgp":0,"ssa":7,"rd":49,"sbbas":0,"sbsgp":31,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403113002":{"p":{"mis":0,"ppfgp":0,"ssa":16,"rd":65,"sbbas":0,"sbsgp":16,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403118001":{"p":{"mis":0,"ppfgp":0,"ssa":13,"rd":55,"sbbas":0,"sbsgp":68,"scss":0,"td":72,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27720101":{"n":"Bairia SO Ballia","p":{"mis":133,"ppfgp":1,"ssa":68,"rd":1257,"sbbas":0,"sbsgp":449,"scss":14,"td":1299,"prfts":0,"kvn":602,"nsc8":345,"msc":0}},"BO30403112001":{"p":{"mis":0,"ppfgp":0,"ssa":1,"rd":120,"sbbas":0,"sbsgp":2,"scss":0,"td":3,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403119001":{"p":{"mis":0,"ppfgp":0,"ssa":16,"rd":90,"sbbas":0,"sbsgp":50,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403102001":{"p":{"mis":0,"ppfgp":0,"ssa":11,"rd":82,"sbbas":0,"sbsgp":19,"scss":0,"td":76,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403125002":{"p":{"mis":0,"ppfgp":0,"ssa":4,"rd":88,"sbbas":0,"sbsgp":17,"scss":0,"td":1,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403125003":{"p":{"mis":0,"ppfgp":0,"ssa":3,"rd":88,"sbbas":0,"sbsgp":18,"scss":0,"td":5,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403126001":{"p":{"mis":0,"ppfgp":0,"ssa":3,"rd":23,"sbbas":0,"sbsgp":15,"scss":0,"td":235,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403126002":{"p":{"mis":0,"ppfgp":0,"ssa":3,"rd":139,"sbbas":0,"sbsgp":1,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403126003":{"p":{"mis":0,"ppfgp":0,"ssa":10,"rd":113,"sbbas":0,"sbsgp":54,"scss":0,"td":218,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123001":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":80,"sbbas":0,"sbsgp":4,"scss":0,"td":27,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403115001":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":59,"sbbas":0,"sbsgp":12,"scss":0,"td":50,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403102002":{"p":{"mis":0,"ppfgp":0,"ssa":14,"rd":79,"sbbas":0,"sbsgp":27,"scss":0,"td":79,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27721001":{"n":"Chhata SO Ballia","p":{"mis":31,"ppfgp":3,"ssa":32,"rd":173,"sbbas":0,"sbsgp":151,"scss":5,"td":225,"prfts":0,"kvn":107,"nsc8":19,"msc":0}},"BO30403125004":{"p":{"mis":0,"ppfgp":0,"ssa":8,"rd":147,"sbbas":0,"sbsgp":25,"scss":0,"td":2,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403109001":{"p":{"mis":0,"ppfgp":0,"ssa":7,"rd":65,"sbbas":0,"sbsgp":23,"scss":0,"td":52,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403126004":{"p":{"mis":0,"ppfgp":0,"ssa":6,"rd":120,"sbbas":0,"sbsgp":16,"scss":0,"td":6,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403125005":{"p":{"mis":0,"ppfgp":0,"ssa":11,"rd":70,"sbbas":0,"sbsgp":21,"scss":0,"td":3,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27720401":{"n":"Dallan Chhapra SO","p":{"mis":27,"ppfgp":2,"ssa":44,"rd":318,"sbbas":0,"sbsgp":217,"scss":2,"td":592,"prfts":0,"kvn":416,"nsc8":72,"msc":0}},"BO30403112002":{"p":{"mis":0,"ppfgp":0,"ssa":17,"rd":52,"sbbas":0,"sbsgp":15,"scss":0,"td":1,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403119002":{"p":{"mis":0,"ppfgp":0,"ssa":3,"rd":53,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403111001":{"p":{"mis":0,"ppfgp":0,"ssa":6,"rd":122,"sbbas":0,"sbsgp":14,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403119003":{"p":{"mis":0,"ppfgp":0,"ssa":9,"rd":51,"sbbas":0,"sbsgp":26,"scss":0,"td":37,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403126005":{"p":{"mis":0,"ppfgp":0,"ssa":7,"rd":105,"sbbas":0,"sbsgp":10,"scss":0,"td":1,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123002":{"p":{"mis":0,"ppfgp":0,"ssa":3,"rd":73,"sbbas":0,"sbsgp":3,"scss":0,"td":23,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403125006":{"p":{"mis":0,"ppfgp":0,"ssa":11,"rd":74,"sbbas":0,"sbsgp":10,"scss":0,"td":1,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403112003":{"p":{"mis":0,"ppfgp":0,"ssa":10,"rd":142,"sbbas":0,"sbsgp":10,"scss":0,"td":62,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123003":{"p":{"mis":0,"ppfgp":0,"ssa":12,"rd":72,"sbbas":0,"sbsgp":9,"scss":0,"td":33,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123004":{"p":{"mis":0,"ppfgp":0,"ssa":4,"rd":79,"sbbas":0,"sbsgp":4,"scss":0,"td":16,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27740201":{"n":"Haldi SO Ballia","p":{"mis":111,"ppfgp":13,"ssa":116,"rd":287,"sbbas":0,"sbsgp":421,"scss":8,"td":538,"prfts":0,"kvn":485,"nsc8":150,"msc":0}},"BO30403125007":{"p":{"mis":0,"ppfgp":0,"ssa":11,"rd":54,"sbbas":0,"sbsgp":8,"scss":0,"td":1,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123005":{"p":{"mis":0,"ppfgp":0,"ssa":10,"rd":127,"sbbas":0,"sbsgp":7,"scss":0,"td":5,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403115002":{"p":{"mis":0,"ppfgp":0,"ssa":5,"rd":97,"sbbas":0,"sbsgp":11,"scss":0,"td":9,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403102003":{"p":{"mis":0,"ppfgp":0,"ssa":1,"rd":56,"sbbas":0,"sbsgp":6,"scss":0,"td":10,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403111002":{"p":{"mis":0,"ppfgp":0,"ssa":35,"rd":38,"sbbas":0,"sbsgp":32,"scss":0,"td":68,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123006":{"p":{"mis":0,"ppfgp":0,"ssa":5,"rd":175,"sbbas":0,"sbsgp":3,"scss":0,"td":7,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403113003":{"p":{"mis":0,"ppfgp":0,"ssa":0,"rd":80,"sbbas":0,"sbsgp":2,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403113004":{"p":{"mis":0,"ppfgp":0,"ssa":11,"rd":81,"sbbas":0,"sbsgp":6,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403125008":{"p":{"mis":0,"ppfgp":0,"ssa":4,"rd":68,"sbbas":0,"sbsgp":5,"scss":0,"td":22,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403119004":{"p":{"mis":0,"ppfgp":0,"ssa":8,"rd":46,"sbbas":0,"sbsgp":20,"scss":0,"td":1,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27721401":{"n":"Karanchhapa SO","p":{"mis":24,"ppfgp":1,"ssa":10,"rd":156,"sbbas":0,"sbsgp":92,"scss":0,"td":216,"prfts":0,"kvn":86,"nsc8":49,"msc":0}},"BO30403123007":{"p":{"mis":0,"ppfgp":0,"ssa":1,"rd":72,"sbbas":0,"sbsgp":6,"scss":0,"td":76,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403109002":{"p":{"mis":0,"ppfgp":0,"ssa":16,"rd":68,"sbbas":0,"sbsgp":8,"scss":0,"td":24,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403111003":{"p":{"mis":0,"ppfgp":0,"ssa":6,"rd":87,"sbbas":0,"sbsgp":6,"scss":0,"td":3,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403126006":{"p":{"mis":0,"ppfgp":0,"ssa":10,"rd":98,"sbbas":0,"sbsgp":4,"scss":0,"td":25,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403125009":{"p":{"mis":0,"ppfgp":0,"ssa":3,"rd":118,"sbbas":0,"sbsgp":7,"scss":0,"td":3,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27721601":{"n":"Lalganj Ballia SO","p":{"mis":100,"ppfgp":5,"ssa":15,"rd":372,"sbbas":0,"sbsgp":141,"scss":5,"td":784,"prfts":0,"kvn":535,"nsc8":113,"msc":0}},"BO30403115003":{"p":{"mis":0,"ppfgp":0,"ssa":4,"rd":43,"sbbas":0,"sbsgp":15,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123008":{"p":{"mis":0,"ppfgp":0,"ssa":11,"rd":80,"sbbas":0,"sbsgp":11,"scss":0,"td":4,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27740301":{"n":"Majhua SO","p":{"mis":22,"ppfgp":0,"ssa":27,"rd":63,"sbbas":0,"sbsgp":97,"scss":6,"td":113,"prfts":0,"kvn":112,"nsc8":54,"msc":0}},"BO30403125010":{"p":{"mis":0,"ppfgp":0,"ssa":6,"rd":35,"sbbas":0,"sbsgp":27,"scss":0,"td":50,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403125011":{"p":{"mis":0,"ppfgp":0,"ssa":1,"rd":82,"sbbas":0,"sbsgp":1,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403111004":{"p":{"mis":0,"ppfgp":0,"ssa":3,"rd":115,"sbbas":0,"sbsgp":6,"scss":0,"td":20,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123009":{"p":{"mis":0,"ppfgp":0,"ssa":7,"rd":78,"sbbas":0,"sbsgp":7,"scss":0,"td":283,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO13203203009":{"p":{"mis":0,"ppfgp":0,"ssa":9,"rd":46,"sbbas":0,"sbsgp":24,"scss":0,"td":60,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403102004":{"p":{"mis":0,"ppfgp":0,"ssa":11,"rd":46,"sbbas":0,"sbsgp":9,"scss":0,"td":54,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403119005":{"p":{"mis":0,"ppfgp":0,"ssa":9,"rd":67,"sbbas":0,"sbsgp":8,"scss":0,"td":5,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403126007":{"p":{"mis":0,"ppfgp":0,"ssa":10,"rd":35,"sbbas":0,"sbsgp":19,"scss":0,"td":106,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403111005":{"p":{"mis":0,"ppfgp":0,"ssa":19,"rd":60,"sbbas":0,"sbsgp":27,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27720801":{"n":"Raniganj Bazar SO","p":{"mis":125,"ppfgp":4,"ssa":48,"rd":1052,"sbbas":0,"sbsgp":583,"scss":19,"td":1314,"prfts":0,"kvn":515,"nsc8":297,"msc":0}},"SO27720901":{"n":"REOTI SO","p":{"mis":81,"ppfgp":1,"ssa":45,"rd":1182,"sbbas":0,"sbsgp":709,"scss":13,"td":1937,"prfts":0,"kvn":590,"nsc8":317,"msc":0}},"BO30403126008":{"p":{"mis":0,"ppfgp":0,"ssa":5,"rd":47,"sbbas":0,"sbsgp":16,"scss":0,"td":35,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403113005":{"p":{"mis":0,"ppfgp":0,"ssa":4,"rd":95,"sbbas":0,"sbsgp":13,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27721101":{"n":"Sahatwar SO","p":{"mis":100,"ppfgp":5,"ssa":142,"rd":806,"sbbas":0,"sbsgp":688,"scss":13,"td":1318,"prfts":0,"kvn":962,"nsc8":159,"msc":0}},"BO30403109003":{"p":{"mis":0,"ppfgp":0,"ssa":3,"rd":93,"sbbas":0,"sbsgp":3,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403118002":{"p":{"mis":0,"ppfgp":0,"ssa":9,"rd":15,"sbbas":0,"sbsgp":33,"scss":0,"td":163,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403118003":{"p":{"mis":0,"ppfgp":0,"ssa":25,"rd":30,"sbbas":0,"sbsgp":123,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403115004":{"p":{"mis":0,"ppfgp":0,"ssa":1,"rd":97,"sbbas":0,"sbsgp":4,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403100009":{"p":{"mis":0,"ppfgp":0,"ssa":5,"rd":81,"sbbas":0,"sbsgp":4,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403111006":{"p":{"mis":0,"ppfgp":0,"ssa":6,"rd":87,"sbbas":0,"sbsgp":4,"scss":0,"td":2,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123010":{"p":{"mis":0,"ppfgp":0,"ssa":10,"rd":113,"sbbas":0,"sbsgp":33,"scss":0,"td":81,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403113006":{"p":{"mis":0,"ppfgp":0,"ssa":1,"rd":47,"sbbas":0,"sbsgp":1,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403125012":{"p":{"mis":0,"ppfgp":0,"ssa":3,"rd":79,"sbbas":0,"sbsgp":11,"scss":0,"td":8,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403118004":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":48,"sbbas":0,"sbsgp":26,"scss":0,"td":15,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123011":{"p":{"mis":0,"ppfgp":0,"ssa":9,"rd":89,"sbbas":0,"sbsgp":13,"scss":0,"td":45,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403118005":{"p":{"mis":0,"ppfgp":0,"ssa":21,"rd":71,"sbbas":0,"sbsgp":60,"scss":0,"td":2,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403102005":{"p":{"mis":0,"ppfgp":0,"ssa":5,"rd":44,"sbbas":0,"sbsgp":7,"scss":0,"td":15,"prfts":0,"kvn":0,"nsc8":0,"msc":0}}};
+  // वित्तीय वर्ष 2026-27 (अप्रैल–सितम्बर 2026) का मूल डेटा
+  var ACCT_FY_DEFAULT = {"BO30403125001":{"p":{"mis":0,"ppfgp":0,"ssa":4,"rd":16,"sbbas":0,"sbsgp":3,"scss":0,"td":36,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403113001":{"p":{"mis":0,"ppfgp":0,"ssa":5,"rd":21,"sbbas":0,"sbsgp":23,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403113002":{"p":{"mis":0,"ppfgp":0,"ssa":11,"rd":41,"sbbas":0,"sbsgp":11,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403118001":{"p":{"mis":0,"ppfgp":0,"ssa":8,"rd":19,"sbbas":0,"sbsgp":44,"scss":0,"td":49,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27720101":{"n":"Bairia SO Ballia","p":{"mis":94,"ppfgp":0,"ssa":46,"rd":737,"sbbas":0,"sbsgp":305,"scss":12,"td":878,"prfts":0,"kvn":450,"nsc8":240,"msc":0}},"BO30403112001":{"p":{"mis":0,"ppfgp":0,"ssa":1,"rd":48,"sbbas":0,"sbsgp":2,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403119001":{"p":{"mis":0,"ppfgp":0,"ssa":7,"rd":30,"sbbas":0,"sbsgp":30,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403102001":{"p":{"mis":0,"ppfgp":0,"ssa":6,"rd":47,"sbbas":0,"sbsgp":16,"scss":0,"td":65,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403125002":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":52,"sbbas":0,"sbsgp":11,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403125003":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":43,"sbbas":0,"sbsgp":10,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403126001":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":23,"sbbas":0,"sbsgp":13,"scss":0,"td":128,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403126002":{"p":{"mis":0,"ppfgp":0,"ssa":3,"rd":62,"sbbas":0,"sbsgp":1,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403126003":{"p":{"mis":0,"ppfgp":0,"ssa":3,"rd":63,"sbbas":0,"sbsgp":36,"scss":0,"td":178,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123001":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":42,"sbbas":0,"sbsgp":1,"scss":0,"td":27,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403115001":{"p":{"mis":0,"ppfgp":0,"ssa":0,"rd":20,"sbbas":0,"sbsgp":11,"scss":0,"td":25,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403102002":{"p":{"mis":0,"ppfgp":0,"ssa":7,"rd":20,"sbbas":0,"sbsgp":22,"scss":0,"td":59,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27721001":{"n":"Chhata SO Ballia","p":{"mis":22,"ppfgp":2,"ssa":23,"rd":88,"sbbas":0,"sbsgp":92,"scss":5,"td":158,"prfts":0,"kvn":74,"nsc8":16,"msc":0}},"BO30403125004":{"p":{"mis":0,"ppfgp":0,"ssa":5,"rd":69,"sbbas":0,"sbsgp":19,"scss":0,"td":2,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403109001":{"p":{"mis":0,"ppfgp":0,"ssa":6,"rd":25,"sbbas":0,"sbsgp":18,"scss":0,"td":47,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403126004":{"p":{"mis":0,"ppfgp":0,"ssa":4,"rd":62,"sbbas":0,"sbsgp":11,"scss":0,"td":6,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403125005":{"p":{"mis":0,"ppfgp":0,"ssa":7,"rd":23,"sbbas":0,"sbsgp":12,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27720401":{"n":"Dallan Chhapra SO","p":{"mis":19,"ppfgp":1,"ssa":32,"rd":206,"sbbas":0,"sbsgp":168,"scss":1,"td":424,"prfts":0,"kvn":301,"nsc8":50,"msc":0}},"BO30403112002":{"p":{"mis":0,"ppfgp":0,"ssa":12,"rd":26,"sbbas":0,"sbsgp":9,"scss":0,"td":1,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403119002":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":24,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403111001":{"p":{"mis":0,"ppfgp":0,"ssa":4,"rd":60,"sbbas":0,"sbsgp":8,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403119003":{"p":{"mis":0,"ppfgp":0,"ssa":6,"rd":26,"sbbas":0,"sbsgp":18,"scss":0,"td":30,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403126005":{"p":{"mis":0,"ppfgp":0,"ssa":6,"rd":71,"sbbas":0,"sbsgp":8,"scss":0,"td":1,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123002":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":40,"sbbas":0,"sbsgp":3,"scss":0,"td":9,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403125006":{"p":{"mis":0,"ppfgp":0,"ssa":7,"rd":29,"sbbas":0,"sbsgp":7,"scss":0,"td":1,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403112003":{"p":{"mis":0,"ppfgp":0,"ssa":4,"rd":33,"sbbas":0,"sbsgp":7,"scss":0,"td":44,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123003":{"p":{"mis":0,"ppfgp":0,"ssa":6,"rd":32,"sbbas":0,"sbsgp":8,"scss":0,"td":33,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123004":{"p":{"mis":0,"ppfgp":0,"ssa":1,"rd":26,"sbbas":0,"sbsgp":3,"scss":0,"td":16,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27740201":{"n":"Haldi SO Ballia","p":{"mis":74,"ppfgp":9,"ssa":84,"rd":153,"sbbas":0,"sbsgp":297,"scss":6,"td":395,"prfts":0,"kvn":367,"nsc8":100,"msc":0}},"BO30403125007":{"p":{"mis":0,"ppfgp":0,"ssa":5,"rd":29,"sbbas":0,"sbsgp":5,"scss":0,"td":1,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123005":{"p":{"mis":0,"ppfgp":0,"ssa":6,"rd":76,"sbbas":0,"sbsgp":3,"scss":0,"td":5,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403115002":{"p":{"mis":0,"ppfgp":0,"ssa":5,"rd":54,"sbbas":0,"sbsgp":6,"scss":0,"td":4,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403102003":{"p":{"mis":0,"ppfgp":0,"ssa":1,"rd":23,"sbbas":0,"sbsgp":3,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403111002":{"p":{"mis":0,"ppfgp":0,"ssa":22,"rd":22,"sbbas":0,"sbsgp":19,"scss":0,"td":55,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123006":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":106,"sbbas":0,"sbsgp":2,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403113003":{"p":{"mis":0,"ppfgp":0,"ssa":0,"rd":50,"sbbas":0,"sbsgp":1,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403113004":{"p":{"mis":0,"ppfgp":0,"ssa":9,"rd":51,"sbbas":0,"sbsgp":3,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403125008":{"p":{"mis":0,"ppfgp":0,"ssa":4,"rd":44,"sbbas":0,"sbsgp":3,"scss":0,"td":16,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403119004":{"p":{"mis":0,"ppfgp":0,"ssa":5,"rd":25,"sbbas":0,"sbsgp":11,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27721401":{"n":"Karanchhapa SO","p":{"mis":20,"ppfgp":0,"ssa":8,"rd":89,"sbbas":0,"sbsgp":65,"scss":0,"td":164,"prfts":0,"kvn":59,"nsc8":41,"msc":0}},"BO30403123007":{"p":{"mis":0,"ppfgp":0,"ssa":1,"rd":32,"sbbas":0,"sbsgp":6,"scss":0,"td":66,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403109002":{"p":{"mis":0,"ppfgp":0,"ssa":6,"rd":45,"sbbas":0,"sbsgp":5,"scss":0,"td":17,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403111003":{"p":{"mis":0,"ppfgp":0,"ssa":4,"rd":41,"sbbas":0,"sbsgp":4,"scss":0,"td":2,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403126006":{"p":{"mis":0,"ppfgp":0,"ssa":10,"rd":33,"sbbas":0,"sbsgp":4,"scss":0,"td":25,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403125009":{"p":{"mis":0,"ppfgp":0,"ssa":1,"rd":61,"sbbas":0,"sbsgp":5,"scss":0,"td":2,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27721601":{"n":"Lalganj Ballia SO","p":{"mis":72,"ppfgp":2,"ssa":11,"rd":199,"sbbas":0,"sbsgp":110,"scss":4,"td":570,"prfts":0,"kvn":372,"nsc8":74,"msc":0}},"BO30403115003":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":14,"sbbas":0,"sbsgp":7,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123008":{"p":{"mis":0,"ppfgp":0,"ssa":6,"rd":36,"sbbas":0,"sbsgp":5,"scss":0,"td":4,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27740301":{"n":"Majhua SO","p":{"mis":13,"ppfgp":0,"ssa":20,"rd":38,"sbbas":0,"sbsgp":68,"scss":5,"td":87,"prfts":0,"kvn":75,"nsc8":29,"msc":0}},"BO30403125010":{"p":{"mis":0,"ppfgp":0,"ssa":6,"rd":25,"sbbas":0,"sbsgp":18,"scss":0,"td":29,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403125011":{"p":{"mis":0,"ppfgp":0,"ssa":1,"rd":56,"sbbas":0,"sbsgp":1,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403111004":{"p":{"mis":0,"ppfgp":0,"ssa":1,"rd":72,"sbbas":0,"sbsgp":4,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123009":{"p":{"mis":0,"ppfgp":0,"ssa":5,"rd":57,"sbbas":0,"sbsgp":6,"scss":0,"td":194,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO13203203009":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":20,"sbbas":0,"sbsgp":20,"scss":0,"td":54,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403102004":{"p":{"mis":0,"ppfgp":0,"ssa":7,"rd":10,"sbbas":0,"sbsgp":5,"scss":0,"td":40,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403119005":{"p":{"mis":0,"ppfgp":0,"ssa":3,"rd":23,"sbbas":0,"sbsgp":7,"scss":0,"td":5,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403126007":{"p":{"mis":0,"ppfgp":0,"ssa":5,"rd":26,"sbbas":0,"sbsgp":12,"scss":0,"td":45,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403111005":{"p":{"mis":0,"ppfgp":0,"ssa":14,"rd":37,"sbbas":0,"sbsgp":19,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27720801":{"n":"Raniganj Bazar SO","p":{"mis":87,"ppfgp":1,"ssa":33,"rd":629,"sbbas":0,"sbsgp":397,"scss":13,"td":938,"prfts":0,"kvn":383,"nsc8":176,"msc":0}},"SO27720901":{"n":"REOTI SO","p":{"mis":33,"ppfgp":1,"ssa":27,"rd":701,"sbbas":0,"sbsgp":443,"scss":12,"td":1342,"prfts":0,"kvn":393,"nsc8":232,"msc":0}},"BO30403126008":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":32,"sbbas":0,"sbsgp":13,"scss":0,"td":25,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403113005":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":64,"sbbas":0,"sbsgp":3,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"SO27721101":{"n":"Sahatwar SO","p":{"mis":79,"ppfgp":4,"ssa":83,"rd":492,"sbbas":0,"sbsgp":470,"scss":11,"td":963,"prfts":0,"kvn":731,"nsc8":104,"msc":0}},"BO30403109003":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":54,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403118002":{"p":{"mis":0,"ppfgp":0,"ssa":5,"rd":3,"sbbas":0,"sbsgp":21,"scss":0,"td":86,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403118003":{"p":{"mis":0,"ppfgp":0,"ssa":15,"rd":0,"sbbas":0,"sbsgp":71,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403115004":{"p":{"mis":0,"ppfgp":0,"ssa":1,"rd":43,"sbbas":0,"sbsgp":2,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403100009":{"p":{"mis":0,"ppfgp":0,"ssa":3,"rd":63,"sbbas":0,"sbsgp":2,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403111006":{"p":{"mis":0,"ppfgp":0,"ssa":4,"rd":42,"sbbas":0,"sbsgp":4,"scss":0,"td":2,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123010":{"p":{"mis":0,"ppfgp":0,"ssa":5,"rd":47,"sbbas":0,"sbsgp":22,"scss":0,"td":26,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403113006":{"p":{"mis":0,"ppfgp":0,"ssa":0,"rd":31,"sbbas":0,"sbsgp":1,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403125012":{"p":{"mis":0,"ppfgp":0,"ssa":1,"rd":43,"sbbas":0,"sbsgp":4,"scss":0,"td":5,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403118004":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":22,"sbbas":0,"sbsgp":17,"scss":0,"td":15,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403123011":{"p":{"mis":0,"ppfgp":0,"ssa":2,"rd":38,"sbbas":0,"sbsgp":9,"scss":0,"td":35,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403118005":{"p":{"mis":0,"ppfgp":0,"ssa":8,"rd":23,"sbbas":0,"sbsgp":36,"scss":0,"td":2,"prfts":0,"kvn":0,"nsc8":0,"msc":0}},"BO30403102005":{"p":{"mis":0,"ppfgp":0,"ssa":3,"rd":18,"sbbas":0,"sbsgp":3,"scss":0,"td":15,"prfts":0,"kvn":0,"nsc8":0,"msc":0}}};
+  function getAcctOffices() {
+    try {
+      var raw = localStorage.getItem(ACCT_OFFICES_KEY);
+      if (raw) { var o = JSON.parse(raw); if (o && typeof o === "object") return o; }
+    } catch (e) {}
+    return JSON.parse(JSON.stringify(ACCT_OFFICES_DEFAULT));
+  }
+  function saveAcctOffices(o) { try { localStorage.setItem(ACCT_OFFICES_KEY, JSON.stringify(o)); } catch (e) {} }
+  function getAcctFyOffices() {
+    try {
+      var raw = localStorage.getItem(ACCT_FY_KEY);
+      if (raw) { var o = JSON.parse(raw); if (o && typeof o === "object") return o; }
+    } catch (e) {}
+    return JSON.parse(JSON.stringify(ACCT_FY_DEFAULT));
+  }
+  function saveAcctFyOffices(o) { try { localStorage.setItem(ACCT_FY_KEY, JSON.stringify(o)); } catch (e) {} }
+  function acctOfficeTotal(entry) {
+    var t = 0, p = (entry && entry.p) || {};
+    ACCT_PRODUCTS.forEach(function (x) { t += parseInt(p[x.key], 10) || 0; });
+    return t;
+  }
+  function acctOfficeName(code, entry) {
+    if (entry && entry.n) return entry.n;
+    var md = MASTER_DATA[code];
+    if (md) return (md.bo_name_hi || code) + (md.bo_name_en_raw ? " (" + md.bo_name_en_raw + ")" : "");
+    return code;
+  }
+  function acctOfficeSo(code, entry) {
+    if (code.indexOf("SO") === 0) return "";
+    var md = MASTER_DATA[code];
+    if (!md) return "";
+    return SO_NAME_EN[md.so_name_hi] || md.so_name_hi || "";
+  }
+  // Q53 के लिए वर्तमान वर्ष की 4 श्रेणियाँ (SB = SBBAS + SBSGP)
+  function acctCurrentCats(boId) {
+    var e = getAcctOffices()[boId];
+    if (!e || !e.p) return null;
+    var p = acctEffectiveView(boId, "2026");   // कैलेंडर वर्ष 2026 (जन–सित + अपलोड)
+    var sb = (parseInt(p.sbbas, 10) || 0) + (parseInt(p.sbsgp, 10) || 0);
+    return { ssa: String(parseInt(p.ssa, 10) || 0), rd: String(parseInt(p.rd, 10) || 0), sb: String(sb), td: String(parseInt(p.td, 10) || 0) };
+  }
+
+  // ---- Master Data → "Account Opening" tab (BO: 4 schemes | SO: all schemes) ----
+  var ACCT_VIEW_KEY = "sdi_acct_view";
+  function getAcctView() {
+    var v = { type: "BO", year: "2026" };
+    try { var r = localStorage.getItem(ACCT_VIEW_KEY); if (r) { var o = JSON.parse(r); if (o && o.type && o.year) v = o; } } catch (e) {}
+    return v;
+  }
+  function saveAcctView(v) { try { localStorage.setItem(ACCT_VIEW_KEY, JSON.stringify(v)); } catch (e) {} }
+  // BO के लिए केवल 4 लागू योजनाएँ (SB = SBBAS + SBSGP)
+  var ACCT_BO_PRODS = [
+    { key: "ssa", label: "SSA" }, { key: "rd", label: "RD" },
+    { key: "sb", label: "SB", tip: "SBBAS + SBSGP (दोनों जोड़कर)" }, { key: "td", label: "TD" }
+  ];
+  function acctBoCatsFor(code, view) {
+    if (view === "2025") {
+      var p = (getAcctBaseline().prevYear || {})[code];
+      if (!p) return null;
+      return { ssa: parseInt(p.ssa, 10) || 0, rd: parseInt(p.rd, 10) || 0, sb: parseInt(p.sb, 10) || 0, td: parseInt(p.td, 10) || 0 };
+    }
+    var v = acctEffectiveView(code, view);
+    return { ssa: v.ssa || 0, rd: v.rd || 0, sb: (v.sbbas || 0) + (v.sbsgp || 0), td: v.td || 0 };
+  }
+  function acctBoCats2026(code) { return acctBoCatsFor(code, "2026"); }
+  function acctBoCats2025(code) { return acctBoCatsFor(code, "2025"); }
+  function acctBoCatsFy(code) { return acctBoCatsFor(code, "FY"); }
+
+  // ==================================================================
+  // मासिक / त्रैमासिक खाता-विवरण अपलोड  (v10)
+  //  • अपलोड की संख्याएँ मूल (जन–सित) डेटा में जुड़ती हैं
+  //  • महीना-वार अलग सुरक्षित रहती हैं (हटाया भी जा सकता है)
+  //  • Q53 (निरीक्षण) + Account Opening टैब + जनरेट होने वाली रिपोर्ट — तीनों पर असर
+  // ==================================================================
+  var ACCT_MONTHS_KEY = "sdi_acct_months_v1";
+  var ACCT_MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  function getAcctMonths() {
+    try { var r = localStorage.getItem(ACCT_MONTHS_KEY); if (r) { var o = JSON.parse(r); if (o && typeof o === "object") return o; } } catch (e) {}
+    return {};
+  }
+  function saveAcctMonths(o) { try { localStorage.setItem(ACCT_MONTHS_KEY, JSON.stringify(o)); } catch (e) {} }
+  function acctPeriodLabel(key) {
+    var m = String(key).match(/^(\d{4})-(\d{2})$/);
+    if (m) return ACCT_MONTH_NAMES[parseInt(m[2], 10) - 1] + " " + m[1];
+    m = String(key).match(/^(\d{4})-(Q\d)$/);
+    if (m) { var q = { Q1: "Jan-Mar", Q2: "Apr-Jun", Q3: "Jul-Sep", Q4: "Oct-Dec" }; return q[m[2]] + " " + m[1] + " (Quarter)"; }
+    m = String(key).match(/^FY(\d{4}-\d{2})(-Q(\d))?$/);
+    if (m) {
+      var fq = { 1: "Apr-Jun", 2: "Jul-Sep", 3: "Oct-Dec", 4: "Jan-Mar" };
+      if (m[3]) return "Financial Year " + m[1] + " - Quarter " + m[3] + " (" + fq[m[3]] + ")";
+      return "Financial Year " + m[1] + " (Apr-Mar)";
+    }
+    return key;
+  }
+  function acctPeriodOptions() {
+    var out = [];
+    [2026, 2027].forEach(function (y) {
+      for (var i = 0; i < 12; i++) out.push({ key: y + "-" + (i < 9 ? "0" : "") + (i + 1), label: ACCT_MONTH_NAMES[i] + " " + y + " (Monthly)" });
+      ["Q1", "Q2", "Q3", "Q4"].forEach(function (q) { out.push({ key: y + "-" + q, label: acctPeriodLabel(y + "-" + q) }); });
+      // वित्तीय वर्ष (अप्रैल–मार्च) — निरीक्षण में यही आवश्यक
+      var fy = y + "-" + ("0" + ((y + 1) % 100)).slice(-2);
+      out.push({ key: "FY" + fy, label: "Financial Year " + fy + " (Apr " + y + " - Mar " + (y + 1) + ")" });
+      [1, 2, 3, 4].forEach(function (n) { out.push({ key: "FY" + fy + "-Q" + n, label: "Financial Year " + fy + " - Quarter " + n }); });
+    });
+    return out;
+  }
+  // किसी दफ़्तर का असली मान = मूल (जन–सित) + सब अपलोड किए महीने
+  // किसी अवधि (period key) का कैलेंडर वर्ष (CY) और वित्तीय वर्ष (FY)
+  function acctBucketOf(per) {
+    var m = String(per).match(/^(\d{4})-(\d{2})$/);
+    if (m) {
+      var y = parseInt(m[1], 10), mm = parseInt(m[2], 10);
+      var fy = mm >= 4 ? y + "-" + ("0" + ((y + 1) % 100)).slice(-2) : (y - 1) + "-" + ("0" + (y % 100)).slice(-2);
+      return { cy: [y], fy: [fy] };
+    }
+    m = String(per).match(/^(\d{4})-(Q\d)$/);
+    if (m) {
+      var y2 = parseInt(m[1], 10), qn = parseInt(m[2].slice(1), 10);
+      var fy2 = qn <= 1 ? (y2 - 1) + "-" + ("0" + (y2 % 100)).slice(-2) : y2 + "-" + ("0" + ((y2 + 1) % 100)).slice(-2);
+      return { cy: [y2], fy: [fy2] };
+    }
+    m = String(per).match(/^FY(\d{4})-(\d{2})(?:-Q(\d))?$/);
+    if (m) {
+      var fy3 = m[1] + "-" + m[2], y3 = parseInt(m[1], 10);
+      if (m[3]) { var q3 = parseInt(m[3], 10), cy3 = q3 <= 3 ? y3 : y3 + 1; return { cy: [cy3], fy: [fy3] }; }
+      return { cy: [], fy: [fy3] };
+    }
+    return { cy: [], fy: [] };
+  }
+  function acctBaseStore(view) { return view === "FY" ? getAcctFyOffices() : getAcctOffices(); }
+  // view (2025 / 2026 / FY) के अनुसार अपलोड किए महीनों का जोड़
+  function acctUploadSum(code, view) {
+    var s = {}; ACCT_PRODUCTS.forEach(function (p) { s[p.key] = 0; });
+    if (view === "2025") return s;
+    var kind = view === "FY" ? "fy" : "cy", val = view === "FY" ? "2026-27" : 2026;
+    var months = getAcctMonths();
+    Object.keys(months).forEach(function (per) {
+      var b = acctBucketOf(per);
+      var hit = kind === "fy" ? b.fy.indexOf(val) !== -1 : b.cy.indexOf(val) !== -1;
+      if (!hit) return;
+      var e = months[per] && months[per][code]; if (!e) return;
+      ACCT_PRODUCTS.forEach(function (p) { s[p.key] += parseInt(e[p.key], 10) || 0; });
+    });
+    return s;
+  }
+  // view के अनुसार असली मान = मूल डेटा + अपलोड
+  function acctEffectiveView(code, view) {
+    var out = {};
+    ACCT_PRODUCTS.forEach(function (p) { out[p.key] = 0; });
+    if (view === "2025") {
+      var pv = (getAcctBaseline().prevYear || {})[code] || {};
+      out.ssa = parseInt(pv.ssa, 10) || 0; out.rd = parseInt(pv.rd, 10) || 0;
+      out.sbbas = 0; out.sbsgp = parseInt(pv.sb, 10) || 0; out.td = parseInt(pv.td, 10) || 0;
+      return out;
+    }
+    var base = ((acctBaseStore(view)[code] || {}).p) || {};
+    ACCT_PRODUCTS.forEach(function (p) { out[p.key] = parseInt(base[p.key], 10) || 0; });
+    var add = acctUploadSum(code, view);
+    ACCT_PRODUCTS.forEach(function (p) { out[p.key] += add[p.key]; });
+    return out;
+  }
+  function acctEffectiveP(code) { return acctEffectiveView(code, "2026"); }
+  function acctMonthsSum(code) { return acctUploadSum(code, "2026"); }
+
+  // ---- खुले खातों के अनुसार क्रम (monitoring tool) ----
+  var ACCT_SORT_KEY = "sdi_acct_sort";
+  function getAcctSort() { try { return localStorage.getItem(ACCT_SORT_KEY) || "name_asc"; } catch (e) { return "name_asc"; } }
+  window.setAcctSort = function (v) { try { localStorage.setItem(ACCT_SORT_KEY, v || "name_asc"); } catch (e) {} window.renderAcctTable(); };
+  function acctRowTotal(code, isSO, year) {
+    if (year === "2025" && !isSO && !(getAcctBaseline().prevYear || {})[code]) return -1;
+    var v = acctEffectiveView(code, year), t = 0;
+    if (isSO) { ACCT_PRODUCTS.forEach(function (p) { t += v[p.key] || 0; }); return t; }
+    return (v.ssa || 0) + (v.rd || 0) + (v.sbbas || 0) + (v.sbsgp || 0) + (v.td || 0);
+  }
+
+  // एक-बार: CY 2026 (जन–सित) और FY 2026-27 (अप्रैल–सित) — दोनों आधार-डेटा सेट करें
+  (function applyAcctSplitSeed() {
+    try {
+      var FLAG = "sdi_acct_split_seed_v1";
+      if (localStorage.getItem(FLAG)) return;
+      localStorage.setItem(ACCT_OFFICES_KEY, JSON.stringify(ACCT_OFFICES_DEFAULT));
+      localStorage.setItem(ACCT_FY_KEY, JSON.stringify(ACCT_FY_DEFAULT));
+      localStorage.setItem(FLAG, "1");
+    } catch (e) {}
+  })();
+
+  window.renderAcctPeriods = function () {
+    var sel = document.getElementById("acctPeriodSel");
+    if (sel && !sel.options.length) {
+      acctPeriodOptions().forEach(function (o) {
+        var op = document.createElement("option");
+        op.value = o.key; op.textContent = o.label;
+        sel.appendChild(op);
+      });
+    }
+    var box = document.getElementById("acctPeriodList");
+    if (!box) return;
+    var months = getAcctMonths();
+    var keys = Object.keys(months).sort();
+    if (!keys.length) { box.innerHTML = '<div class="small-muted" style="padding:4px 0;">No monthly / quarterly report uploaded yet.</div>'; return; }
+    var html = "";
+    keys.forEach(function (per) {
+      var off = months[per] || {}, offices = 0, tot = 0;
+      Object.keys(off).forEach(function (code) {
+        offices++;
+        ACCT_PRODUCTS.forEach(function (p) { tot += parseInt(off[code][p.key], 10) || 0; });
+      });
+      html += '<div class="acct-period-row"><span class="apr-l">' + acctPeriodLabel(per) + "</span>" +
+              '<span class="apr-m">' + offices + (offices === 1 ? " office" : " offices") + " &middot; " + tot + (tot === 1 ? " account" : " accounts") + "</span>" +
+              '<button type="button" class="apr-x" title="Remove this upload" onclick="removeAcctPeriod(\'' + per + '\')">✕ Remove</button></div>';
+    });
+    box.innerHTML = html;
+  };
+  window.removeAcctPeriod = function (per) {
+    if (!confirm(acctPeriodLabel(per) + " — remove this upload? These figures will be subtracted from the total.")) return;
+    var months = getAcctMonths();
+    delete months[per];
+    saveAcctMonths(months);
+    window.renderAcctPeriods();
+    if (typeof window.renderAcctTable === "function") window.renderAcctTable();
+    try { var bs = document.getElementById("boSelect"); if (bs && bs.value && typeof applyAcctBaseline === "function") applyAcctBaseline(bs.value); } catch (e) {}
+    try { (window.showToast || function () {})( "Upload removed — " + acctPeriodLabel(per)); } catch (e) {}
+  };
+
+  window.acctMonthlyParse = function (input) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    var sel = document.getElementById("acctPeriodSel");
+    var period = (sel && sel.value) || "";
+    if (!period) { alert("Select a period (month / quarter) first."); input.value = ""; return; }
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var fail = function (err) { alert("Upload failed: " + (err && err.message ? err.message : err)); input.value = ""; };
+      try {
+        JSZip.loadAsync(e.target.result).then(function (zip) {
+          var sheetName = null;
+          zip.forEach(function (relPath) { if (/^xl\/worksheets\/sheet\d+\.xml$/.test(relPath)) { if (!sheetName || relPath < sheetName) sheetName = relPath; } });
+          if (!sheetName) throw new Error("worksheet नहीं मिला");
+          var pShared = zip.file("xl/sharedStrings.xml") ? zip.file("xl/sharedStrings.xml").async("string") : Promise.resolve("");
+          return pShared.then(function (ssXml) {
+            var sharedMap = {};
+            if (ssXml) {
+              var dp0 = new DOMParser().parseFromString(ssXml, "application/xml");
+              var sis = dp0.getElementsByTagName("si");
+              for (var i = 0; i < sis.length; i++) {
+                var ts = sis[i].getElementsByTagName("t"), s = "";
+                for (var j = 0; j < ts.length; j++) s += ts[j].textContent || "";
+                sharedMap[i] = s;
+              }
+            }
+            return zip.file(sheetName).async("string").then(function (xml) {
+              var dp = new DOMParser().parseFromString(xml, "application/xml");
+              var rowEls = dp.getElementsByTagName("row"), grid = [];
+              for (var ri = 0; ri < rowEls.length; ri++) {
+                var cells = rowEls[ri].getElementsByTagName("c"), rowArr = [];
+                for (var ci = 0; ci < cells.length; ci++) {
+                  var c = cells[ci], ref = c.getAttribute("r") || "";
+                  var colIdx = acctColToIdx(ref.replace(/[0-9]/g, ""));
+                  var type = c.getAttribute("t"), val = "";
+                  var vEls = c.getElementsByTagName("v"), tEls = c.getElementsByTagName("t");
+                  if (type === "inlineStr" && tEls.length) val = tEls[0].textContent || "";
+                  else if (vEls.length) { val = vEls[0].textContent || ""; if (type === "s") val = sharedMap[parseInt(val, 10)] || ""; }
+                  rowArr[colIdx] = val;
+                }
+                grid.push(rowArr);
+              }
+              var hIdx = -1, bestScore = 0;
+              for (var g = 0; g < grid.length; g++) {
+                var jn = (grid[g] || []).join("|").toLowerCase();
+                if (jn.indexOf("name") === -1) continue;
+                var sc = 0;
+                ["sol", "ssa", "rd", "td", "sbsgp", "sbbas", "mis", "ppfgp", "scss", "kvn", "nsc8", "msc", "total"].forEach(function (k) { if (jn.indexOf(k) !== -1) sc++; });
+                if (sc > bestScore) { bestScore = sc; hIdx = g; }
+              }
+              if (hIdx === -1 || bestScore < 2) throw new Error("Header row (Name / RD etc.) not found");
+              var cm = {};
+              (grid[hIdx] || []).forEach(function (hT, ix) {
+                var hh = String(hT || "").toLowerCase().trim();
+                if (!hh) return;
+                if (hh.indexOf("so name") !== -1) cm.so = ix;
+                else if (hh.indexOf("sol") !== -1) cm.code = ix;
+                else if (hh === "name" || hh.indexOf("bo name") !== -1) cm.name = ix;
+                else if (hh.indexOf("ssa") !== -1) cm.ssa = ix;
+                else if (hh.indexOf("sbsgp") !== -1) { cm.sbsgp = ix; }
+                else if (hh === "sbbas") cm.sbbas = ix;
+                else if (hh === "scss") cm.scss = ix;
+                else if (hh === "prfts") cm.prfts = ix;
+                else if (hh === "kvn") cm.kvn = ix;
+                else if (hh === "nsc8") cm.nsc8 = ix;
+                else if (hh === "mssc" || hh === "msc") cm.msc = ix;
+                else if (hh === "mis") cm.mis = ix;
+                else if (hh === "ppfgp") cm.ppfgp = ix;
+                else if (hh.indexOf("rd") !== -1) cm.rd = ix;
+                else if (hh.indexOf("td") !== -1) cm.td = ix;
+              });
+              if (cm.name === undefined) cm.name = 0;
+              if (cm.so === undefined) cm.so = 2;
+              var add = {}, unmatched = [], offices = 0, tot = 0;
+              for (var r2 = hIdx + 1; r2 < grid.length; r2++) {
+                var g2 = grid[r2] || [];
+                var nm = String(g2[cm.name] || "").trim();
+                if (!nm) continue;
+                if (nm.toLowerCase() === "total") continue;
+                var pv = {};
+                ACCT_PRODUCTS.forEach(function (pk) { pv[pk.key] = cm[pk.key] !== undefined ? (parseInt(acctCleanNum(g2[cm[pk.key]]), 10) || 0) : 0; });
+                if (!/BO/i.test(nm)) {                    // SO पंक्ति
+                  var soCode = String(g2[cm.code] !== undefined ? g2[cm.code] : (g2[1] || "")).trim();
+                  if (soCode) { add["SO" + soCode] = pv; offices++; ACCT_PRODUCTS.forEach(function (pk) { tot += pv[pk.key]; }); }
+                  continue;
+                }
+                var bid = acctFindBid(nm, String(g2[cm.so] || ""));
+                if (!bid) { unmatched.push(nm); continue; }
+                add[bid] = pv; offices++;
+                ACCT_PRODUCTS.forEach(function (pk) { tot += pv[pk.key]; });
+              }
+              if (!offices) throw new Error("No post-office row found");
+              if (!confirm(acctPeriodLabel(period) + " — add this report?\n" + offices + (offices === 1 ? " office" : " offices") + ", " + tot + (tot === 1 ? " account" : " accounts") + "\n\nThese figures will be ADDED to the existing data." + (unmatched.length ? "\n(" + unmatched.length + " names not matched)" : ""))) { input.value = ""; return; }
+              var months = getAcctMonths();
+              if (!months[period]) months[period] = {};
+              Object.keys(add).forEach(function (code) {
+                if (!months[period][code]) months[period][code] = {};
+                ACCT_PRODUCTS.forEach(function (pk) {
+                  months[period][code][pk.key] = (parseInt(months[period][code][pk.key], 10) || 0) + (add[code][pk.key] || 0);
+                });
+              });
+              saveAcctMonths(months);
+              window.renderAcctPeriods();
+              if (typeof window.renderAcctTable === "function") window.renderAcctTable();
+              try { var bs = document.getElementById("boSelect"); if (bs && bs.value && typeof applyAcctBaseline === "function") applyAcctBaseline(bs.value); } catch (e) {}
+              try { (window.showToast || function () {})( "✅ " + acctPeriodLabel(period) + " added — " + offices + (offices === 1 ? " office" : " offices") + ", " + tot + (tot === 1 ? " account" : " accounts")); } catch (e) {}
+              if (unmatched.length) console.warn("Monthly import unmatched:", unmatched);
+              input.value = "";
+            });
+          });
+        }).catch(fail);
+      } catch (err) { fail(err); }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  window.setAcctView = function (k, v) { var s = getAcctView(); s[k] = v; saveAcctView(s); window.renderAcctTable(); };
+  function acctEsc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
+  window.renderAcctTable = function () {
+    var wrap = document.getElementById("acctTableWrap");
+    if (!wrap) return;
+    var view = getAcctView();
+    var off = getAcctOffices();
+    var qEl = document.getElementById("acctOfficeSearch");
+    var q = ((qEl && qEl.value) || "").toLowerCase().trim();
+    var isSO = view.type === "SO";
+
+    var seg = function (cur, opts, key) {
+      return opts.map(function (o) {
+        return '<button type="button" class="acct-seg' + (o.v === cur ? " active" : "") +
+               '" onclick="setAcctView(\'' + key + '\',\'' + o.v + '\')">' + o.t + "</button>";
+      }).join("");
+    };
+    var sortMode = getAcctSort();
+    var rankOn = sortMode === "total_desc" || sortMode === "total_asc";
+    var head =
+      '<div class="acct-controls">' +
+        '<div class="acct-segrow">' + seg(view.type, [{ v: "BO", t: "🏤 Branch Office (BO)" }, { v: "SO", t: "🏢 Sub Office (SO)" }], "type") + "</div>" +
+        '<div class="acct-segrow">' + seg(view.year, [{ v: "2025", t: "CY 2025" }, { v: "2026", t: "CY 2026" }, { v: "FY", t: "FY 2026-27" }], "year") + "</div>" +
+        '<div class="acct-sortrow"><span class="acct-sortlbl">Sort:</span>' +
+          '<select id="acctSortSel" onchange="setAcctSort(this.value)">' +
+            '<option value="name_asc"' + (sortMode === "name_asc" ? " selected" : "") + '>Name (A → Z)</option>' +
+            '<option value="total_desc"' + (sortMode === "total_desc" ? " selected" : "") + '>Accounts opened — high to low ↓</option>' +
+            '<option value="total_asc"' + (sortMode === "total_asc" ? " selected" : "") + '>Accounts opened — low to high ↑</option>' +
+            '<option value="code_asc"' + (sortMode === "code_asc" ? " selected" : "") + '>Office code — ascending ↑</option>' +
+            '<option value="code_desc"' + (sortMode === "code_desc" ? " selected" : "") + '>Office code — descending ↓</option>' +
+          "</select>" +
+        "</div>" +
+      "</div>";
+
+    if (isSO && view.year === "2025") {
+      wrap.innerHTML = head + '<div class="acct-empty">CY 2025 account-opening data is not available for Sub Offices (SO) — the 2025 report covered Branch Offices (BO) only. Please choose <b>CY 2026</b> or <b>FY 2026-27</b>.</div>';
+      return;
+    }
+
+    var prods = isSO ? ACCT_PRODUCTS : ACCT_BO_PRODS;
+    var codes = Object.keys(off).filter(function (c) {
+      return isSO ? c.indexOf("SO") === 0 : c.indexOf("SO") !== 0;
+    });
+    codes.sort(function (a, b) { return acctOfficeName(a, off[a]).localeCompare(acctOfficeName(b, off[b]), "hi"); });
+    if (rankOn) {
+      codes.sort(function (a, b) {
+        var ta = acctRowTotal(a, isSO, view.year), tb = acctRowTotal(b, isSO, view.year);
+        if (ta !== tb) return sortMode === "total_desc" ? tb - ta : ta - tb;
+        return acctOfficeName(a, off[a]).localeCompare(acctOfficeName(b, off[b]), "hi");
+      });
+    } else if (sortMode === "code_asc" || sortMode === "code_desc") {
+      codes.sort(function (a, b) {
+        var r = String(a).localeCompare(String(b), undefined, { numeric: true });
+        return sortMode === "code_desc" ? -r : r;
+      });
+    }
+
+    var html = head + '<table class="acct-tbl"><thead><tr>' + (rankOn ? '<th class="acct-rank">क्रम</th>' : "") + '<th style="min-width:150px;">' + (isSO ? "Sub Office" : "Branch Office") + "</th>" +
+               '<th style="min-width:90px;">' + (isSO ? "Code" : "SO") + "</th>";
+    prods.forEach(function (p) { html += "<th" + (p.tip ? ' title="' + p.tip + '"' : "") + ">" + p.label + "</th>"; });
+    html += "<th>Total</th></tr></thead><tbody>";
+
+    var grand = {}; prods.forEach(function (p) { grand[p.key] = 0; });
+    var shown = 0;
+    codes.forEach(function (code) {
+      var e = off[code] || { p: {} };
+      var name = acctOfficeName(code, e);
+      var sub = isSO ? code.replace(/^SO/, "") : acctOfficeSo(code, e);
+      if (q && name.toLowerCase().indexOf(q) === -1 && code.toLowerCase().indexOf(q) === -1 && String(sub).toLowerCase().indexOf(q) === -1) return;
+
+      var vals;
+      if (isSO) {
+        var effSO = acctEffectiveView(code, view.year);
+        vals = {};
+        prods.forEach(function (p) { vals[p.key] = parseInt(effSO[p.key], 10) || 0; });
+      } else {
+        vals = acctBoCatsFor(code, view.year);
+        if (!vals) return; // इस वर्ष का आधार-डेटा इस दफ़्तर के लिए नहीं है
+      }
+
+      shown++;
+      html += "<tr>" + (rankOn ? '<td class="acct-rank">' + shown + "</td>" : "") +
+              '<td class="acct-name">' + acctEsc(name) + '</td><td class="acct-so">' + acctEsc(sub) + "</td>";
+      var rowTot = 0;
+      prods.forEach(function (p) {
+        var v = vals[p.key] || 0;
+        rowTot += v; grand[p.key] += v;
+        html += '<td><input type="number" inputmode="numeric" class="acct-cell" value="' + v +
+                '" data-code="' + code + '" data-prod="' + p.key + '" data-year="' + view.year +
+                '" data-type="' + (isSO ? "SO" : "BO") + '" oninput="acctCellChanged(this)"></td>';
+      });
+      html += '<td class="acct-total" id="accttot_' + code + '">' + rowTot + "</td></tr>";
+    });
+
+    html += "</tbody><tfoot><tr><td colspan='" + (rankOn ? 3 : 2) + "'><b>कुल (" + shown + " " + (isSO ? "Sub Offices" : "Branch Offices") + ")</b></td>";
+    var gt = 0;
+    prods.forEach(function (p) { gt += grand[p.key]; html += "<td><b>" + grand[p.key] + "</b></td>"; });
+    html += "<td><b>" + gt + "</b></td></tr></tfoot></table>";
+    wrap.innerHTML = html;
+  };
+
+  window.acctCellChanged = function (el) {
+    var code = el.getAttribute("data-code");
+    var prod = el.getAttribute("data-prod");
+    var year = el.getAttribute("data-year") || "2026";
+    var type = el.getAttribute("data-type") || "BO";
+    var v = parseInt(el.value, 10);
+    if (isNaN(v) || v < 0) v = 0;
+
+    if (year === "2025") {
+      // पिछले वर्ष (2025) की बेसलाइन में लिखें
+      var base = getAcctBaseline();
+      if (!base.prevYear) base.prevYear = {};
+      if (!base.prevYear[code]) base.prevYear[code] = {};
+      base.prevYear[code][prod] = String(v);
+      var t = 0;
+      ["ssa", "rd", "sb", "td"].forEach(function (k) { t += parseInt(base.prevYear[code][k], 10) || 0; });
+      base.prevYear[code].total = String(t);
+      saveAcctBaseline(base);
+      var te1 = document.getElementById("accttot_" + code);
+      if (te1) te1.textContent = t;
+      return;
+    }
+
+    var view = year;
+    var store = view === "FY" ? getAcctFyOffices() : getAcctOffices();
+    if (!store[code]) return;
+    if (!store[code].p) store[code].p = {};
+    // दिखने वाला मान = मूल डेटा + अपलोड। इसलिए मूल में (टाइप किया मान − अपलोड जोड़) लिखें,
+    // ताकि स्क्रीन पर वही मान दिखे जो टाइप किया गया।
+    var msum = acctUploadSum(code, view);
+    if (type === "BO" && prod === "sb") {
+      var wantSb = v - (parseInt(msum.sbbas, 10) || 0) - (parseInt(msum.sbsgp, 10) || 0);
+      store[code].p.sbbas = 0;
+      store[code].p.sbsgp = Math.max(0, wantSb);
+    } else {
+      var want = v - (parseInt(msum[prod], 10) || 0);
+      store[code].p[prod] = Math.max(0, want);
+    }
+    if (view === "FY") saveAcctFyOffices(store); else saveAcctOffices(store);
+    var te = document.getElementById("accttot_" + code);
+    if (te) { te.textContent = acctRowTotal(code, type === "SO", view); }
+    // अगर यही BO अभी निरीक्षण में खुला है तो Q53 तुरंत अपडेट करें
+    try {
+      var bs = document.getElementById("boSelect");
+      if (bs && bs.value === code && typeof applyAcctBaseline === "function") applyAcctBaseline(code);
+    } catch (e) {}
+  };
+
+
   function getAcctBaseline() {
     try {
       var raw = localStorage.getItem(ACCT_BASE_KEY);
@@ -8734,7 +9684,7 @@ const MASTER_DATA = {
   function applyAcctBaseline(boId) {
     var base = getAcctBaseline();
     var prev = (base.prevYear || {})[boId] || null;
-    var cur = (base.curTill || {})[boId] || null;
+    var cur = acctCurrentCats(boId) || (base.curTill || {})[boId] || null;
     Object.keys(ACCT_EXCEL_CATS).forEach(function (catKey) {
       var col = ACCT_EXCEL_CATS[catKey];
       var pEl = document.getElementById("biz_" + catKey + "_previous");
@@ -8748,13 +9698,25 @@ const MASTER_DATA = {
       note.style.display = "block";
       if (prev) {
         note.textContent = cur
-          ? "पिछले वर्ष की संख्याएँ 2025 Excel से भर दी गई हैं। वर्तमान वर्ष: Excel (अब तक) + बाद के खाते — दोनों जुड़कर ही रिपोर्ट में जाएँगे।"
+          ? "वर्तमान वर्ष (1 जनवरी – 30 सितम्बर 2026) का डेटा app में पहले से भरा है। 1 अक्टूबर के बाद खुले खाते 'बाद के खाते — आप भरें' में लिखें; दोनों जुड़कर रिपोर्ट में जाएँगे।"
           : "पिछले वर्ष की संख्याएँ 2025 Excel से भर दी गई हैं। वर्तमान वर्ष का Excel मिलने पर Import करें; तब तक 'बाद के खाते' में पूरी संख्या लिखें।";
         note.style.background = "#e8f6ec";
       } else {
         note.textContent = "इस BO का 2025 Excel डेटा नहीं मिला — पिछले वर्ष की संख्याएँ स्वयं भरें।";
         note.style.background = "#fdf3e7";
       }
+    }
+    // वित्तीय वर्ष 2026-27 की अलग जानकारी (वार्षिक निरीक्षण के लिए)
+    var fyNote = document.getElementById("acctFyNote");
+    if (fyNote) {
+      var fyC = acctBoCatsFy(boId);
+      if (fyC) {
+        var fyTot = fyC.ssa + fyC.rd + fyC.sb + fyC.td;
+        fyNote.style.display = "block";
+        fyNote.innerHTML = "वित्तीय वर्ष 2026-27 (अप्रैल 2026 से अब तक) — SSA: <b>" + fyC.ssa + "</b> · RD: <b>" + fyC.rd +
+          "</b> · SB: <b>" + fyC.sb + "</b> · TD: <b>" + fyC.td + "</b> · कुल: <b>" + fyTot + "</b>" +
+          "<br><span style=\'color:#5a6b86;\'>जानकारी के लिए — रिपोर्ट की तुलना (प्रश्न 53) कैलेंडर वर्ष 2025 बनाम 2026 पर ही रहेगी।</span>";
+      } else { fyNote.style.display = "none"; }
     }
   }
 
@@ -8885,21 +9847,36 @@ const MASTER_DATA = {
                 }
                 grid.push(rowArr);
               }
-              var hIdx = -1;
+              // हेडर पंक्ति खोजें — सबसे ज़्यादा मेल खाने वाली पंक्ति चुनें
+              // (नई फ़ाइलों में 'Total' कॉलम नहीं होता, इसलिए उसे अनिवार्य न रखें)
+              var hIdx = -1, bestScore = 0;
               for (var g = 0; g < grid.length; g++) {
                 var jn = (grid[g] || []).join("|").toLowerCase();
-                if (jn.indexOf("name") !== -1 && jn.indexOf("rd") !== -1 && jn.indexOf("total") !== -1) { hIdx = g; break; }
+                if (jn.indexOf("name") === -1) continue;
+                var sc = 0;
+                ["sol", "ssa", "rd", "td", "sbsgp", "sbbas", "mis", "ppfgp", "scss", "kvn", "nsc8", "msc", "total"].forEach(function (k) {
+                  if (jn.indexOf(k) !== -1) sc++;
+                });
+                if (sc > bestScore) { bestScore = sc; hIdx = g; }
               }
-              if (hIdx === -1) throw new Error("हेडर पंक्ति (Name / RD / Total) नहीं मिली");
+              if (hIdx === -1 || bestScore < 2) throw new Error("हेडर पंक्ति (Name / RD आदि) नहीं मिली");
               var cm = {};
               (grid[hIdx] || []).forEach(function (hT, ix) {
                 var h = String(hT || "").toLowerCase().trim();
                 if (!h) return;
                 if (h.indexOf("so name") !== -1) cm.so = ix;
-                else if (h.indexOf("sol") !== -1) return;
+                else if (h.indexOf("sol") !== -1) cm.code = ix;
                 else if (h === "name" || h.indexOf("bo name") !== -1) cm.name = ix;
                 else if (h.indexOf("ssa") !== -1) cm.ssa = ix;
-                else if (h.indexOf("sbsgp") !== -1) cm.sb = ix;
+                else if (h.indexOf("sbsgp") !== -1) { cm.sb = ix; cm.sbsgp = ix; }
+                else if (h === "sbbas") cm.sbbas = ix;
+                else if (h === "scss") cm.scss = ix;
+                else if (h === "prfts") cm.prfts = ix;
+                else if (h === "kvn") cm.kvn = ix;
+                else if (h === "nsc8") cm.nsc8 = ix;
+                else if (h === "mssc" || h === "msc") cm.msc = ix;
+                else if (h === "mis") cm.mis = ix;
+                else if (h === "ppfgp") cm.ppfgp = ix;
                 else if (h.indexOf("rd") !== -1) cm.rd = ix;
                 else if (h.indexOf("td") !== -1) cm.td = ix;
                 else if (h.indexOf("total") !== -1) cm.total = ix;
@@ -8907,25 +9884,51 @@ const MASTER_DATA = {
               if (cm.name === undefined) cm.name = 0;
               if (cm.so === undefined) cm.so = 2;
               var out = {};
+              var storeOut = {};
               var unmatchedList = [];
               for (var r2 = hIdx + 1; r2 < grid.length; r2++) {
                 var g2 = grid[r2] || [];
                 var nm = String(g2[cm.name] || "").trim();
                 if (!nm) continue;
-                if (nm.toLowerCase() === "total") break;
+                if (nm.toLowerCase() === "total") continue;   // कुल पंक्ति छोड़ें (फ़ाइल में कहीं भी हो तो भी डेटा न खोए)
+                var prodVals = {};
+                ACCT_PRODUCTS.forEach(function (pk) {
+                  prodVals[pk.key] = cm[pk.key] !== undefined ? (parseInt(acctCleanNum(g2[cm[pk.key]]), 10) || 0) : 0;
+                });
+                if (!/BO/i.test(nm)) {
+                  var soCode = String(g2[cm.code] !== undefined ? g2[cm.code] : (g2[1] || "")).trim();
+                  if (soCode) storeOut["SO" + soCode] = { n: nm, p: prodVals };
+                  continue;
+                }
                 var bid = acctFindBid(nm, String(g2[cm.so] || ""));
                 if (!bid) { unmatchedList.push(nm); continue; }
+                storeOut[bid] = { p: prodVals };
                 out[bid] = {
                   ssa: cm.ssa !== undefined ? acctCleanNum(g2[cm.ssa]) : "",
                   rd: cm.rd !== undefined ? acctCleanNum(g2[cm.rd]) : "",
-                  sb: cm.sb !== undefined ? acctCleanNum(g2[cm.sb]) : "",
+                  sb: (function () {
+                    // SB = SBBAS + SBSGP (दोनों जोड़ें)
+                    var sum = 0, any = false;
+                    if (cm.sbbas !== undefined) { sum += parseInt(acctCleanNum(g2[cm.sbbas]), 10) || 0; any = true; }
+                    if (cm.sbsgp !== undefined) { sum += parseInt(acctCleanNum(g2[cm.sbsgp]), 10) || 0; any = true; }
+                    if (!any) return cm.sb !== undefined ? acctCleanNum(g2[cm.sb]) : "";
+                    return String(sum);
+                  })(),
                   td: cm.td !== undefined ? acctCleanNum(g2[cm.td]) : "",
                   total: cm.total !== undefined ? acctCleanNum(g2[cm.total]) : "",
                 };
               }
               var n2 = Object.keys(out).length;
-              if (!n2) throw new Error("कोई डाकघर पंक्ति नहीं मिली");
+              var nStore = Object.keys(storeOut).length;
+              if (!n2 && !nStore) throw new Error("कोई डाकघर पंक्ति नहीं मिली");
+              if (target !== "prevYear" && nStore) {
+                var offMerge = getAcctOffices();
+                Object.keys(storeOut).forEach(function (k) { offMerge[k] = storeOut[k]; });
+                saveAcctOffices(offMerge);
+                if (typeof window.renderAcctTable === "function") window.renderAcctTable();
+              }
               var tgtLabel = target === "prevYear" ? "पिछले वर्ष" : "वर्तमान वर्ष (अब तक)";
+              if (target !== "prevYear" && nStore) tgtLabel += " — Account Opening tab (" + nStore + " दफ़्तर)";
               if (!confirm("Import करें? " + n2 + " डाकघर मिले" + (unmatchedList.length ? " (" + unmatchedList.length + " नाम नहीं मिले)" : "") + " — " + tgtLabel + " का डेटा बदल जाएगा।")) { input.value = ""; return; }
               var base = getAcctBaseline();
               base[target] = out;
@@ -9149,6 +10152,7 @@ const MASTER_DATA = {
   }
   // Initial sizing once the layout has settled.
   requestAnimationFrame(sigResizeCanvas);
+  try { window.__sigResizeCanvas = sigResizeCanvas; } catch (e) {}
 
   function sigPointFromEvent(evt) {
     const rect = sigCanvas.getBoundingClientRect();
@@ -9307,6 +10311,141 @@ const MASTER_DATA = {
   // ---------------------------------------------------------------------
   // Generate report
   // ---------------------------------------------------------------------
+  // ------------------------------------------------------------------
+  // एक जगह: किसी BO को "निरीक्षण पूर्ण (IR Final)" चिह्नित करने की पूरी प्रक्रिया।
+  //   • done-mark  • Master Data की अंतिम-निरीक्षण तिथि
+  //   • Inspection Programme 2026 में निरीक्षण तिथि  • Tour Diary में ऑटो-जर्नी
+  // इसे "Mark Done" बटन और रिपोर्ट बनाने (Generate) — दोनों से बुलाया जाता है।
+  // ------------------------------------------------------------------
+  function markBOInspFinal(boId, finalDate, inspDateISO, boTAName, boDist, boName) {
+    var bo = MASTER_DATA[boId];
+    setBOInspected(boId, true, finalDate);
+    try {
+      if (bo) {
+        if (!bo.inspection_history) bo.inspection_history = {};
+        bo.inspection_history.last_inspection_date = finalDate;
+      }
+      var rawMd = localStorage.getItem("sdi_master_data");
+      if (rawMd) {
+        var mdObj = JSON.parse(rawMd);
+        if (mdObj && mdObj.boRecords && mdObj.boRecords[boId]) {
+          mdObj.boRecords[boId].last_inspection = finalDate;
+          localStorage.setItem("sdi_master_data", JSON.stringify(mdObj));
+        }
+      }
+    } catch (e) { console.warn("Master data update failed:", e); }
+    try {
+      if (window.setProgInspectionDate && bo && bo.bo_name_hi) window.setProgInspectionDate(bo.bo_name_hi, finalDate);
+    } catch (e) { console.warn("Programme date update failed:", e); }
+    try {
+      if (typeof lastInspectionDateInput !== "undefined" && lastInspectionDateInput) lastInspectionDateInput.value = finalDate;
+      var rawDraft = localStorage.getItem(INSP_DRAFT_KEY_PREFIX + boId);
+      if (rawDraft) {
+        var draftObj = JSON.parse(rawDraft);
+        if (draftObj && draftObj.lastInspectionDate !== finalDate) {
+          draftObj.lastInspectionDate = finalDate;
+          localStorage.setItem(INSP_DRAFT_KEY_PREFIX + boId, JSON.stringify(draftObj));
+        }
+      }
+    } catch (e) { console.warn("Draft date sync failed:", e); }
+    try {
+      lotQuarters = calculateLotQuarters(finalDate);
+      var lotSummaries = (typeof lotEntriesEl !== "undefined") ? lotEntriesEl.querySelectorAll("summary span:first-child") : [];
+      lotSummaries.forEach(function (s, i) { s.textContent = "तिमाही " + (i + 1) + " — " + lotQuarters[i]; });
+      if (typeof applyDateDefaults === "function") applyDateDefaults();
+    } catch (e) {}
+    try { (window.updateMarkDoneBtn || function () {})(); } catch (e) {}
+    try { rebuildBOSelect(); } catch (e) {}
+    var msg = "✅ " + boName + " IR Final चिह्नित।";
+    var cls = "status";
+    if (window.createInspectionJourney && inspDateISO) {
+      try {
+        var result = window.createInspectionJourney(inspDateISO, boTAName, boDist);
+        if (result && result.ok) { msg = "✅ " + boName + " IR Final — Tour Diary में " + result.date + " की जर्नी जोड़ दी गई"; cls = "status ok"; }
+        else if (result && result.reason === "exists") { msg = "✅ " + boName + " IR Final चिह्नित। " + result.date + " की जर्नी पहले से मौजूद है।"; }
+      } catch (e) { console.warn("Journey creation failed:", e); }
+    }
+    try { if (typeof statusMsg !== "undefined" && statusMsg) { statusMsg.textContent = msg; statusMsg.className = cls; } } catch (e) {}
+    try { (window.showToast || function () {})(msg); } catch (e) {}
+    return true;
+  }
+
+  // ------------------------------------------------------------------
+  // लंबित-सिंक: जिन BO की रिपोर्ट बन चुकी है (draft में तारीख़ है) पर
+  // "निरीक्षण पूर्ण" चिह्न नहीं लगा — उन्हें ढूँढकर एक टैप में चिह्नित करें।
+  // ------------------------------------------------------------------
+  window.syncScanUnmarked = function () {
+    var box = document.getElementById("syncList");
+    if (!box) return;
+    var rows = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (!k || k.indexOf(INSP_DRAFT_KEY_PREFIX) !== 0) continue;
+      var boId = k.slice(INSP_DRAFT_KEY_PREFIX.length);
+      if (isBOInspected(boId)) continue;
+      var d = null;
+      try { d = JSON.parse(localStorage.getItem(k)); } catch (e) {}
+      if (!d || !d.inspectionDate) continue;
+      var bo = MASTER_DATA[boId];
+      var filled = 0;
+      Object.keys(d).forEach(function (kk) {
+        var vv = d[kk];
+        if (vv === null || vv === undefined || vv === "" ) return;
+        if (Array.isArray(vv) && !vv.length) return;
+        if (typeof vv === "object" && !Array.isArray(vv) && !Object.keys(vv).length) return;
+        filled++;
+      });
+      rows.push({ boId: boId, name: bo ? bo.bo_name_hi : boId, iso: d.inspectionDate, filled: filled });
+    }
+    rows.sort(function (a, b) { return b.filled - a.filled; });
+    if (!rows.length) { box.innerHTML = '<div class="note" style="margin:0;">कोई लंबित-सिंक नहीं मिला — सब चिह्नित हैं। ✅</div>'; return; }
+    var html = "";
+    rows.forEach(function (r) {
+      html += '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;">' +
+        '<span style="flex:1;font-weight:600;font-size:0.88rem;">' + r.name +
+          '<span style="font-weight:400;color:#777;font-size:0.78rem;"> · भरे फ़ील्ड: ' + r.filled + '</span></span>' +
+        '<input type="date" id="syncd_' + r.boId + '" value="' + r.iso + '" style="font-size:0.82rem;padding:4px 6px;">' +
+        '<button type="button" class="btn btn-primary" style="font-size:0.78rem;padding:5px 12px;" onclick="syncMarkOne(\'' + r.boId + '\')">✅ चिह्नित करें</button>' +
+        '</div>';
+    });
+    box.innerHTML = html;
+  };
+  window.syncMarkOne = function (boId) {
+    var el = document.getElementById("syncd_" + boId);
+    var iso = el ? el.value : "";
+    if (!iso) { alert("कृपया तारीख़ चुनें।"); return; }
+    var bo = MASTER_DATA[boId];
+    var finalDate = fromISODate(iso);
+    var boEnRaw = (bo && bo.bo_name_en_raw) ? bo.bo_name_en_raw.toLowerCase().replace(/\s/g, "") : "";
+    var om = null;
+    for (var oi = 0; oi < allOffices.length; oi++) {
+      var on = allOffices[oi].name.toLowerCase().replace(/\s/g, "");
+      var onh = allOffices[oi].name_hi || "";
+      if (on === boEnRaw || onh === (bo && bo.bo_name_hi)) { om = allOffices[oi]; break; }
+    }
+    if (!confirm((bo ? bo.bo_name_hi : boId) + " को " + finalDate + " का निरीक्षण पूर्ण चिह्नित करें?")) return;
+    markBOInspFinal(boId, finalDate, iso, om ? om.name : (bo && bo.bo_name_en_raw || boId), om ? om.dist : 0, bo ? bo.bo_name_hi : boId);
+    window.syncScanUnmarked();
+  };
+
+  // बैकअप की याद-दिलाने वाली पट्टी — 7 दिन से पुराना (या कोई) बैकअप न हो तो दिखे
+  (function backupReminder() {
+    try {
+      var el = document.getElementById("backupRemind");
+      if (!el) return;
+      var last = localStorage.getItem("auto_backup_last") || "";
+      var days = null;
+      if (last) { var t = Date.parse(last); if (!isNaN(t)) days = Math.floor((Date.now() - t) / 86400000); }
+      if (days !== null && days < 7) { el.style.display = "none"; return; }
+      el.style.display = "block";
+      el.innerHTML = (days === null
+          ? "\u26A0\uFE0F <b>अभी तक कोई बैकअप नहीं लिया गया।</b>"
+          : "\u26A0\uFE0F <b>पिछला बैकअप " + days + " दिन पहले</b> लिया गया था।") +
+        " डेटा सुरक्षित रखने के लिए अभी पूरा बैकअप लें और उसे Google Drive में रख दें।" +
+        ' <button type="button" class="btn btn-primary" style="font-size:0.78rem;padding:4px 12px;margin-left:6px;" onclick="try{if(window.exportData)exportData();}catch(e){}this.parentNode.style.display=\'none\';">\uD83D\uDCBE अभी बैकअप लें</button>';
+    } catch (e) {}
+  })();
+
   const generateBtn = document.getElementById("generateBtn");
   const statusMsg = document.getElementById("statusMsg");
   const dlLinks = document.getElementById("dlLinks");
@@ -9326,7 +10465,10 @@ const MASTER_DATA = {
     if (generateBtnQuick) generateBtnQuick.addEventListener("click", function(){ generateBtn.click(); });
   }catch(e){ console.warn("Quick button setup failed:", e); }
 
-  generateBtn.addEventListener("click", async () => {
+    var syncScanBtn = document.getElementById("syncScanBtn");
+  if (syncScanBtn) syncScanBtn.addEventListener("click", function () { window.syncScanUnmarked(); });
+
+generateBtn.addEventListener("click", async () => {
     const boId = boSelect.value;
     const bo = MASTER_DATA[boId];
     if (!bo) { alert("कृपया शाखा डाकघर चुनें"); return; }
@@ -9440,9 +10582,12 @@ const MASTER_DATA = {
       // template to flag fields needing attention, not meant for the final
       // report.
       stripAllHighlighting(bodyEl);
+      restyleReport(doc, bodyEl);
 
       const serializer = new XMLSerializer();
       let newXml = serializer.serializeToString(doc);
+      // v9: bump the template's 10pt body text to 10.5pt for readability
+      newXml = newXml.replace(/<w:sz w:val="20"\/>/g, '<w:sz w:val="21"/>');
       if (!newXml.startsWith("<?xml")) {
         newXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n' + newXml;
       }
@@ -9473,6 +10618,27 @@ const MASTER_DATA = {
 
       statusMsg.className = "status ok";
       statusMsg.textContent = "✅ रिपोर्ट तैयार हो गई! डाउनलोड शुरू हो गया है।";
+
+      // रिपोर्ट बन गई — यदि यह BO अभी "निरीक्षण पूर्ण" चिह्नित नहीं है, तो पूछकर चिह्नित कर दें
+      // (पहले: रिपोर्ट बनाने से चिह्न नहीं लगता था, इसलिए तारीख़ कार्यक्रम में नहीं दिखती थी)
+      try {
+        if (inspectionDateStr && !isBOInspected(boId)) {
+          var qMsg = "रिपोर्ट तैयार हो गई।\n\n" + (bo.bo_name_hi || boId) +
+            " को \"निरीक्षण पूर्ण (IR Final)\" भी चिह्नित कर दें?\n\nदिनांक: " + inspectionDateStr +
+            "\n\n(इससे Inspection Programme में निरीक्षण तिथि भर जाएगी और Tour Diary में उस दिन की जर्नी बन जाएगी।)";
+          if (confirm(qMsg)) {
+            var boEnRaw2 = (bo && bo.bo_name_en_raw) ? bo.bo_name_en_raw.toLowerCase().replace(/\s/g, "") : "";
+            var om2 = null;
+            for (var oi2 = 0; oi2 < allOffices.length; oi2++) {
+              var on2 = allOffices[oi2].name.toLowerCase().replace(/\s/g, "");
+              var onh2 = allOffices[oi2].name_hi || "";
+              if (on2 === boEnRaw2 || onh2 === bo.bo_name_hi) { om2 = allOffices[oi2]; break; }
+            }
+            markBOInspFinal(boId, inspectionDateStr, inspectionDateInput.value,
+              om2 ? om2.name : (bo.bo_name_en_raw || boId), om2 ? om2.dist : 0, bo.bo_name_hi || boId);
+          }
+        }
+      } catch (e) { console.warn("Auto IR Final marking failed:", e); }
     } catch (err) {
       console.error("Inspection report generation error:", err);
       statusMsg.className = "status err";
@@ -9651,6 +10817,17 @@ const MASTER_DATA = {
 
   var _prevBoIdForDraft = boSelect.value || "";
 
+  var _inspPendingBoId = "";
+  var _inspPendingDraft = null;
+  // जो draft सहेजने के लिए तैयार है, उसे तुरंत लिखें (इंतज़ार किए बिना)
+  function writeInspDraftNow() {
+    try {
+      if (_inspSaveTimer) { clearTimeout(_inspSaveTimer); _inspSaveTimer = null; }
+      if (_inspPendingBoId && _inspPendingDraft) {
+        localStorage.setItem(INSP_DRAFT_KEY_PREFIX + _inspPendingBoId, JSON.stringify(_inspPendingDraft));
+      }
+    } catch (e) { console.warn("Insp auto-save failed:", e); }
+  }
   function saveInspDraft(targetBoId) {
     // Snapshot BOTH the BO id AND the form data RIGHT NOW (v7.19). Reading
     // the form inside the setTimeout below was a bug: on a BO switch the
@@ -9664,13 +10841,17 @@ const MASTER_DATA = {
     try { draft = collectInspDraft(); }
     catch (e) { console.warn("Insp auto-save failed:", e); return; }
     draft.boId = boIdToSave;
+    _inspPendingBoId = boIdToSave;
+    _inspPendingDraft = draft;
     if (_inspSaveTimer) clearTimeout(_inspSaveTimer);
-    _inspSaveTimer = setTimeout(function() {
-      try {
-        localStorage.setItem(INSP_DRAFT_KEY_PREFIX + boIdToSave, JSON.stringify(draft));
-      } catch(e) { console.warn("Insp auto-save failed:", e); }
-    }, 1000);
+    _inspSaveTimer = setTimeout(writeInspDraftNow, 1000);
   }
+  // ऐप बंद / पीछे भेजे जाते ही pending draft तुरंत सहेजें — 1 सेकंड का इंतज़ार नहीं (v11)
+  window.addEventListener("pagehide", writeInspDraftNow);
+  window.addEventListener("beforeunload", writeInspDraftNow);
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") writeInspDraftNow();
+  });
 
   function hasInspDraftData() {
     // Check if any field has data
@@ -10014,6 +11195,154 @@ const MASTER_DATA = {
     "BO30403118004": "28.09.2026",
     "BO30403118001": "27.08.2026"
   };
+  // ------------------------------------------------------------------
+  // v2 seed — चंदपुर (बैरिया) BO30403102002: 2026 में निरीक्षण हो चुका
+  // (पिछले निरीक्षक द्वारा; रजिस्टर में तारीख़ दर्ज नहीं, इसलिए बिना तारीख़)
+  // ------------------------------------------------------------------
+  var INSP_DONE_SEED2 = { "BO30403102002": null, "BO30403119002": "14.09.2026" };
+  // v3 — उपयोगकर्ता द्वारा बताई गई तारीख़ें
+  var INSP_DONE_SEED3 = {
+    "BO30403113006": "15.07.2026",   // सोनवानी
+    "BO30403125001": "25.07.2026",   // अचलगढ़
+    "BO30403112002": "29.07.2026",   // दया छपरा
+    "BO30403102004": "28.07.2026"    // पांडेयपुर
+  };
+  // v4 — Tour Diary (journeys) से मिले निरीक्षण-दौरे की तारीख़ें
+  var INSP_DONE_SEED4 = {
+    "BO30403126003": "01.08.2026",   // बिसौली
+    "BO30403112003": "11.08.2026",   // गंगापुर
+    "BO30403119005": "03.09.2026",   // पियारौंता
+    "BO30403109001": "31.08.2026",   // छोटकी सेरिया
+    "BO30403126004": "13.08.2026",   // चंद पुर (सहतवार)
+    "BO30403123011": "11.09.2026",   // सुरेमानपुर
+    "BO30403111003": "21.09.2026"    // कोडहरा उपरवार
+  };
+
+  // v5 — सुधार + अतिरिक्त तारीख़
+  //  • बिगही (BO30403126001): वहाँ निरीक्षण नहीं हुआ था (डाक चौपाल/दौरा) — चिह्न हटाएँ
+  //  • भगवानपुर (BO30403102001, बैरिया): निरीक्षण 24.08.2026 को हुआ
+  var INSP_UNDO = { "BO30403126001": true };
+  var INSP_DONE_SEED5 = { "BO30403102001": "24.08.2026" };
+  function applyInspFix5() {
+    var FLAG = "sdi_insp_fix_v5";
+    try { if (localStorage.getItem(FLAG)) return; localStorage.setItem(FLAG, "1"); }
+    catch (e) { return; }
+    // (क) बिगही का ग़लत चिह्न हटाएँ
+    Object.keys(INSP_UNDO).forEach(function (boId) {
+      try { setBOInspected(boId, false); } catch (e) {}
+      try { var b = MASTER_DATA[boId]; if (b && b.inspection_history) delete b.inspection_history.last_inspection_date; } catch (e) {}
+    });
+    // (ख) भगवानपुर — निरीक्षण पूर्ण
+    Object.keys(INSP_DONE_SEED5).forEach(function (boId) {
+      var d = INSP_DONE_SEED5[boId];
+      var bo = MASTER_DATA[boId];
+      if (!bo) return;
+      setBOInspected(boId, true, d);
+      try {
+        if (!bo.inspection_history) bo.inspection_history = {};
+        bo.inspection_history.last_inspection_date = d;
+        var rawMd = localStorage.getItem("sdi_master_data");
+        if (rawMd) {
+          var mdObj = JSON.parse(rawMd);
+          if (mdObj && mdObj.boRecords && mdObj.boRecords[boId]) {
+            mdObj.boRecords[boId].last_inspection = d;
+            localStorage.setItem("sdi_master_data", JSON.stringify(mdObj));
+          }
+        }
+        if (bo.bo_name_hi && window.setProgInspectionDateIfEmpty) {
+          window.setProgInspectionDateIfEmpty(bo.bo_name_hi, d);
+        }
+      } catch (e) { console.warn("fix5 update failed:", e); }
+    });
+    rebuildBOSelect();
+  }
+  function applyInspDoneSeed4() {
+    var FLAG = "sdi_insp_seed_v4";
+    try { if (localStorage.getItem(FLAG)) return; localStorage.setItem(FLAG, "1"); }
+    catch (e) { return; }
+    var marked = getInspectedBOs();
+    Object.keys(INSP_DONE_SEED4).forEach(function (boId) {
+      var d = INSP_DONE_SEED4[boId];
+      var bo = MASTER_DATA[boId];
+      if (!bo) return;
+      if (!marked[boId]) setBOInspected(boId, true, d);
+      try {
+        if (!bo.inspection_history) bo.inspection_history = {};
+        bo.inspection_history.last_inspection_date = d;
+        var rawMd = localStorage.getItem("sdi_master_data");
+        if (rawMd) {
+          var mdObj = JSON.parse(rawMd);
+          if (mdObj && mdObj.boRecords && mdObj.boRecords[boId]) {
+            mdObj.boRecords[boId].last_inspection = d;
+            localStorage.setItem("sdi_master_data", JSON.stringify(mdObj));
+          }
+        }
+        if (bo.bo_name_hi && window.setProgInspectionDateIfEmpty) {
+          window.setProgInspectionDateIfEmpty(bo.bo_name_hi, d);
+        }
+      } catch (e) { console.warn("seed4 update failed:", e); }
+    });
+    rebuildBOSelect();
+  }
+
+  function applyInspDoneSeed3() {
+    var FLAG = "sdi_insp_seed_v3";
+    try { if (localStorage.getItem(FLAG)) return; localStorage.setItem(FLAG, "1"); }
+    catch (e) { return; }
+    var marked = getInspectedBOs();
+    Object.keys(INSP_DONE_SEED3).forEach(function (boId) {
+      var d = INSP_DONE_SEED3[boId];
+      var bo = MASTER_DATA[boId];
+      if (!bo) return;
+      if (!marked[boId]) setBOInspected(boId, true, d);
+      try {
+        if (!bo.inspection_history) bo.inspection_history = {};
+        bo.inspection_history.last_inspection_date = d;
+        var rawMd = localStorage.getItem("sdi_master_data");
+        if (rawMd) {
+          var mdObj = JSON.parse(rawMd);
+          if (mdObj && mdObj.boRecords && mdObj.boRecords[boId]) {
+            mdObj.boRecords[boId].last_inspection = d;
+            localStorage.setItem("sdi_master_data", JSON.stringify(mdObj));
+          }
+        }
+        if (bo.bo_name_hi && window.setProgInspectionDateIfEmpty) {
+          window.setProgInspectionDateIfEmpty(bo.bo_name_hi, d);
+        }
+      } catch (e) { console.warn("seed3 update failed:", e); }
+    });
+    rebuildBOSelect();
+  }
+  function applyInspDoneSeed2() {
+    var FLAG = "sdi_insp_seed_v2";
+    try { if (localStorage.getItem(FLAG)) return; localStorage.setItem(FLAG, "1"); }
+    catch (e) { return; }
+    var marked = getInspectedBOs();
+    Object.keys(INSP_DONE_SEED2).forEach(function (boId) {
+      if (marked[boId]) return;
+      var bo = MASTER_DATA[boId];
+      if (!bo) return;
+      var d = INSP_DONE_SEED2[boId] || null;
+      setBOInspected(boId, true, d);
+      if (!d) return;
+      try {
+        if (!bo.inspection_history) bo.inspection_history = {};
+        bo.inspection_history.last_inspection_date = d;
+        var rawMd = localStorage.getItem("sdi_master_data");
+        if (rawMd) {
+          var mdObj = JSON.parse(rawMd);
+          if (mdObj && mdObj.boRecords && mdObj.boRecords[boId]) {
+            mdObj.boRecords[boId].last_inspection = d;
+            localStorage.setItem("sdi_master_data", JSON.stringify(mdObj));
+          }
+        }
+        if (bo.bo_name_hi && window.setProgInspectionDateIfEmpty) {
+          window.setProgInspectionDateIfEmpty(bo.bo_name_hi, d);
+        }
+      } catch (e) { console.warn("seed2 update failed:", e); }
+    });
+  }
+
   function applyInspDoneSeed() {
     var FLAG = "sdi_insp_seed_v1";
     try { if (localStorage.getItem(FLAG)) return; localStorage.setItem(FLAG, "1"); }
@@ -10072,6 +11401,10 @@ const MASTER_DATA = {
     rebuildBOSelect();
   }
   applyInspDoneSeed();
+  applyInspDoneSeed2();
+  applyInspDoneSeed3();
+  applyInspDoneSeed4();
+  applyInspFix5();
 
   // On page load, if there's a saved draft for the first BO, restore it
   setTimeout(function() {
@@ -10173,5 +11506,270 @@ const MASTER_DATA = {
 })();
 </script>
 
+<script>
+(function () {
+  function ready(fn) {
+    if (document.readyState !== "loading") setTimeout(fn, 80);
+    else document.addEventListener("DOMContentLoaded", fn);
+  }
+  var WKEY = "sdi_wiz_mode";
+  ready(function () {
+    var root = document.getElementById("insp-root");
+    if (!root) return;
+    var main = root.querySelector("main");
+    if (!main) return;
+
+    var kids = Array.prototype.slice.call(main.children);
+    var steps = kids.filter(function (c) {
+      return c.classList && c.classList.contains("card") &&
+             c.querySelector(".step-badge") &&
+             c.id !== "autoFillCard" &&
+             !(c.style && c.style.display === "none");
+    });
+    if (steps.length < 2) return;
+    // non-step cards (status card, closing note) — shown only on the last step
+    var extras = kids.filter(function (c) {
+      return c.classList && c.classList.contains("card") &&
+             steps.indexOf(c) === -1 && c.id !== "autoFillCard";
+    });
+
+    var titles = steps.map(function (c) {
+      var h2 = c.querySelector("h2");
+      var t = h2 ? h2.textContent : "";
+      return t.replace(/\s+/g, " ")
+              .replace(/^[\s\u2705\u2714\u2713\u2605\u2139\uFE0F\u2022\u00B7\-\d.]+/, "")
+              .trim();
+    });
+    var badges = steps.map(function (c) {
+      var b = c.querySelector(".step-badge");
+      return b ? b.textContent.trim() : "";
+    });
+
+    var footer = root.querySelector(".footer-bar");
+    if (footer && footer.parentNode === root) main.appendChild(footer);
+
+    var bar = document.createElement("div");
+    bar.className = "wz-bar";
+    bar.innerHTML =
+      '<div class="wz-top">' +
+        '<span class="wz-count" id="wzCount"></span>' +
+        '<span class="wz-title" id="wzTitle"></span>' +
+      '</div>' +
+      '<div class="wz-track"><div class="wz-fill" id="wzFill"></div></div>' +
+      '<div class="wz-chips" id="wzChips"></div>' +
+      '<div class="wz-mode"><button type="button" class="btn btn-sm btn-secondary" id="wzToggle"></button></div>';
+    main.insertBefore(bar, steps[0]);
+
+    var chips = bar.querySelector("#wzChips");
+    steps.forEach(function (s, i) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "wz-chip";
+      b.textContent = badges[i] || String(i + 1);
+      b.title = titles[i];
+      b.addEventListener("click", function () { go(i); });
+      chips.appendChild(b);
+    });
+
+    var navs = steps.map(function (s, i) {
+      var nav = document.createElement("div");
+      nav.className = "wz-nav";
+      var prev = document.createElement("button");
+      prev.type = "button"; prev.className = "btn btn-secondary"; prev.innerHTML = "← पिछला";
+      prev.setAttribute("data-wz", "prev");
+      prev.disabled = (i === 0);
+      prev.addEventListener("click", function () { go(i - 1); });
+      var hint = document.createElement("span");
+      hint.className = "wz-hint";
+      hint.textContent = (i + 1) + " / " + steps.length;
+      var next = document.createElement("button");
+      next.type = "button"; next.className = "btn btn-primary";
+      next.setAttribute("data-wz", "next");
+      if (i === steps.length - 1) { next.innerHTML = "✔ अंतिम"; next.disabled = true; }
+      else { next.innerHTML = "अगला →"; next.addEventListener("click", function () { go(i + 1); }); }
+      nav.appendChild(prev); nav.appendChild(hint); nav.appendChild(next);
+      s.parentNode.insertBefore(nav, s.nextSibling);
+      return nav;
+    });
+
+    var cur = 0, showAll = false;
+    try { showAll = localStorage.getItem(WKEY) === "all"; } catch (e) {}
+
+    function paint() {
+      var n = steps.length;
+      var fill = bar.querySelector("#wzFill"), cnt = bar.querySelector("#wzCount"), ttl = bar.querySelector("#wzTitle");
+      if (fill) fill.style.width = showAll ? "100%" : Math.round(((cur + 1) / n) * 100) + "%";
+      if (cnt) cnt.textContent = showAll ? ("सभी चरण (" + n + ")") : ("चरण " + (cur + 1) + " / " + n);
+      if (ttl) ttl.textContent = titles[cur] || "";
+      var ce = chips.querySelectorAll(".wz-chip");
+      for (var i = 0; i < ce.length; i++) {
+        ce[i].classList.toggle("active", i === cur);
+        ce[i].classList.toggle("done", i < cur);
+      }
+      // centre the active chip WITHOUT scrolling the page
+      if (ce[cur]) {
+        var target = ce[cur].offsetLeft - (chips.clientWidth - ce[cur].offsetWidth) / 2;
+        chips.scrollLeft = Math.max(0, target);
+      }
+      var last = (cur === n - 1);
+      steps.forEach(function (s, i) {
+        s.classList.toggle("wz-hide", !showAll && i !== cur);
+        navs[i].classList.toggle("wz-hide", !showAll && i !== cur);
+        var hb = navs[i].querySelector('[data-wz="next"]');
+        if (hb) hb.innerHTML = showAll ? "अगला ↓" : "अगला →";
+        var pb = navs[i].querySelector('[data-wz="prev"]');
+        if (pb) pb.innerHTML = showAll ? "↑ पिछला" : "← पिछला";
+      });
+      // subtle enter animation so the change is obvious
+      if (!showAll) {
+        var sc = steps[cur];
+        sc.classList.remove("wz-anim"); void sc.offsetWidth; sc.classList.add("wz-anim");
+      }
+      extras.forEach(function (x) { x.classList.toggle("wz-hide", !showAll && !last); });
+      if (footer) footer.classList.toggle("wz-hide", !showAll && !last);
+      var tb = bar.querySelector("#wzToggle");
+      if (tb) tb.innerHTML = showAll ? "🎯 एक-एक चरण देखें" : "👁️ सभी चरण दिखाएँ";
+    }
+
+    function go(i) {
+      if (i < 0 || i >= steps.length) return;
+      cur = i;
+      paint();
+      if (typeof window.__sigResizeCanvas === "function") { try { window.__sigResizeCanvas(); } catch (e) {} }
+      try {
+        if (showAll) {
+          // show-all mode: scroll to the neighbouring card
+          steps[cur].scrollIntoView({ behavior: "smooth", block: "start" });
+        } else {
+          var y = bar.getBoundingClientRect().top + window.pageYOffset - 8;
+          window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+        }
+      } catch (e) {
+        window.scrollTo(0, showAll ? steps[cur].offsetTop : 0);
+      }
+    }
+
+    bar.querySelector("#wzToggle").addEventListener("click", function () {
+      showAll = !showAll;
+      try { localStorage.setItem(WKEY, showAll ? "all" : "step"); } catch (e) {}
+      paint();
+    });
+    window.addEventListener("orientationchange", function () {
+      setTimeout(function () { if (typeof window.__sigResizeCanvas === "function") { try { window.__sigResizeCanvas(); } catch (e) {} } }, 350);
+    });
+    paint();
+    window.__wizGo = go;
+  });
+})();
+
+</script>
+<script>
+/* =====================================================================
+   Duplicate account-number validation
+   पासबुक सत्यापन / SB-46 / समय-पूर्व बंद RD — एक ही खाता संख्या दो जगह
+   ===================================================================== */
+(function () {
+  function norm(v) { return String(v || "").replace(/[^0-9A-Za-z]/g, "").toUpperCase(); }
+  function acctInputs() {
+    return Array.prototype.slice.call(document.querySelectorAll('#insp-root input[id$="_acct"]'));
+  }
+  function labelOf(el) {
+    var m = el.id.match(/^pb_([a-z0-9]+)_(\d+)_acct$/i);
+    if (m) return "पासबुक " + m[1].toUpperCase() + " #" + (parseInt(m[2], 10) + 1);
+    m = el.id.match(/^sb46_(\d+)_acct$/i);
+    if (m) return "SB-46 #" + (parseInt(m[1], 10) + 1);
+    m = el.id.match(/^rdc_(\d+)_acct$/i);
+    if (m) return "RD-बंद #" + (parseInt(m[1], 10) + 1);
+    return el.id;
+  }
+  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  function ensureWarn() {
+    var w = document.getElementById("dupAcctWarn");
+    if (w) return w;
+    var main = document.querySelector("#insp-root main");
+    if (!main) return null;
+    w = document.createElement("div");
+    w.id = "dupAcctWarn";
+    w.className = "dup-warn wz-hide";
+    var bar = document.querySelector(".wz-bar");
+    if (bar && bar.parentNode) bar.parentNode.insertBefore(w, bar.nextSibling);
+    else main.insertBefore(w, main.firstChild);
+    return w;
+  }
+
+  window.checkDupAccts = function () {
+    var els = acctInputs();
+    var map = {};
+    els.forEach(function (el) {
+      var n = norm(el.value);
+      if (n.length >= 4) (map[n] = map[n] || []).push(el);
+    });
+    var dupNums = [], dupDetail = [];
+    els.forEach(function (el) {
+      var n = norm(el.value);
+      if (n.length >= 4 && map[n].length > 1) {
+        el.classList.add("dup-acct");
+        el.setAttribute("title", "⚠️ यह खाता संख्या दोहराई गई है");
+        if (dupNums.indexOf(n) === -1) {
+          dupNums.push(n);
+          dupDetail.push(n + " (" + map[n].map(labelOf).join(" • ") + ")");
+        }
+      } else {
+        el.classList.remove("dup-acct");
+        el.removeAttribute("title");
+      }
+    });
+    var w = ensureWarn();
+    if (w) {
+      if (dupNums.length) {
+        w.classList.remove("wz-hide");
+        w.innerHTML = "⚠️ <b>दोहराई गई खाता संख्याएँ (" + dupNums.length + "):</b> " +
+          dupDetail.slice(0, 6).map(esc).join("; ") +
+          (dupDetail.length > 6 ? " …" : "") + " — कृपया इन्हें ठीक करें।";
+      } else {
+        w.classList.add("wz-hide");
+        w.innerHTML = "";
+      }
+    }
+    return dupNums;
+  };
+
+  // live check on typing / programmatic fill
+  document.addEventListener("input", function (e) {
+    var t = e.target;
+    if (t && t.id && /_acct$/.test(t.id)) window.checkDupAccts();
+  }, true);
+  document.addEventListener("change", function (e) {
+    var t = e.target;
+    if (t && t.id && /_acct$/.test(t.id)) window.checkDupAccts();
+  }, true);
+
+  // periodic safety check (catches draft restore / BO switch) — cheap signature guard
+  var lastSig = "";
+  setInterval(function () {
+    var tab = document.getElementById("insp-tab");
+    if (!tab || !tab.classList.contains("active")) return;
+    var els = acctInputs();
+    if (!els.length) return;
+    var s = els.map(function (el) { return el.value; }).join("|");
+    if (s !== lastSig) { lastSig = s; window.checkDupAccts(); }
+  }, 1500);
+
+  // block report generation until the user confirms
+  document.addEventListener("click", function (e) {
+    var t = e.target;
+    while (t && t !== document && (!t.id || t.id !== "generateBtn")) t = t.parentNode;
+    if (!t || t === document) return;
+    var dups = window.checkDupAccts();
+    if (dups.length) {
+      var ok = window.confirm("⚠️ " + dups.length + " खाता संख्या दोहराई गई हैं (" +
+        dups.slice(0, 5).join(", ") + (dups.length > 5 ? " …" : "") + ").\n\nकृपया जाँच लें।\nफिर भी रिपोर्ट बनाएँ?");
+      if (!ok) { e.stopPropagation(); e.preventDefault(); }
+    }
+  }, true);
+})();
+
+</script>
 </body>
 </html>
