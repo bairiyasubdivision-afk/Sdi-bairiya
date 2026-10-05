@@ -749,6 +749,9 @@ input::placeholder,textarea::placeholder{color:#98a2b3;}
 #insp-root .info-grid .row{align-items:baseline;}
 #insp-root .info-grid .k{overflow-wrap:anywhere;flex:0 1 auto;}
 #insp-root .info-grid .v{overflow-wrap:anywhere;word-break:break-word;min-width:0;}
+.stat-card.stat-click{cursor:pointer;transition:transform .12s ease, box-shadow .12s ease;}
+.stat-card.stat-click:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(20,30,60,.16);}
+.stat-card.stat-click:active{transform:translateY(0);}
 /* --- sort row --- */
 .acct-sortrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;}
 .acct-sortrow .acct-sortlbl{font-size:.82rem;font-weight:700;color:var(--navy);}
@@ -1259,6 +1262,7 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       <button class="sub-tab" onclick="switchDataTab('villages')">Villages</button>
       <button class="sub-tab" onclick="switchDataTab('programme')">Inspection Programme 2026</button>
       <button class="sub-tab" onclick="switchDataTab('accounts')">Account Opening</button>
+      <button class="sub-tab" onclick="switchDataTab('warning')">Warning Letters</button>
       <button class="sub-tab" onclick="switchDataTab('settings')">Settings</button>
       <button class="sub-tab" onclick="switchDataTab('backup')">Backup & Restore</button>
     </div>
@@ -1325,7 +1329,16 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
           <span class="data-card-toggle">click to collapse</span>
         </div>
         <div class="data-card-body">
-          <input type="text" class="search-box" id="officeSearch" placeholder="Search offices by name, type, or distance..." oninput="renderOfficeTable()">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+            <input type="text" class="search-box" id="officeSearch" placeholder="Search offices by name, type, or distance..." oninput="renderOfficeTable()" style="flex:1;min-width:190px;">
+            <select id="officeTypeFilter" onchange="renderOfficeTable()" style="padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:inherit;background:#fff;">
+              <option value="">All types</option>
+              <option value="SO">Sub Offices (SO)</option>
+              <option value="BO">Branch Offices (BO)</option>
+              <option value="Office">Offices</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
           <div style="margin-bottom:10px;">
             <button class="btn-sm btn-add" onclick="openOfficeModal()">+ Add New Office</button>
           </div>
@@ -1342,7 +1355,14 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
           <span class="data-card-toggle">click to collapse</span>
         </div>
         <div class="data-card-body">
-          <input type="text" class="search-box" id="staffSearch" placeholder="Search by name, employee ID, post, BO name..." oninput="renderStaffTable()">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+            <input type="text" class="search-box" id="staffSearch" placeholder="Search by name, employee ID, post, BO name..." oninput="renderStaffTable()" style="flex:1;min-width:190px;">
+            <select id="staffStatusFilter" onchange="renderStaffTable()" style="padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:inherit;background:#fff;">
+              <option value="">All statuses</option>
+              <option value="WORKING">Working</option>
+              <option value="VACANT">Vacant</option>
+            </select>
+          </div>
           <div style="margin-bottom:10px;">
             <button class="btn-sm btn-add" onclick="openStaffModal()">+ Add Staff Member</button>
           </div>
@@ -1380,6 +1400,60 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
           </div>
           <div class="data-table-wrap" id="progTableWrap"></div>
           <p class="info-text" style="margin-top:8px;color:#666;">Inspection date (2026): auto-filled when IR Final is marked &mdash; can also be edited by hand. Auto-filled cells appear with a green background.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- WARNING LETTERS -->
+    <div class="sub-tab-content" id="sub-warning">
+      <div class="data-card">
+        <div class="data-card-title" onclick="toggleDataCard(this)">
+          Warning Letters &mdash; चेतावनी पत्र
+          <span class="data-card-toggle">click to collapse</span>
+        </div>
+        <div class="data-card-body">
+          <div class="acct-segrow" style="margin-bottom:12px;">
+            <button type="button" class="acct-seg" id="wlTab_posb" onclick="wlSetType('posb')">POSB खाता-खोलना कम</button>
+            <button type="button" class="acct-seg" id="wlTab_daybegin" onclick="wlSetType('daybegin')">Day Begin / Day End नियम</button>
+          </div>
+
+          <div id="wlPosbCtl">
+            <p style="font-size:0.9rem;margin:0 0 12px;color:var(--muted);line-height:1.6;">
+              शाखा डाकघर जिनका POSB खाता-खोलना कम रहा, उनके BPM / प्रभारी बीपीएम को चेतावनी पत्र (.docx)।
+              आँकड़े <b>जीवंत डेटा</b> से आते हैं (मूल डेटा + अपलोड किए महीने) &mdash; आगे डेटा जुड़ने पर सूची व पत्र अपने-आप अद्यतन।
+            </p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+              <label style="font-size:0.86rem;font-weight:700;">सीमा &mdash; कुल खाते इससे कम:</label>
+              <input type="number" id="wlThreshold" value="60" min="0" step="1"
+                     style="width:88px;padding:7px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;" oninput="wlRender()">
+              <span class="info-text" id="wlSummary" style="font-size:0.82rem;"></span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+              <button class="btn-sm btn-add" onclick="wlToggleAllResidence(true)">✔ सभी में निवास क्लॉज़</button>
+              <button class="btn-sm btn-del" onclick="wlToggleAllResidence(false)">✖ सभी में हटाएँ</button>
+              <button class="btn-sm btn-save" onclick="wlGenerateAllZip()">📄 सभी पत्र बनाएँ (.zip)</button>
+            </div>
+          </div>
+
+          <div id="wlDayCtl" style="display:none;">
+            <p style="font-size:0.9rem;margin:0 0 12px;color:var(--muted);line-height:1.6;">
+              जो शाखा डाकघर निर्धारित समय पर <b>दैनिक कार्य-प्रारंभ (Day Begin)</b> एवं <b>दैनिक कार्य-समापन (Day End)</b> नहीं करते।
+              इसका डेटा app में नहीं है, इसलिए नीचे <b>खोजकर BO चुनें</b> (एक से ज़्यादा) और उनके पत्र बनाएँ।
+            </p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+              <input type="text" class="search-box" id="wlSearch" placeholder="BO / SO का नाम खोजें..." oninput="wlRender()" style="flex:1;min-width:190px;">
+              <span class="info-text" id="wlSelCount" style="font-size:0.82rem;"></span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+              <button class="btn-sm btn-add" onclick="wlSelAll(true)">✔ दिख रहे सभी चुनें</button>
+              <button class="btn-sm btn-del" onclick="wlSelAll(false)">✖ चयन हटाएँ</button>
+              <button class="btn-sm btn-add" onclick="wlToggleAllResidence(true)">✔ निवास क्लॉज़</button>
+              <button class="btn-sm btn-del" onclick="wlToggleAllResidence(false)">✖ निवास हटाएँ</button>
+              <button class="btn-sm btn-save" onclick="wlGenerateDayBeginZip()">📄 चुने हुए BO के पत्र (.zip)</button>
+            </div>
+          </div>
+
+          <div class="data-table-wrap" id="wlTableWrap"></div>
         </div>
       </div>
     </div>
@@ -1594,6 +1668,7 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       if(typeof window.renderAcctTable==='function')window.renderAcctTable();
       if(typeof window.renderAcctPeriods==='function')window.renderAcctPeriods();
     }
+    if(tab==='warning'&&typeof window.wlRender==='function')window.wlRender();
   };
 
   // ============================================================
@@ -1863,14 +1938,39 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       var v=d.boRecords[bid].villages;
       if(v)totalVillages+=v.split(',').length;
     });
-    var h='<div class="stat-card"><div class="stat-num">'+totalOff+'</div><div class="stat-label">Total Offices</div></div>';
-    h+='<div class="stat-card"><div class="stat-num">'+soCount+'</div><div class="stat-label">Sub Offices</div></div>';
-    h+='<div class="stat-card"><div class="stat-num">'+boCount+'</div><div class="stat-label">Branch Offices</div></div>';
-    h+='<div class="stat-card"><div class="stat-num">'+totalStaff+'</div><div class="stat-label">Working Staff</div></div>';
-    h+='<div class="stat-card"><div class="stat-num">'+vacant+'</div><div class="stat-label">Vacant Posts</div></div>';
-    h+='<div class="stat-card"><div class="stat-num">'+totalVillages+'</div><div class="stat-label">Villages</div></div>';
+    // टाइल पर क्लिक करने से उसी मद का डेटा दिखता है
+    var h='<div class="stat-card stat-click" title="सभी दफ़्तर देखें" onclick="showStatData(\'all\')"><div class="stat-num">'+totalOff+'</div><div class="stat-label">Total Offices</div></div>';
+    h+='<div class="stat-card stat-click" title="उप डाकघर देखें" onclick="showStatData(\'SO\')"><div class="stat-num">'+soCount+'</div><div class="stat-label">Sub Offices</div></div>';
+    h+='<div class="stat-card stat-click" title="शाखा डाकघर देखें" onclick="showStatData(\'BO\')"><div class="stat-num">'+boCount+'</div><div class="stat-label">Branch Offices</div></div>';
+    h+='<div class="stat-card stat-click" title="कार्यरत स्टाफ देखें" onclick="showStatData(\'WORKING\')"><div class="stat-num">'+totalStaff+'</div><div class="stat-label">Working Staff</div></div>';
+    h+='<div class="stat-card stat-click" title="रिक्त पद देखें" onclick="showStatData(\'VACANT\')"><div class="stat-num">'+vacant+'</div><div class="stat-label">Vacant Posts</div></div>';
+    h+='<div class="stat-card stat-click" title="गाँव देखें" onclick="showStatData(\'villages\')"><div class="stat-num">'+totalVillages+'</div><div class="stat-label">Villages</div></div>';
     document.getElementById('dataStats').innerHTML=h;
   }
+
+  // टाइल क्लिक → उसी मद का डेटा उसी उप-टैब में फ़िल्टर लगाकर दिखाएँ
+  window.showStatData=function(kind){
+    try{
+      if(kind==='all'||kind==='SO'||kind==='BO'){
+        window.switchDataTab('offices');
+        var f=document.getElementById('officeTypeFilter'); if(f) f.value=(kind==='all'?'':kind);
+        var s=document.getElementById('officeSearch'); if(s) s.value='';
+        window.renderOfficeTable();
+        var box=document.getElementById('sub-offices'); if(box&&box.scrollIntoView) box.scrollIntoView({behavior:'smooth',block:'start'});
+      } else if(kind==='WORKING'||kind==='VACANT'){
+        window.switchDataTab('staff');
+        var f2=document.getElementById('staffStatusFilter'); if(f2) f2.value=kind;
+        var s2=document.getElementById('staffSearch'); if(s2) s2.value='';
+        window.renderStaffTable();
+        var box2=document.getElementById('sub-staff'); if(box2&&box2.scrollIntoView) box2.scrollIntoView({behavior:'smooth',block:'start'});
+      } else if(kind==='villages'){
+        window.switchDataTab('villages');
+        var s3=document.getElementById('villageSearch'); if(s3) s3.value='';
+        window.renderVillageTable();
+        var box3=document.getElementById('sub-villages'); if(box3&&box3.scrollIntoView) box3.scrollIntoView({behavior:'smooth',block:'start'});
+      }
+    }catch(e){ console.warn('showStatData failed:',e); }
+  };
 
   // --- Utility ---
   function escapeHtml(s){if(s===null||s===undefined)return '';return String(s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"');}
@@ -1880,7 +1980,9 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
   window.renderOfficeTable=function(){
     var d=ensureData();
     var search=(document.getElementById('officeSearch')?document.getElementById('officeSearch').value:'').toLowerCase();
+    var typeF=(document.getElementById('officeTypeFilter')?document.getElementById('officeTypeFilter').value:'');
     var offices=d.offices.filter(function(o){
+      if(typeF && o.type!==typeF) return false;
       if(!search)return true;
       return o.name.toLowerCase().indexOf(search)>=0||o.type.toLowerCase().indexOf(search)>=0||String(o.dist).indexOf(search)>=0;
     });
@@ -1981,10 +2083,12 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
   window.renderStaffTable=function(){
     var d=ensureData();
     var search=(document.getElementById('staffSearch')?document.getElementById('staffSearch').value:'').toLowerCase();
+    var statusF=(document.getElementById('staffStatusFilter')?document.getElementById('staffStatusFilter').value:'');
     var rows=[];
     Object.keys(d.boRecords).forEach(function(bid){
       var bo=d.boRecords[bid];
       bo.staff.forEach(function(s,si){
+        if(statusF && (s.status||'')!==statusF) return;
         if(search){
           var hay=(s.name+' '+s.employee_id+' '+s.post+' '+bo.bo_name_hi+' '+bo.bo_name_en+' '+bo.so_name).toLowerCase();
           if(hay.indexOf(search)<0)return;
@@ -9510,6 +9614,361 @@ const MASTER_DATA = {
     };
     reader.readAsArrayBuffer(file);
   };
+
+  // ==================================================================
+  // चेतावनी पत्र (Warning Letters) — FY 2026-27 में कम खाता खोलने वाले BO
+  //  • सारे आँकड़े जीवंत डेटा से आते हैं (मूल + अपलोड किए महीने) —
+  //    कुछ भी hard-code नहीं, इसलिए आगे डेटा जुड़ने पर app बदलने की
+  //    ज़रूरत नहीं।
+  //  • अवधि अपलोड हुए महीनों से अपने-आप आगे बढ़ती है।
+  //  • हर BO के आगे "निवास क्लॉज़" का tick — सिर्फ़ उन्हीं के पत्र में जुड़ेगा।
+  // ==================================================================
+  var WL_RES_KEY = "sdi_wl_residence_v1";
+  var WL_FONT = "Nirmala UI";
+  var WL_RULES = "ग्रामीण डाक सेवक (आचरण एवं अनुशासन) नियमावली, 2020 (GDS Conduct and Engagement Rules, 2020)";
+  function wlResMap(){ try{ var r=localStorage.getItem(WL_RES_KEY); if(r){ var o=JSON.parse(r); if(o&&typeof o==="object") return o; } }catch(e){} return {}; }
+  function wlSaveRes(o){ try{ localStorage.setItem(WL_RES_KEY, JSON.stringify(o)); }catch(e){} }
+  function wlPad(n){ return ("0"+n).slice(-2); }
+  function wlFmtD(dt){ return wlPad(dt.getDate())+"."+wlPad(dt.getMonth()+1)+"."+dt.getFullYear(); }
+
+  function wlBoData(boId){
+    var v = acctEffectiveView(boId, "FY");
+    var ssa=parseInt(v.ssa,10)||0, rd=parseInt(v.rd,10)||0,
+        sb=(parseInt(v.sbbas,10)||0)+(parseInt(v.sbsgp,10)||0), td=parseInt(v.td,10)||0;
+    return { ssa:ssa, rd:rd, sb:sb, td:td, total:ssa+rd+sb+td };
+  }
+  // अवधि: आधार अप्रैल–सितम्बर 2026; अपलोड हुए महीनों से आगे बढ़ती है
+  function wlPeriod(){
+    var from="01.04.2026", to="30.09.2026", months=6;
+    try{
+      var mons=getAcctMonths(), fyM=[];
+      Object.keys(mons).forEach(function(p){
+        if(!/^\d{4}-\d{2}$/.test(p)) return;
+        var b=acctBucketOf(p);
+        if(b.fy.indexOf("2026-27")!==-1) fyM.push(p);
+      });
+      if(fyM.length){
+        fyM.sort();
+        var last=fyM[fyM.length-1], y=parseInt(last.slice(0,4),10), mm=parseInt(last.slice(5,7),10);
+        var lastDay=new Date(y, mm, 0).getDate();
+        to = wlPad(lastDay)+"."+wlPad(mm)+"."+y;
+        months = (y-2026)*12 + (mm-4) + 1;
+        if(months<1) months=1;
+      }
+    }catch(e){}
+    return { from:from, to:to, months:months };
+  }
+  function wlSubAvg(months){
+    var tot=0, n=0;
+    Object.keys(MASTER_DATA).forEach(function(b){ if(b.indexOf("BO")===0){ tot+=wlBoData(b).total; n++; } });
+    return n ? (tot/n/(months||6)).toFixed(2) : "0.00";
+  }
+  function wlThreshold(){
+    var el=document.getElementById("wlThreshold");
+    var v=parseFloat(el&&el.value);
+    return isNaN(v) ? 60 : v;
+  }
+  function wlRows(){
+    var th=wlThreshold(), rows=[];
+    Object.keys(MASTER_DATA).forEach(function(b){
+      if(b.indexOf("BO")!==0) return;
+      var d=wlBoData(b);
+      if(d.total<th) rows.push({ id:b, md:MASTER_DATA[b], d:d });
+    });
+    rows.sort(function(a,b){ return a.d.total-b.d.total || String(a.md.bo_name_hi).localeCompare(String(b.md.bo_name_hi),"hi"); });
+    return rows;
+  }
+  function wlBpmName(md){
+    var s=(md.staff||[]).filter(function(x){ return x.post==="BPM" && x.name && x.status!=="VACANT"; });
+    return s.length ? s[0].name : "";
+  }
+  function wlAddressee(md){
+    var n=wlBpmName(md);
+    return n ? ("श्री/श्रीमती "+n) : "प्रभारी बीपीएम";
+  }
+  // ---------- पत्र का प्रकार (POSB खाता-खोलना | Day Begin-Day End) ----------
+  var WL_TYPE_KEY = "sdi_wl_type_v1";
+  var WL_SEL_KEY  = "sdi_wl_sel_v1";
+  function wlType(){ try{ return localStorage.getItem(WL_TYPE_KEY)||"posb"; }catch(e){ return "posb"; } }
+  window.wlSetType=function(t){ try{ localStorage.setItem(WL_TYPE_KEY, t==="daybegin"?"daybegin":"posb"); }catch(e){} window.wlRender(); };
+  function wlSelMap(){ try{ var r=localStorage.getItem(WL_SEL_KEY); if(r){ var o=JSON.parse(r); if(o&&typeof o==="object") return o; } }catch(e){} return {}; }
+  function wlSaveSel(o){ try{ localStorage.setItem(WL_SEL_KEY, JSON.stringify(o)); }catch(e){} }
+  function wlAllBos(){
+    var rows=[];
+    Object.keys(MASTER_DATA).forEach(function(b){ if(b.indexOf("BO")===0) rows.push({ id:b, md:MASTER_DATA[b] }); });
+    rows.sort(function(a,b){ return String(a.md.bo_name_hi).localeCompare(String(b.md.bo_name_hi),"hi"); });
+    return rows;
+  }
+  function wlMatch(r,q){
+    q=(q||"").toLowerCase().trim(); if(!q) return true;
+    return ((r.md.bo_name_hi||"")+" "+(r.md.bo_name_en_raw||"")+" "+(r.md.so_name_hi||"")).toLowerCase().indexOf(q)>=0;
+  }
+  window.wlToggleSel=function(el){
+    var boId=(el&&typeof el==="object")?el.getAttribute("data-bo"):el;
+    var on=(el&&typeof el==="object")?!!el.checked:true;
+    var m=wlSelMap(); if(on) m[boId]=true; else delete m[boId];
+    wlSaveSel(m);
+    var c=document.getElementById("wlSelCount"); if(c) c.textContent=Object.keys(m).length+" BO चुने";
+  };
+  window.wlSelAll=function(on){
+    var m=wlSelMap(), q=((document.getElementById("wlSearch")||{}).value)||"";
+    wlAllBos().forEach(function(r){ if(wlMatch(r,q)){ if(on) m[r.id]=true; else delete m[r.id]; } });
+    wlSaveSel(m); window.wlRender();
+  };
+
+  window.wlRender=function(){
+    var wrap=document.getElementById("wlTableWrap"); if(!wrap) return;
+    var _t=wlType();
+    var _pc=document.getElementById("wlPosbCtl"), _dc=document.getElementById("wlDayCtl");
+    if(_pc) _pc.style.display = (_t==="posb") ? "" : "none";
+    if(_dc) _dc.style.display = (_t==="daybegin") ? "" : "none";
+    var _b1=document.getElementById("wlTab_posb"), _b2=document.getElementById("wlTab_daybegin");
+    if(_b1) _b1.classList.toggle("active", _t==="posb");
+    if(_b2) _b2.classList.toggle("active", _t==="daybegin");
+    if(_t==="daybegin"){ wlRenderDay(); return; }
+    var per=wlPeriod(), rows=wlRows(), res=wlResMap();
+    var sum=document.getElementById("wlSummary");
+    if(sum) sum.textContent = "अवधि "+per.from+" से "+per.to+" ("+per.months+" माह) · चयनित BO: "+rows.length+
+      " · उपमण्डल औसत "+wlSubAvg(per.months)+"/माह · सीमा (कुल खाते <) "+wlThreshold();
+    if(!rows.length){ wrap.innerHTML='<div class="empty-msg">इस सीमा से नीचे कोई BO नहीं मिला।</div>'; return; }
+    var h='<table><thead><tr><th>#</th><th>Branch Office</th><th>SO</th><th>SSA</th><th>RD</th><th>SB</th><th>TD</th><th>Total</th><th>BPM</th><th>निवास क्लॉज़</th><th>Letter</th></tr></thead><tbody>';
+    rows.forEach(function(r,i){
+      h+='<tr><td>'+(i+1)+'</td><td>'+acctEsc(r.md.bo_name_hi)+'</td><td>'+acctEsc(r.md.so_name_hi||"")+'</td>'+
+         '<td>'+r.d.ssa+'</td><td>'+r.d.rd+'</td><td>'+r.d.sb+'</td><td>'+r.d.td+'</td><td><b>'+r.d.total+'</b></td>'+
+         '<td>'+acctEsc(wlAddressee(r.md))+'</td>'+
+         '<td style="text-align:center;"><input type="checkbox" data-bo="'+r.id+'" '+(res[r.id]?"checked":"")+' onchange="wlToggleResidence(this)"></td>'+
+         '<td><button class="btn-sm btn-add" data-bo="'+r.id+'" onclick="wlGenerateOne(this)">📄 Letter</button></td></tr>';
+    });
+    h+='</tbody></table>';
+    wrap.innerHTML=h;
+  };
+  window.wlToggleResidence=function(el){
+    var boId=(el&&typeof el==='object')?el.getAttribute('data-bo'):el;
+    var on=(el&&typeof el==='object')?!!el.checked:true;
+    var m=wlResMap();
+    if(on) m[boId]=true; else delete m[boId];
+    wlSaveRes(m);
+  };
+  window.wlToggleAllResidence=function(on){
+    var m=wlResMap();
+    if(wlType()==="daybegin"){
+      Object.keys(wlSelMap()).forEach(function(id){ if(on) m[id]=true; else delete m[id]; });
+    } else {
+      wlRows().forEach(function(r){ if(on) m[r.id]=true; else delete m[r.id]; });
+    }
+    wlSaveRes(m);
+    window.wlRender();
+  };
+
+  // ---------- पत्र बनाना ----------
+  async function wlBuildLetter(row, withRes){
+    var ok = await loadDocx();
+    var L = (typeof docx!=="undefined") ? docx : (typeof window.docx!=="undefined" ? window.docx : null);
+    if(!ok || !L){ alert("docx library लोड नहीं हुई — इंटरनेट कनेक्शन जाँचें, फिर दोबारा कोशिश करें।"); return null; }
+    var W=L.WidthType, AT=L.AlignmentType, BS=L.BorderStyle, ST=L.ShadingType, VA=L.VerticalAlign;
+    var A4={ width:11906, height:16838 };
+    function P(t,o){ o=o||{}; return new L.Paragraph({
+      alignment:o.align, spacing:{ before:o.before||0, after:o.after===undefined?80:o.after, line:276 },
+      border:o.rule?{ bottom:{ style:BS.SINGLE, size:8, color:"1F3864", space:2 } }:undefined,
+      children:[ new L.TextRun({ text:t, bold:!!o.bold, size:o.size||22, font:WL_FONT }) ] }); }
+    function C(t,w,o){ o=o||{}; return new L.TableCell({
+      width:{ size:w, type:W.DXA }, verticalAlign:VA.CENTER,
+      shading:o.head?{ type:ST.CLEAR, fill:"DCE4F2" }:undefined,
+      margins:{ top:60, bottom:60, left:90, right:90 },
+      children:[ new L.Paragraph({ alignment:o.align||AT.CENTER,
+        children:[ new L.TextRun({ text:t, bold:!!o.head, size:20, font:WL_FONT }) ] }) ] }); }
+
+    var md=row.md, d=row.d, per=wlPeriod(), months=per.months;
+    var avg=(d.total/months).toFixed(2), sub=wlSubAvg(months);
+    var today=new Date(), due=new Date(today.getTime()+14*86400000);
+    var LET_DATE=wlFmtD(today), DUE=wlFmtD(due);
+    var boHi=md.bo_name_hi||row.id, soHi=md.so_name_hi||"";
+
+    var cw=[2000,1600,1600,1600,1600];
+    var tbl=new L.Table({ width:{ size:8400, type:W.DXA }, columnWidths:cw, layout:"fixed", rows:[
+      new L.TableRow({ tableHeader:true, children:[ C("योजना",cw[0],{head:1}), C("SSA",cw[1],{head:1}), C("RD",cw[2],{head:1}), C("SB",cw[3],{head:1}), C("TD",cw[4],{head:1}) ] }),
+      new L.TableRow({ children:[ C("खोले गए खाते",cw[0],{align:AT.LEFT}), C(String(d.ssa),cw[1]), C(String(d.rd),cw[2]), C(String(d.sb),cw[3]), C(String(d.td),cw[4]) ] }),
+      new L.TableRow({ children:[ C("कुल",cw[0],{align:AT.LEFT,head:1}),
+        new L.TableCell({ columnSpan:4, width:{ size:cw[1]+cw[2]+cw[3]+cw[4], type:W.DXA }, verticalAlign:VA.CENTER,
+          shading:{ type:ST.CLEAR, fill:"DCE4F2" }, margins:{ top:60, bottom:60, left:90, right:90 },
+          children:[ new L.Paragraph({ alignment:AT.CENTER, children:[ new L.TextRun({ text:String(d.total), bold:true, size:20, font:WL_FONT }) ] }) ] }) ] })
+    ]});
+
+    var kids=[
+      P("भारतीय डाक विभाग",{ align:AT.CENTER, bold:true, size:26, after:0 }),
+      P("Department of Posts, India",{ align:AT.CENTER, size:20, after:40 }),
+      P("कार्यालय, निरीक्षक डाकघर, पूर्वी उप मण्डल, बैरिया, बलिया – 277201",{ align:AT.CENTER, bold:true, after:0 }),
+      P("O/o Inspector of Posts, East Sub Dn. Bairia, Ballia – 277201",{ align:AT.CENTER, size:20, after:0 }),
+      P("(बलिया डाक मण्डल | Ballia Postal Division)",{ align:AT.CENTER, size:20, after:120, rule:true }),
+      P("सेवा में,",{ after:20 }),
+      P("      "+wlAddressee(md),{ after:0 }),
+      P("      शाखा डाकपाल, शाखा डाकघर "+boHi,{ after:0 }),
+      P("      "+soHi+" उप डाकघर, बलिया",{ after:140 }),
+      P("स्थान: बलिया            दिनांक: "+LET_DATE,{ align:AT.RIGHT, after:160 }),
+      P("पत्रांक: SDI/बैरिया/POSB-चेतावनी/2026-27",{ after:90 }),
+      P("विषय: POSB खाता खोलने हेतु अत्यधिक निम्न प्रदर्शन के संबंध में सख्त चेतावनी पत्र।",{ bold:true, after:90 }),
+      P("संदर्भ: POSB रिपोर्ट अवधि "+per.from+" से "+per.to+" तक इस कार्यालय को प्राप्त सूचना।",{ after:140 }),
+      P("महोदय,",{ after:100 }),
+      P("      उपरोक्त विषयगत मामले में आपको सूचित किया जाता है कि अवधि "+per.from+" से "+per.to+" ("+months+
+        " माह) के POSB प्रदर्शन के अवलोकन में आपके शाखा डाकघर का प्रदर्शन अत्यधिक निम्न पाया गया है। इस अवधि के दौरान आपके शाखा डाकघर द्वारा कुल POSB "+
+        d.total+" एवं SSA "+d.ssa+" खाते खोले गए हैं, जिसका मासिक औसत केवल "+avg+" प्रति माह है, जबकि उपमण्डल का समग्र औसत "+sub+" प्रति माह है।",
+        { align:AT.JUSTIFIED, after:120 }),
+      P("      योजना-वार विवरण निम्नवत् है:",{ align:AT.JUSTIFIED, after:80 }),
+      tbl, P("",{ after:60 }),
+      P("अतः महत्वपूर्ण निर्देश – तत्काल कार्यवाही हेतु:",{ bold:true, after:90 }),
+      P("1.  कम से कम 50 (पचास) नए POSB खाते अवश्य खोलें तथा इसका अनुपालन प्रतिवेदन दिनांक "+DUE+" तक इस कार्यालय में प्रेषित किया जाए।",{ align:AT.JUSTIFIED, after:80 }),
+      P("2.  "+per.from+" से "+per.to+" तक की अवधि में जो खातों का बैकलॉग (backlog) रह गया है, उसे समाप्त करने हेतु अब से प्रति माह कम से कम 60 (साठ) खाते खोलने का लक्ष्य निर्धारित किया गया है। यह लक्ष्य प्रत्येक माह निरंतर पूरा किया जाए ताकि बैकलॉग की पूर्ति एवं विभागीय लक्ष्य की प्राप्ति दोनों सुनिश्चित हो सकें।",{ align:AT.JUSTIFIED, after:80 }),
+      P("3.  निर्धारित लक्ष्य की प्राप्ति हेतु आप अपने शाखा डाकघर के अधीनस्थ गाँवों में मेला एवं कैम्प आयोजित करें तथा POSB योजनाओं का व्यापक प्रचार-प्रसार करें, जिससे अधिकतम जनता इन योजनाओं से जुड़ सके।",{ align:AT.JUSTIFIED, after:80 })
+    ];
+    if(withRes){
+      kids.push(P("4.  आप तत्काल रूप से अपने शाखा डाकघर के गाँव में निवास करना सुनिश्चित करें तथा दिनांक "+DUE+
+        " तक अपने निवास का प्रमाण (जैसे आधार कार्ड, मतदाता पहचान पत्र अथवा अन्य दस्तावेजी प्रमाण) इस कार्यालय में प्रस्तुत करें।",{ align:AT.JUSTIFIED, after:80 }));
+    }
+    kids.push(P("      यह एक सख्त चेतावनी है। "+WL_RULES+" के नियम 3 के अंतर्गत निर्धारित कर्तव्यों के अनुपालन में आपको निर्देशित किया जाता है कि आप मेला एवं कैम्प आयोजित करते हुए तथा ग्रामीण जनता को इन योजनाओं के प्रति जागरूक करते हुए निर्धारित लक्ष्य को नियत अवधि में प्राप्त करना सुनिश्चित करें। लक्ष्य प्राप्ति न होने अथवा वांछित सुधार न दिखने पर नियम-संगत कार्यवाही की जाएगी।",
+      { align:AT.JUSTIFIED, after:100 }));
+    kids.push(P("      आपको इस पत्र की प्राप्ति की सूचना देने हेतु दिनांक "+DUE+" तक लिखित जवाब एवं 50 खाते खोलने का अनुपालन प्रतिवेदन"+
+      (withRes?" तथा गाँव में निवास का प्रमाण":"")+" इस कार्यालय में प्रेषित करने का निर्देश दिया जाता है।",
+      { align:AT.JUSTIFIED, after:400 }));
+    kids.push(P("निरीक्षक डाकघर",{ align:AT.RIGHT, bold:true, after:0 }));
+    kids.push(P("पूर्वी उप मण्डल, बैरिया, बलिया – 277201",{ align:AT.RIGHT, after:0 }));
+
+    var doc=new L.Document({ styles:{ default:{ document:{ run:{ font:WL_FONT, size:22 } } } },
+      sections:[{ properties:{ page:{ size:A4, margin:{ top:900, right:1000, bottom:900, left:1000 } } }, children:kids }] });
+    return await L.Packer.toBlob(doc);   // browser में Blob चाहिए (Buffer नहीं)
+  }
+  function wlFileName(md, withRes){
+    var nm=String(md.bo_name_en_raw||md.bo_name_hi||"BO").replace(/[^A-Za-z0-9]+/g,"_");
+    return "Warning_Letter_"+nm+(withRes?"_with_residence":"_without_residence")+".docx";
+  }
+  window.wlGenerateOne=async function(el){
+    var boId=(el&&typeof el==='object')?el.getAttribute('data-bo'):el;
+    var md=MASTER_DATA[boId]; if(!md) return;
+    var withRes=!!wlResMap()[boId];
+    var blob=await wlBuildLetter({ id:boId, md:md, d:wlBoData(boId) }, withRes);
+    if(blob) downloadBlob(blob, wlFileName(md, withRes));
+  };
+  window.wlGenerateAllZip=async function(){
+    var rows=wlRows();
+    if(!rows.length){ alert("इस सीमा से नीचे कोई BO नहीं मिला।"); return; }
+    var ok=await loadDocx();
+    if(!ok){ alert("docx library लोड नहीं हुई।"); return; }
+    var res=wlResMap(), zip=new JSZip(), n=0;
+    for(var i=0;i<rows.length;i++){
+      var withRes=!!res[rows[i].id];
+      var blob=await wlBuildLetter(rows[i], withRes);
+      if(blob){ zip.file(wlFileName(rows[i].md, withRes), blob); n++; }
+    }
+    var z=await zip.generateAsync({type:"blob"});
+    downloadBlob(z, "Warning_Letters_FY2026-27.zip");
+    try{ (window.showToast||function(){})( "✅ "+n+" पत्र बने — ZIP डाउनलोड हो गया"); }catch(e){}
+  };
+
+  // ---------- Day Begin / Day End वाला दृश्य ----------
+  function wlRenderDay(){
+    var wrap=document.getElementById("wlTableWrap"); if(!wrap) return;
+    var q=((document.getElementById("wlSearch")||{}).value)||"";
+    var res=wlResMap(), sel=wlSelMap();
+    var all=wlAllBos().filter(function(r){ return wlMatch(r,q); });
+    var c=document.getElementById("wlSelCount");
+    if(c) c.textContent = Object.keys(sel).length+" BO चुने";
+    if(!all.length){ wrap.innerHTML='<div class="empty-msg">कोई BO नहीं मिला।</div>'; return; }
+    var h='<table><thead><tr><th>#</th><th>चुनें</th><th>Branch Office</th><th>SO</th><th>BPM / प्रभारी</th><th>निवास क्लॉज़</th><th>Letter</th></tr></thead><tbody>';
+    all.forEach(function(r,i){
+      h+='<tr><td>'+(i+1)+'</td>'+
+         '<td style="text-align:center;"><input type="checkbox" data-bo="'+r.id+'" '+(sel[r.id]?"checked":"")+' onchange="wlToggleSel(this)"></td>'+
+         '<td>'+acctEsc(r.md.bo_name_hi)+'</td><td>'+acctEsc(r.md.so_name_hi||"")+'</td>'+
+         '<td>'+acctEsc(wlAddressee(r.md))+'</td>'+
+         '<td style="text-align:center;"><input type="checkbox" data-bo="'+r.id+'" '+(res[r.id]?"checked":"")+' onchange="wlToggleResidence(this)"></td>'+
+         '<td><button class="btn-sm btn-add" data-bo="'+r.id+'" onclick="wlGenerateDayOne(this)">📄 Letter</button></td></tr>';
+    });
+    h+='</tbody></table>';
+    wrap.innerHTML=h;
+  }
+
+  // ---------- Day Begin / Day End पत्र बनाना ----------
+  async function wlBuildDayBegin(row, withRes){
+    var ok = await loadDocx();
+    var L = (typeof docx!=="undefined") ? docx : (typeof window.docx!=="undefined" ? window.docx : null);
+    if(!ok || !L){ alert("docx library लोड नहीं हुई — इंटरनेट कनेक्शन जाँचें, फिर दोबारा कोशिश करें।"); return null; }
+    var AT=L.AlignmentType, BS=L.BorderStyle;
+    var A4={ width:11906, height:16838 };
+    function P(t,o){ o=o||{}; return new L.Paragraph({
+      alignment:o.align, spacing:{ before:o.before||0, after:o.after===undefined?80:o.after, line:276 },
+      border:o.rule?{ bottom:{ style:BS.SINGLE, size:8, color:"1F3864", space:2 } }:undefined,
+      children:[ new L.TextRun({ text:t, bold:!!o.bold, size:o.size||22, font:WL_FONT }) ] }); }
+
+    var md=row.md;
+    var boHi=md.bo_name_hi||row.id, soHi=md.so_name_hi||"";
+    var today=new Date(), due=new Date(today.getTime()+14*86400000);
+    var LET_DATE=wlFmtD(today), DUE=wlFmtD(due);
+
+    var kids=[
+      P("भारतीय डाक विभाग",{ align:AT.CENTER, bold:true, size:26, after:0 }),
+      P("Department of Posts, India",{ align:AT.CENTER, size:20, after:40 }),
+      P("कार्यालय, निरीक्षक डाकघर, पूर्वी उप मण्डल, बैरिया, बलिया – 277201",{ align:AT.CENTER, bold:true, after:0 }),
+      P("O/o Inspector of Posts, East Sub Dn. Bairia, Ballia – 277201",{ align:AT.CENTER, size:20, after:0 }),
+      P("(बलिया डाक मण्डल | Ballia Postal Division)",{ align:AT.CENTER, size:20, after:120, rule:true }),
+      P("सेवा में,",{ after:20 }),
+      P("      "+wlAddressee(md),{ after:0 }),
+      P("      शाखा डाकपाल, शाखा डाकघर "+boHi,{ after:0 }),
+      P("      "+soHi+" उप डाकघर, बलिया",{ after:140 }),
+      P("स्थान: बलिया            दिनांक: "+LET_DATE,{ align:AT.RIGHT, after:160 }),
+      P("पत्रांक: SDI/बैरिया/कार्य-समय-चेतावनी/2026-27",{ after:90 }),
+      P("विषय: शाखा डाकघर को निर्धारित कार्य-समय 11:00 बजे से 15:00 बजे (अपराह्न 3:00 बजे) तक न खोलने तथा निर्धारित समय पर दैनिक कार्य-प्रारंभ (Day Begin) एवं दैनिक कार्य-समापन (Day End) न करने के संबंध में सख्त चेतावनी पत्र।",{ bold:true, after:90 }),
+      P("संदर्भ: इस कार्यालय को प्राप्त सूचना एवं शाखा डाकघर के दैनिक कार्य-संचालन का अवलोकन।",{ after:140 }),
+      P("महोदय,",{ after:100 }),
+      P("      उपरोक्त विषयगत मामले में आपको सूचित किया जाता है कि आपके शाखा डाकघर को निर्धारित कार्य-समय 11:00 बजे से 15:00 बजे (अपराह्न 3:00 बजे) तक नहीं खोला जाता तथा निर्धारित समय पर दैनिक कार्य-प्रारंभ (Day Begin) एवं दैनिक कार्य-समापन (Day End) नहीं किया जाता है। यह विभाग द्वारा जारी निर्देशों का उल्लंघन है, जिससे शाखा डाकघर की कार्य-कुशलता, अभिलेखों की शुद्धता एवं जनसेवा प्रभावित हो रही है।",
+        { align:AT.JUSTIFIED, after:120 }),
+      P("अतः महत्वपूर्ण निर्देश – तत्काल कार्यवाही हेतु:",{ bold:true, after:90 }),
+      P("1.  प्रत्येक कार्य-दिवस पर शाखा डाकघर निर्धारित कार्य-समय 11:00 बजे खोलें तथा दैनिक कार्य-प्रारंभ (Day Begin) अनिवार्य रूप से करें।",{ align:AT.JUSTIFIED, after:80 }),
+      P("2.  15:00 बजे (अपराह्न 3:00 बजे) दैनिक कार्य-समापन (Day End) करें तथा शाखा डाकघर निर्धारित समय पर बंद करें।",{ align:AT.JUSTIFIED, after:80 }),
+      P("3.  दैनिक कार्य-प्रारंभ एवं कार्य-समापन से संबंधित समस्त अभिलेख यथावत् एवं अद्यतन रखें।",{ align:AT.JUSTIFIED, after:80 }),
+      P("4.  उपरोक्त के अनुपालन का प्रतिवेदन लौटती डाक से उसी दिन इस कार्यालय में प्रेषित करें।",{ align:AT.JUSTIFIED, after:80 })
+    ];
+    if(withRes){
+      kids.push(P("5.  आप तत्काल रूप से अपने शाखा डाकघर के गाँव में निवास करना सुनिश्चित करें तथा दिनांक "+DUE+
+        " तक अपने निवास का प्रमाण (जैसे आधार कार्ड, मतदाता पहचान पत्र अथवा अन्य दस्तावेजी प्रमाण) इस कार्यालय में प्रस्तुत करें।",{ align:AT.JUSTIFIED, after:80 }));
+    }
+    kids.push(P("      यह एक सख्त चेतावनी है। आपको निर्देशित किया जाता है कि आप प्रत्येक कार्य-दिवस पर निर्धारित कार्य-समय 11:00 बजे से 15:00 बजे तक शाखा डाकघर खोलें तथा निर्धारित समय पर दैनिक कार्य-प्रारंभ एवं कार्य-समापन सुनिश्चित करें। विभाग द्वारा जारी निर्देशों का पालन न करने अथवा वांछित सुधार न दिखने पर नियम-संगत कार्यवाही की जाएगी।",
+      { align:AT.JUSTIFIED, after:100 }));
+    kids.push(P("      आपको इस पत्र की प्राप्ति की सूचना देने हेतु लिखित जवाब तथा अनुपालन प्रतिवेदन लौटती डाक से उसी दिन इस कार्यालय में प्रेषित करने का निर्देश दिया जाता है।",
+      { align:AT.JUSTIFIED, after:400 }));
+    kids.push(P("निरीक्षक डाकघर",{ align:AT.RIGHT, bold:true, after:0 }));
+    kids.push(P("पूर्वी उप मण्डल, बैरिया, बलिया – 277201",{ align:AT.RIGHT, after:0 }));
+
+    var doc=new L.Document({ styles:{ default:{ document:{ run:{ font:WL_FONT, size:22 } } } },
+      sections:[{ properties:{ page:{ size:A4, margin:{ top:900, right:1000, bottom:900, left:1000 } } }, children:kids }] });
+    return await L.Packer.toBlob(doc);
+  }
+  function wlDayFileName(md, withRes){
+    var nm=String(md.bo_name_en_raw||md.bo_name_hi||"BO").replace(/[^A-Za-z0-9]+/g,"_");
+    return "Warning_DayBegin_"+nm+(withRes?"_with_residence":"_without_residence")+".docx";
+  }
+  window.wlGenerateDayOne=async function(el){
+    var boId=(el&&typeof el==="object")?el.getAttribute("data-bo"):el;
+    var md=MASTER_DATA[boId]; if(!md) return;
+    var withRes=!!wlResMap()[boId];
+    var blob=await wlBuildDayBegin({ id:boId, md:md }, withRes);
+    if(blob) downloadBlob(blob, wlDayFileName(md, withRes));
+  };
+  window.wlGenerateDayBeginZip=async function(){
+    var sel=wlSelMap(), ids=Object.keys(sel);
+    if(!ids.length){ alert("पहले कम से कम एक BO चुनें।"); return; }
+    var ok=await loadDocx(); if(!ok){ alert("docx library लोड नहीं हुई।"); return; }
+    var res=wlResMap(), zip=new JSZip(), n=0;
+    for(var i=0;i<ids.length;i++){
+      var md=MASTER_DATA[ids[i]]; if(!md) continue;
+      var withRes=!!res[ids[i]];
+      var blob=await wlBuildDayBegin({ id:ids[i], md:md }, withRes);
+      if(blob){ zip.file(wlDayFileName(md, withRes), blob); n++; }
+    }
+    if(!n){ alert("कोई पत्र नहीं बना।"); return; }
+    var z=await zip.generateAsync({type:"blob"});
+    downloadBlob(z, "Warning_DayBegin_Letters.zip");
+    try{ (window.showToast||function(){})( "✅ "+n+" पत्र बने — ZIP डाउनलोड हो गया"); }catch(e){}
+  };
+
+
 
   window.setAcctView = function (k, v) { var s = getAcctView(); s[k] = v; saveAcctView(s); window.renderAcctTable(); };
   function acctEsc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
