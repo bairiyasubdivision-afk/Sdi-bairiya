@@ -2762,31 +2762,56 @@ function getJourneyHqDist(j){
 //     e.g. leave Sat 10:00, return Sun 13:00 → 1 + 1 = 2 DA.
 function recalcJourneyDA(j){
   var dmd=parseFloat(document.getElementById('daMinDist').value)||8;
-  var od=getJourneyHqDist(j);
-  if(od!==null&&od<dmd)return 0;
+  // v7.27 — पात्रता: जिस भी जगह की HQ से दूरी 8 किमी या ज़्यादा हो, पूरा दिन पात्र
+  // (पहले सिर्फ़ पहली जगह देखी जाती थी, इसलिए नज़दीक वाली जगह पहले गए तो DA छूट जाता था)
+  var _dd=[];
+  (j.legs||[]).forEach(function(l){
+    var nm=l.isReturn?l.from:l.to;
+    if(!nm||nm===HQ_NAME)return;
+    var d=getOfficeDist(nm);
+    if(d===null&&window.resolveOfficeByName){var _o=window.resolveOfficeByName(nm);if(_o)d=_o.dist;}
+    if(d===null){var _ld=parseFloat(l.dist);if(!isNaN(_ld)&&_ld>0)d=_ld;}
+    if(d!==null&&d!==undefined&&!isNaN(d))_dd.push(d);
+  });
+  if(_dd.length&&!_dd.some(function(d){return d>=dmd;}))return 0;
+  if(!_dd.length){var od=getJourneyHqDist(j);if(od!==null&&od<dmd)return 0;}
   var legs=j.legs||[];
   if(!legs.length)return j.da||0;
   var firstDep=null,lastArr=null,hasOutward=false,hasReturn=false;
   for(var i=0;i<legs.length;i++){
     var l=legs[i];
     if(!l.isReturn)hasOutward=true;else hasReturn=true;
-    if(!firstDep&&l.departure)firstDep=l.departure;
-    if(l.arrival)lastArr=l.arrival;
   }
-  if(!firstDep||!lastArr)return j.da||0;
-  var frac=function(h){return h<6?0.3:(h<=12?0.7:1);};
-  var depT=firstDep.split('T')[1]||'';
-  var arrT=lastArr.split('T')[1]||'';
-  var depDay=firstDep.split('T')[0];
-  var arrDay=lastArr.split('T')[0];
+  // v7.28 — निकलने का समय = HQ से निकलने वाली leg; आगमन = HQ पर पहुँचने वाली leg
+  // (असली आगमन, कोई अनुमानित मध्यरात्रि नहीं)। multi-day जर्नी का आख़िरी दिन
+  // इसी असली HQ-आगमन पर गिना जाता है।
+  for(var i2=0;i2<legs.length;i2++){
+    var l2=legs[i2];
+    if(!firstDep&&l2.departure&&l2.from===HQ_NAME)firstDep=l2.departure;
+    if(l2.arrival&&l2.to===HQ_NAME)lastArr=l2.arrival;
+  }
+  if(!firstDep){for(var i3=0;i3<legs.length;i3++){if(legs[i3].departure){firstDep=legs[i3].departure;break;}}}
+  if(!lastArr){for(var i4=legs.length-1;i4>=0;i4--){if(legs[i4].arrival){lastArr=legs[i4].arrival;break;}}}
+  // v7.27 — सीमा: <6घं = 0.3, 6–12घं = 0.7, 12घं या उससे ऊपर = 1
+  var frac=function(h){return h<6?0.3:(h<12?0.7:1);};
+  var depT=firstDep?firstDep.split('T')[1]||'':'';
+  var arrT=lastArr?lastArr.split('T')[1]||'':'';
+  // v7.26 — ये दो शाखाएँ पहले इस ग़लत शर्त के बाद आती थीं, इसलिए सिर्फ़-वापसी वाली
+  // जर्नी (जिसमें departure खाली हो) और सिर्फ़-जाने वाली जर्नी (जिसमें arrival खाली हो)
+  // का DA 0 बैठ जाता था। अब हर शाखा को सिर्फ़ अपना ज़रूरी समय चाहिए।
   if(!hasOutward){
-    // return-only day: away from HQ since midnight (12 AM)
+    // return-only day: away from HQ since midnight (12 AM) → arrival
+    if(!lastArr)return j.da||0;
     return frac(timeToMin(arrT)/60);
   }
   if(!hasReturn){
     // outward-only journey = overnight stay; day 1 = departure → midnight
+    if(!firstDep)return j.da||0;
     return frac((1440-timeToMin(depT))/60);
   }
+  if(!firstDep||!lastArr)return j.da||0;
+  var depDay=firstDep.split('T')[0];
+  var arrDay=lastArr.split('T')[0];
   if(depDay===arrDay){
     var dmin=timeToMin(arrT)-timeToMin(depT);
     if(dmin<0)dmin+=1440;
@@ -3500,10 +3525,10 @@ function buildLegs(){
   // खाली departure की वजह से पहले आ जाने का बग ठीक किया)। DA हर जर्नी में एक बार।
   var legs=[];
   getMonthJourneys().slice().sort(function(a,b){var x=_dk(a.date),y=_dk(b.date);return x<y?-1:(x>y?1:0);}).forEach(function(j){
-    var jda=recalcJourneyDA(j),daShown=false;
+    var jda=recalcJourneyDA(j),daShown=false,hasOut=(j.legs||[]).some(function(x){return !x.isReturn;});
     (j.legs||[]).forEach(function(l){
-      var showDa=(!l.isReturn&&!daShown);if(showDa)daShown=true;
-      legs.push({from:l.from,departure:l.departure,to:l.to,arrival:l.arrival,mode:l.mode,dist:l.dist,purpose:l.purpose,da:showDa?jda.toFixed(1):'',halt:'',fare:(l.fare===undefined?'':l.fare)});
+      var showDa=(!daShown&&(!l.isReturn||!hasOut));if(showDa)daShown=true;
+      legs.push({from:l.from,departure:l.departure,to:l.to,arrival:l.arrival,mode:l.mode,dist:l.dist,purpose:l.purpose,da:showDa?jda.toFixed(1):'',halt:'',fare:(l.fare===undefined?'':l.fare),date:j.date});
     });
   });
   return legs;
@@ -3514,11 +3539,32 @@ function buildLegs(){
 // ============================================================
 function generateWorkLog(){
   var mi=getMonthIdx(),y=getYear(),dim=getDaysInMonth();
-  var body=document.getElementById('workLogBody');body.innerHTML='';
+  var body=document.getElementById('workLogBody');
+  // v7.24 — यह function पहले हर बार सब .wl-work बॉक्स खाली कर देता था, और यह
+  // page-load / महीना बदलने / छुट्टी बदलने पर बुलाया जाता है — इससे अधिकारी की
+  // "Details of Work" प्रविष्टियाँ चुपचाप मिट जाती थीं। अब पहले मौजूदा मान
+  // (तारीख़-वार) बचाए जाते हैं, फिर तालिका दोबारा बनती है।
+  // महीने-वार भंडार (sdi_worklog_months_v1) — महीना बदलने पर दूसरे महीने की
+  // प्रविष्टियाँ भी सुरक्षित रहें।
+  var store={};
+  try{store=JSON.parse(localStorage.getItem('sdi_worklog_months_v1')||'{}')||{};}catch(e){store={};}
+  if(body){Array.prototype.forEach.call(body.querySelectorAll('tr'),function(tr){
+    var dc=tr.querySelector('td:nth-child(2)'),wi=tr.querySelector('.wl-work');
+    if(!dc||!wi)return;
+    var ds=dc.textContent.trim(),pp=ds.split('.');
+    if(pp.length!==3)return;
+    var k=pp[1]+'-'+pp[2];
+    if(!store[k])store[k]={};
+    if(String(wi.value).trim())store[k][ds]=wi.value;else delete store[k][ds];
+  });}
+  try{localStorage.setItem('sdi_worklog_months_v1',JSON.stringify(store));}catch(e){}
+  var mk=pad2(mi+1)+'-'+y, cur=store[mk]||{};
+  body.innerHTML='';
   for(var d=1;d<=dim;d++){
     var ds=pad2(d)+'.'+pad2(mi+1)+'.'+y;var dt=new Date(y,mi,d),dn=dt.getDay();
     var tr=document.createElement('tr');if(holidays[ds])tr.className='wl-holiday';
-    tr.innerHTML='<td>'+d+'</td><td>'+ds+'</td><td><input type="text" class="wl-work" value=""></td>';
+    var pv=(cur[ds]!==undefined)?cur[ds]:'';
+    tr.innerHTML='<td>'+d+'</td><td>'+ds+'</td><td><input type="text" class="wl-work" value="'+esc(pv)+'"></td>';
     body.appendChild(tr);
   }
 }
@@ -3762,7 +3808,15 @@ async function generateTourDiary(){
     var legs=buildLegs();var mi=getMonthIdx(),y=getYear(),dim=getDaysInMonth();
     var name=document.getElementById('officerName').value,desig=document.getElementById('officerDesignation').value,month=document.getElementById('billMonth').value;
     var f1=[],f2=[];
-    legs.forEach(function(l){var placed=false;if(l.departure){var d=new Date(l.departure);if(d.getDate()<=15){f1.push(l);placed=true;}else{f2.push(l);placed=true;}}if(!placed&&l.arrival){var d2=new Date(l.arrival);if(d2.getDate()<=15)f1.push(l);else f2.push(l);}});
+    // v7.24 — किसी भी leg को न गिरने दें: पहले departure, फिर arrival, फिर जर्नी की
+    // तारीख़ से पखवाड़ा तय करें। (पहले बिना-समय वाली leg चुपचाप छूट जाती थी।)
+    legs.forEach(function(l){
+      var day=null,src=l.departure||l.arrival;
+      if(src){var dd=new Date(src);if(!isNaN(dd.getTime()))day=dd.getDate();}
+      if(day===null&&l.date){var pp=String(l.date).split('.');if(pp.length===3)day=parseInt(pp[0],10);}
+      if(day===null)day=1;
+      if(day<=15)f1.push(l);else f2.push(l);
+    });
     // Bus / Train / Other की यात्रा हो तो Tour Diary में "Fare (₹)" कॉलम भी जुड़े
     var anyFareLeg=legs.some(function(l){return (l.mode==='Bus'||l.mode==='Train'||l.mode==='Other');});
     var jcw=anyFareLeg?[2184,1297,2184,1297,975,867,900,4696]:[2364,1397,2364,1397,1075,967,4836];
@@ -3832,8 +3886,8 @@ async function generateTABill(){
     var mr=parseFloat(document.getElementById('mileageRate').value),dr=parseFloat(document.getElementById('daRate').value),dmd=parseFloat(document.getElementById('daMinDist').value)||8;
     var td=0,tf=0,tDA=0,billRows=[];
     getMonthJourneys().slice().sort(function(a,b){var x=_dk(a.date),y=_dk(b.date);return x<y?-1:(x>y?1:0);}).forEach(function(j){
-      var jda=recalcJourneyDA(j),adm=jda>0,daShown=false;
-      j.legs.forEach(function(l){var isFM=(l.mode==='Bus'||l.mode==='Train'||l.mode==='Other');var ow=parseFloat(l.dist)||0;var fare=isFM?(parseFloat(l.fare)||0):(ow*mr);var rateShow=isFM?'\u2014':mr.toFixed(2);var showDa=(!l.isReturn&&!daShown);if(showDa)daShown=true;var daShow=showDa?(adm?jda.toFixed(1):''):'';billRows.push({from:l.from,dep:l.departure,to:l.to,arr:l.arrival,mode:l.mode,rate:rateShow,fare:fare.toFixed(2),da:daShow,dist:(isFM?(l.dist||''):ow),halt:'',purpose:l.purpose});td+=ow;tf+=fare;});
+      var jda=recalcJourneyDA(j),adm=jda>0,daShown=false,hasOut=(j.legs||[]).some(function(x){return !x.isReturn;});
+      j.legs.forEach(function(l){var isFM=(l.mode==='Bus'||l.mode==='Train'||l.mode==='Other');var ow=parseFloat(l.dist)||0;var fare=isFM?(parseFloat(l.fare)||0):(ow*mr);var rateShow=isFM?'\u2014':mr.toFixed(2);var showDa=(!daShown&&(!l.isReturn||!hasOut));if(showDa)daShown=true;var daShow=showDa?(adm?jda.toFixed(1):''):'';billRows.push({from:l.from,dep:l.departure,to:l.to,arr:l.arrival,mode:l.mode,rate:rateShow,fare:fare.toFixed(2),da:daShow,dist:(isFM?(l.dist||''):ow),halt:'',purpose:l.purpose});td+=ow;tf+=fare;});
       if(adm)tDA+=jda;
     });
     var daAmt=tDA*dr,ha=0,hf='',ht='';
@@ -10951,14 +11005,48 @@ const MASTER_DATA = {
     } else {
       html += '<div class="note" style="margin:10px 0 0;">जर्नी-सिंक: सभी निरीक्षणों की जर्नी मौजूद ✅</div>';
     }
+    // v7.27 — पाँचवाँ हिस्सा: जाने वाली leg में departure समय खाली (DA ग़लत बैठेगा)
+    var nodep = [];
+    try {
+      journeys.forEach(function (j) {
+        var lg = j.legs || [];
+        var hasOut = false, outNoDep = false, anyTime = false;
+        lg.forEach(function (l) {
+          if (!l.isReturn) { hasOut = true; if (!l.departure) outNoDep = true; }
+          if (l.departure || l.arrival) anyTime = true;
+        });
+        if (hasOut && outNoDep && anyTime) nodep.push({ date: j.date, office: j.office || ((lg[0] && lg[0].to) || '') });
+      });
+    } catch (e) {}
+    if (nodep.length) {
+      html += '<div class="note" style="margin:10px 0 6px;">जाने वाली leg में departure समय खाली है — DA ग़लत बैठेगा (' + nodep.length + ')</div>';
+      nodep.forEach(function (z) {
+        html += '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;">' +
+          '<span style="flex:1;font-weight:600;font-size:0.88rem;">' + (z.office || '—') +
+            '<span style="font-weight:400;color:#777;font-size:0.78rem;"> · ' + z.date + ' · Tour Diary में departure समय भरें</span></span>' +
+          '<button type="button" class="btn btn-secondary" style="font-size:0.78rem;padding:5px 12px;" onclick="switchTab(\'ta\');">📋 TA टैब खोलें</button>' +
+          '</div>';
+      });
+    }
     // v7.23 — चौथा हिस्सा: अधूरी जर्नी (वापसी leg नहीं → DA ग़लत बैठ सकता है)
     var incompl = [];
     try {
+      // v7.25 — रात्रि-ठहराव समझें: यदि अगले दिन की जर्नी में वापसी leg है, तो
+      // आज की सिर्फ़-जाने वाली जर्नी अधूरी नहीं (e.g. 22.08 वाराणसी → 23.08 वापसी)।
+      var retDates = {};
+      journeys.forEach(function (j) {
+        if ((j.legs || []).some(function (l) { return l.isReturn; })) retDates[j.date] = true;
+      });
       journeys.forEach(function (j) {
         var lg = j.legs || [];
         var hasOut = false, hasRet = false;
         lg.forEach(function (l) { if (l.isReturn) hasRet = true; else hasOut = true; });
-        if (hasOut && !hasRet) incompl.push({ date: j.date, office: j.office || ((lg[0] && lg[0].to) || '') });
+        if (hasOut && !hasRet) {
+          var pp = String(j.date || '').split('.');
+          var nx = '';
+          if (pp.length === 3) { var dt = new Date(parseInt(pp[2], 10), parseInt(pp[1], 10) - 1, parseInt(pp[0], 10)); dt.setDate(dt.getDate() + 1); nx = pad2(dt.getDate()) + '.' + pad2(dt.getMonth() + 1) + '.' + dt.getFullYear(); }
+          if (!retDates[nx]) incompl.push({ date: j.date, office: j.office || ((lg[0] && lg[0].to) || ''), overnight: nx });
+        }
       });
     } catch (e) {}
     if (incompl.length) {
