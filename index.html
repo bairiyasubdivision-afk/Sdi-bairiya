@@ -10771,6 +10771,19 @@ const MASTER_DATA = {
   // lastInspectionDate from the newly-selected BO's own history (if any)
   // rather than leaving it blank.
   // ---------------------------------------------------------------------
+  // v7.30 — पक्का बंदोबस्त: BO बदलते ही #insp-root के हर BO-विशेष खाने को साफ़ करें,
+  // ताकि किसी भी हालत में पिछले BO का डेटा न दिखे। (ग्लोबल नियंत्रण छोड़ दिए जाते हैं।)
+  var INSP_GLOBAL_FIELD_IDS = { boSelect: 1, boSearchBox: 1, acctImportTarget: 1, acctImportFile: 1,
+    acctMonthlyFile: 1, acctPeriodSel: 1, acctOfficeSearch: 1, signatureFile: 1, acctOfficeSearch2: 1 };
+  function sweepInspFormFields() {
+    var root = document.getElementById("insp-root");
+    if (!root) return;
+    Array.prototype.forEach.call(root.querySelectorAll("input, select, textarea"), function (el) {
+      if (!el.id || INSP_GLOBAL_FIELD_IDS[el.id]) return;
+      if (el.type === "checkbox" || el.type === "radio") el.checked = false;
+      else el.value = "";
+    });
+  }
   function resetInspFormFields() {
     const ids = [
       "lastInspector", "supVisitDate", "boOpeningDate", "sdiVisitDates", "moVisitDates", "specialRemark",
@@ -11505,14 +11518,11 @@ generateBtn.addEventListener("click", async () => {
     BUSINESS_CATEGORIES_UI.forEach((cat) => {
       let prevVal = document.getElementById(`biz_${cat.key}_previous`) ? document.getElementById(`biz_${cat.key}_previous`).value : "";
       if (cat.excel) {
-        // Excel schemes: draft the value ONLY when the user CHANGED it from
-        // the live baseline — so a re-imported Excel is never blocked by a
-        // stale draft that merely echoed the old baseline numbers.
-        try {
-          var bb = getAcctBaseline();
-          var pb = ((bb.prevYear || {})[boSelect.value] || {})[ACCT_EXCEL_CATS[cat.key]];
-          if (prevVal === String(pb === undefined ? "" : pb)) prevVal = "";
-        } catch (e) {}
+        // v7.29 — Excel-वाले खानों का 'previous' draft में कभी न रखें। पहले यह
+        // boSelect.value (नया BO) से तुलना करता था, इसलिए BO बदलते समय पुराने BO
+        // का मान नए BO के draft में लिखा जा सकता था (draft cross-contamination)।
+        // यह मान अब हमेशा live baseline से आएगा।
+        prevVal = "";
       }
       draft.business[cat.key] = {
         previous: prevVal,
@@ -11627,6 +11637,9 @@ generateBtn.addEventListener("click", async () => {
   }
 
   function restoreInspDraft(boId) {
+    // v7.30 — सुरक्षा: जिस BO का मान लोड कर रहे हैं, मसौदे में भी वही boId हो।
+    // (पुराने दूषित मसौदे दूसरे BO का डेटा लिए हो सकते हैं — उन्हें न लादें।)
+    try { var _raw = localStorage.getItem(INSP_DRAFT_KEY_PREFIX + boId); if (_raw) { var _d = JSON.parse(_raw); if (_d && _d.boId && _d.boId !== boId) { return false; } } } catch (e) {}
     const raw = localStorage.getItem(INSP_DRAFT_KEY_PREFIX + boId);
     if (!raw) return false;
     // Clear SB-46 entries only now that a draft will actually be restored
@@ -11774,10 +11787,9 @@ generateBtn.addEventListener("click", async () => {
           if (d.business[cat.key]) {
             const rec = d.business[cat.key];
             const pEl = document.getElementById(`biz_${cat.key}_previous`);
-            // Excel schemes: an EMPTY draft value must not wipe the Excel
-            // baseline prefill (old drafts stored "" before this feature);
-            // a non-empty value (the user's manual fix) still wins.
-            if (pEl && (rec.previous || !cat.excel)) pEl.value = rec.previous || "";
+            // v7.29 — Excel-वाले खानों का 'previous' हमेशा live baseline से; पुराने
+            // cross-contaminated draft का मान कभी न लादें। (ग़ैर-Excel खानों में draft ही चलेगा।)
+            if (pEl && !cat.excel) pEl.value = rec.previous || "";
             const rEl = document.getElementById(`biz_${cat.key}_remark`);
             if (rEl) rEl.value = rec.remark || "";
             if (cat.excel) {
@@ -11827,6 +11839,10 @@ generateBtn.addEventListener("click", async () => {
     // Blank every manually-entered field immediately so the new BO never
     // shows data left over from whichever BO was selected before it.
     resetInspFormFields();
+    // v7.30 — और एक ज़बरदस्ती-सफ़ाई (belt & braces): कोई भी BO-विशेष खाना पीछे
+    // न छूटे। इसके बाद auto-default तारीख़ें और baseline फिर लगा दिए जाते हैं।
+    sweepInspFormFields();
+    applyDateDefaults();
 
     // Pre-fill Q53 baselines (previous-year + current-till-Excel) for the new BO
     applyAcctBaseline(boSelect.value);
