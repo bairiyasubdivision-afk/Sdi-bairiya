@@ -2879,8 +2879,11 @@ function openJourneyDay(ds){
   var idx=-1;
   for(var i=0;i<journeys.length;i++){if(journeys[i].date===ds){idx=i;break;}}
   if(idx<0)return;
-  if(!confirm('This day is part of the journey that started on '+ds+'.\n\nOpen that journey for editing?'))return;
-  loadJourneyForEdit(idx);
+  if(confirm('This day is part of the journey that started on '+ds+'.\n\nClick OK to open that journey for editing.\nClick Cancel for the option to DELETE it.')){
+    loadJourneyForEdit(idx);
+    return;
+  }
+  askDeleteJourney(idx,ds);
 }
 function renderCalendar(){
   var mi=getMonthIdx(),y=getYear(),dim=getDaysInMonth(),firstDay=new Date(y,mi,1).getDay();
@@ -2918,14 +2921,34 @@ function renderCalendar(){
   h+='</tbody>';document.getElementById('calendarTable').innerHTML=h;renderHolidayDisplay();
 }
 
+function journeySpanText(j){
+  var lg=(j&&j.legs)||[];var last=null;
+  for(var q=lg.length-1;q>=0;q--){if(lg[q].arrival){last=lg[q].arrival;break;}}
+  if(!last)return j.date;
+  var p=String(last).split('T')[0].split('-');
+  if(p.length!==3)return j.date;
+  var endD=p[2]+'.'+p[1]+'.'+p[0];
+  return endD===j.date?j.date:(j.date+' to '+endD);
+}
+function askDeleteJourney(idx,ds){
+  var j=journeys[idx];if(!j)return;
+  var span=journeySpanText(j);
+  var extra=(span!==j.date)?('\n\nThis journey covers '+span+' — all its days will be removed.'):'';
+  if(!confirm('DELETE the journey for '+ds+'?'+extra+'\n\nClick OK to delete, Cancel to keep it.'))return;
+  deleteJourney(idx);
+  alert('\u2705 '+ds+' की जर्नी हटा दी गई।');
+}
 function selectDate(ds){
   var lv=getLeaveForDate(ds);
   if(lv){alert(ds+' is marked as '+lv.label+'. No journey can be planned on a leave day.\n\nRemove the leave first if you want to plan a journey on this date.');return;}
   if(holidays[ds]){if(!confirm(ds+' छुट्टी है ('+holidays[ds]+') — सार्वजनिक अवकाश।\n\nयदि आपने राजकीय कार्य (official exigency) में यात्रा की है तो इस दिन की जर्नी दर्ज की जा सकती है।\n\nजर्नी दर्ज करें?'))return;}
   var existingIdx=journeys.findIndex(function(j){return j.date===ds;});
   if(existingIdx>=0){
-    if(!confirm('A journey already exists for '+ds+'.\n\nDo you want to EDIT/MODIFY this existing journey?\n\nClick OK to load the journey for editing, Cancel to do nothing.')){return;}
-    loadJourneyForEdit(existingIdx);
+    if(confirm('A journey already exists for '+ds+'.\n\nClick OK to EDIT/MODIFY this journey.\nClick Cancel for the option to DELETE it.')){
+      loadJourneyForEdit(existingIdx);
+      return;
+    }
+    askDeleteJourney(existingIdx,ds);
     return;
   }
   selectedDate=ds;renderCalendar();currentLegs=[];addLeg();showForm(ds);
