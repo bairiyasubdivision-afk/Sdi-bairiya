@@ -897,6 +897,10 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
         <div id="placeholderMsg" style="color:#999;font-style:italic;padding:20px;text-align:center;">Click a date on the calendar to start planning a journey.</div>
         <div class="journey-list" id="journeyListWrap" style="display:none;">
           <h4 class="card-title collapsible" onclick="toggleCard(this)" style="color:var(--navy);margin:10px 0 8px;font-size:0.95rem;border-bottom:2px solid var(--red);padding-bottom:6px;cursor:pointer;">Saved Journeys <span class="collapse-icon">▼</span></h4>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 10px;">
+            <input type="text" id="journeySearch" placeholder="Search journeys — date, office or purpose" oninput="renderJourneyList()" style="flex:1;min-width:220px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;">
+            <label style="font-size:0.85rem;display:flex;gap:6px;align-items:center;white-space:nowrap;"><input type="checkbox" id="journeyAllMonths" onchange="renderJourneyList()"> All months</label>
+          </div>
           <div class="card-body" style="display:none;">
             <div style="overflow-x:auto;">
               <table style="width:100%;font-size:0.8rem;"><thead><tr><th>Date</th><th>Route</th><th>Dep</th><th>Ret HQ</th><th>Km</th><th>DA</th><th>Work Log Entry</th><th></th></tr></thead><tbody id="journeyListBody"></tbody></table>
@@ -2866,11 +2870,12 @@ function renderCalendar(){
       if(lv){if(lv.type==='RH')cls+='is-leave-rh ';else if(lv.type==='CL')cls+='is-leave-cl ';else if(lv.type==='EL')cls+='is-leave-el ';}
       cls+=selectedDate===ds?'selected':'';
       var sunCls=dn===0?' cal-day-sun':'';
-      // Leave days and holidays: no click to start journey
-      var clickAttr=lv?'':(isHol?'':('onclick="selectDate(\''+ds+'\')"'));
-      var cellStyle=lv?'cursor:default;':(isHol?'cursor:default;':'');
+      // v7.31 — अवकाश (leave) के दिन जर्नी नहीं। पर सार्वजनिक छुट्टी के दिन जर्नी दर्ज
+      // की जा सकती है (राजकीय कार्य / official exigency) — पुष्टि लेकर।
+      var clickAttr=lv?'':('onclick="selectDate(\''+ds+'\')"');
+      var cellStyle=lv?'cursor:default;':'';
       h+='<td class="'+cls+'" '+clickAttr+(cellStyle?' style="'+cellStyle+'"':'')+'><span class="cal-day-num'+sunCls+'">'+day+'</span>';
-      if(hasJ)h+='<div class="cal-badge">journey</div>';
+      if(hasJ)h+='<div class="cal-badge">journey'+(isHol?' (छुट्टी)':'')+'</div>';
       else if(lv){h+='<div class="cal-leave-badge '+lv.type.toLowerCase()+'">'+lv.type+'</div>';
         h+='<div class="cal-leave-label">'+(lv.type==='RH'?'Restricted Holiday':lv.type==='CL'?'Casual Leave':'Earned Leave')+'</div>';}
       else if(isHol){var hn=holidays[ds]||'';if(hn.length>10)hn=hn.substring(0,9)+'..';h+='<div class="cal-hol-badge">'+hn+'</div>';}
@@ -2884,7 +2889,7 @@ function renderCalendar(){
 function selectDate(ds){
   var lv=getLeaveForDate(ds);
   if(lv){alert(ds+' is marked as '+lv.label+'. No journey can be planned on a leave day.\n\nRemove the leave first if you want to plan a journey on this date.');return;}
-  if(holidays[ds]){if(!confirm('Warning: '+ds+' is a holiday ('+holidays[ds]+'). Are you sure you want to add a journey on this day?'))return;}
+  if(holidays[ds]){if(!confirm(ds+' छुट्टी है ('+holidays[ds]+') — सार्वजनिक अवकाश।\n\nयदि आपने राजकीय कार्य (official exigency) में यात्रा की है तो इस दिन की जर्नी दर्ज की जा सकती है।\n\nजर्नी दर्ज करें?'))return;}
   var existingIdx=journeys.findIndex(function(j){return j.date===ds;});
   if(existingIdx>=0){
     if(!confirm('A journey already exists for '+ds+'.\n\nDo you want to EDIT/MODIFY this existing journey?\n\nClick OK to load the journey for editing, Cancel to do nothing.')){return;}
@@ -3485,6 +3490,32 @@ function renderJourneyList(){
     var parts=j.date.split('.');
     return parseInt(parts[1])===mi+1 && parseInt(parts[2])===y;
   });
+  // v7.34 — Search (English) + "All months": find any journey by date, office or purpose
+  var _qEl=document.getElementById('journeySearch');
+  var _q=_qEl?String(_qEl.value||'').trim().toLowerCase():'';
+  var _allEl=document.getElementById('journeyAllMonths');
+  var _all=!!(_allEl&&_allEl.checked);
+  if(_q||_all){
+    var list=_all?journeys.slice():monthJourneys;
+    if(_q){
+      list=list.filter(function(j){
+        var route=(j.legs||[]).map(function(l){return l.to;}).join(' ');
+        var hay=(j.date+' '+route+' '+(j.workLogEntry||'')+' '+(j.purpose||'')+' '+(j.office||'')).toLowerCase();
+        return hay.indexOf(_q)>=0;
+      });
+    }
+    wrap.style.display='block';
+    if(!list.length){ body.innerHTML='<tr><td colspan="8" style="text-align:center;color:#999;padding:10px;">No journeys match your search.</td></tr>'; return; }
+    body.innerHTML='';
+    list.forEach(function(j){
+      var globalIdx=journeys.indexOf(j);
+      var route=j.legs.map(function(l){return l.to;}).join(' -> ');
+      var tr=document.createElement('tr');
+      tr.innerHTML='<td>'+j.date+'</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(route)+'</td><td>'+j.depTime+'</td><td>'+j.retTime+'</td><td>'+j.dist+'</td><td>'+recalcJourneyDA(j).toFixed(1)+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(j.workLogEntry)+'">'+esc(j.workLogEntry)+'</td><td><button class="jl-edit" onclick="editJourney('+globalIdx+')" title="Edit/Modify this journey">&#9998;</button> <button class="jl-del" onclick="deleteJourney('+globalIdx+')" title="Delete this journey">&#10005;</button></td>';
+      body.appendChild(tr);
+    });
+    return;
+  }
   // Use the global index for edit/delete operations
   if(!monthJourneys.length){
     if(journeys.length){
@@ -3583,7 +3614,7 @@ function generateWorkLogFromJourneys(){
       else if(dn===0)w='SUNDAY';
       else w='Stayed at HQ and did office work';
     }
-    else{if(dn===0)w=w+' (SUNDAY)';}
+    else{if(dn===0)w=w+' (SUNDAY)';if(isHol)w=w+' (\u091b\u0941\u091f\u094d\u091f\u0940 \u2014 \u0930\u093e\u091c\u0915\u0940\u092f \u0915\u093e\u0930\u094d\u092f)';}
     var tr=document.createElement('tr');
     if(isHol&&!dp[ds]&&!lv)tr.className='wl-holiday';
     if(lv)tr.className='wl-leave';
@@ -3856,7 +3887,7 @@ async function generateTourDiary(){
           else if(dn===0)w='SUNDAY';
           else w='Stayed at HQ and did office work';
         }
-        else{if(dn===0)w=w+' (SUNDAY)';}
+        else{if(dn===0)w=w+' (SUNDAY)';if(isHol)w=w+' (\u091b\u0941\u091f\u094d\u091f\u0940 \u2014 \u0930\u093e\u091c\u0915\u0940\u092f \u0915\u093e\u0930\u094d\u092f)';}
         rows.push(new D.TableRow({children:[mkCell(ds,wlcw[0]),mkCell(w,wlcw[1])]}));
       }
       return mkTable(rows,wlcw,wltw);
@@ -4317,12 +4348,26 @@ function stripAllHighlighting(bodyEl) {
         var shd = wEnsure(pPr, doc, "shd", W_PPR_ORDER);
         shd.setAttribute("w:val", "clear"); shd.setAttribute("w:color", "auto"); shd.setAttribute("w:fill", opts.shade);
       }
+      if (opts.keep) { wEnsure(pPr, doc, "keepNext", W_PPR_ORDER); }
+      if (opts.band) {
+        // tinted band with a crimson accent bar on the left
+        var shdB = wEnsure(pPr, doc, "shd", W_PPR_ORDER);
+        shdB.setAttribute("w:val", "clear"); shdB.setAttribute("w:color", "auto"); shdB.setAttribute("w:fill", "EAF0F7");
+        var pBdrB = wEnsure(pPr, doc, "pBdr", W_PPR_ORDER);
+        Array.prototype.slice.call(pBdrB.childNodes).forEach(function (c) { pBdrB.removeChild(c); });
+        var lb = wEl(doc, "left");
+        lb.setAttribute("w:val", "single"); lb.setAttribute("w:sz", "36");
+        lb.setAttribute("w:space", "6"); lb.setAttribute("w:color", "1B2A4A");
+        pBdrB.appendChild(lb);
+        var indB = wEnsure(pPr, doc, "ind", W_PPR_ORDER);
+        indB.setAttribute("w:left", "140");
+      }
       if (opts.rule) {
         var pBdr = wEnsure(pPr, doc, "pBdr", W_PPR_ORDER);
         if (!pBdr.getElementsByTagNameNS(W_NS, "bottom").length) {
           var bot = wEl(doc, "bottom");
           bot.setAttribute("w:val", "single"); bot.setAttribute("w:sz", "12");
-          bot.setAttribute("w:space", "2"); bot.setAttribute("w:color", "C8102E");
+          bot.setAttribute("w:space", "2"); bot.setAttribute("w:color", "1B2A4A");
           pBdr.appendChild(bot);
         }
       }
@@ -4360,15 +4405,33 @@ function stripAllHighlighting(bodyEl) {
           if (n.nodeName === "w:tc") { inCell = true; break; }
           n = n.parentNode;
         }
-        if (/निरीक्षण रिपोर्ट\s*दिनांक/.test(t) || /^_BONAME_/.test(t)) {
-          wStylePara(p, doc, { jc: "center", before: 0, after: 140 });
+        if (/निरीक्षण रिपोर्ट\s*दिनांक/.test(t) || /^_BONAME_/.test(t) || /शाखा डाकघर-लेखा कार्यालय/.test(t)) {
+          var _isTitleLine2 = /निरीक्षण रिपोर्ट/.test(t);
+          wStylePara(p, doc, { jc: "center", before: 0, after: _isTitleLine2 ? 160 : 20 });
+          if (_isTitleLine2) (function () {
+            var pPr = wParaPr(p, doc);
+            var pb = wEnsure(pPr, doc, "pBdr", W_PPR_ORDER);
+            Array.prototype.slice.call(pb.childNodes).forEach(function (c) { pb.removeChild(c); });
+            var bt = wEl(doc, "bottom");
+            bt.setAttribute("w:val", "single"); bt.setAttribute("w:sz", "12");
+            bt.setAttribute("w:space", "6"); bt.setAttribute("w:color", "16213E");
+            pb.appendChild(bt);
+          })();
           wStyleRuns(p, doc, { sz: 30, bold: true, color: "16213E" });
         } else if (!inCell && /^[\u0900-\u097F]{1,4}\.\s/.test(t) && (t.length <= 48 || /:\s*$/.test(t))) {
-          wStylePara(p, doc, { before: 240, after: 130, rule: true });
-          wStyleRuns(p, doc, { sz: 27, bold: true, color: "9C0C23" });
+          wStylePara(p, doc, { before: 260, after: 140, band: true, keep: true });
+          wStyleRuns(p, doc, { sz: 27, bold: true, color: "16213E" });
         } else if (!inCell && /^\d{1,2}\.\s/.test(t)) {
-          wStylePara(p, doc, { before: 150, after: 80 });
+          wStylePara(p, doc, { before: 150, after: 80, keep: t.length < 150 });   // only short questions are chained to the next paragraph
           wStyleRuns(p, doc, { sz: 22, bold: true, color: "16213E" });
+          (function () {   // question number in crimson
+            var r0 = p.getElementsByTagNameNS(W_NS, "r")[0];
+            var t0 = r0 && r0.getElementsByTagNameNS(W_NS, "t")[0];
+            if (t0 && /^\d{1,2}\.\s*$/.test(t0.textContent || "")) {
+              var rp0 = r0.getElementsByTagNameNS(W_NS, "rPr")[0];
+              if (rp0) wEnsure(rp0, doc, "color", W_RPR_ORDER).setAttribute("w:val", "1B2A4A");
+            }
+          })();
         }
       });
 
@@ -4393,7 +4456,7 @@ function stripAllHighlighting(bodyEl) {
         }
         if (!tblPr.getElementsByTagNameNS(W_NS, "tblCellMar").length) {
           var cm = wEl(doc, "tblCellMar");
-          [["top", "45"], ["left", "85"], ["bottom", "45"], ["right", "85"]].forEach(function (pr) {
+          [["top", "58"], ["left", "115"], ["bottom", "58"], ["right", "115"]].forEach(function (pr) {
             var e = wEl(doc, pr[0]);
             e.setAttribute("w:w", pr[1]); e.setAttribute("w:type", "dxa");
             cm.appendChild(e);
@@ -4425,11 +4488,261 @@ function stripAllHighlighting(bodyEl) {
     }
 
 
+// ---------------------------------------------------------------------------
+// Table flow + look (v10)
+//  * The template flags EVERY row of every table as a "repeat header row".
+//    Word treats a table whose rows are all header rows as unbreakable, so the
+//    whole table jumps to the next page and leaves a big gap behind it. Only
+//    real header rows keep that flag now.
+//  * The SB / RD / SSA / TD passbook table is split into four separate tables
+//    (own title + column heading each) so the sections fill the pages evenly.
+//  * Consistent look: navy header band, soft zebra rows, light-grey borders.
+// ---------------------------------------------------------------------------
+function polishTables(doc, bodyEl) {
+  var NAVY = "1B2A4A", GRID = "A9B4C2", ZEBRA = "F4F6FA", LABEL = "EDF1F7",
+      SECT_FILL = "EAF0F7", SECT_TXT = "16213E";
+
+  function kidsNamed(parent, name) {
+    return Array.prototype.filter.call(parent.childNodes, function (n) {
+      return n.nodeType === 1 && n.nodeName === "w:" + name;
+    });
+  }
+  function rowsOf(tbl) { return kidsNamed(tbl, "tr"); }
+  function cellsOf(tr) { return kidsNamed(tr, "tc"); }
+  function textOf(el) {
+    var ts = el.getElementsByTagNameNS(W_NS, "t"), s = "";
+    for (var i = 0; i < ts.length; i++) s += ts[i].textContent || "";
+    return s.replace(/\s+/g, " ").trim();
+  }
+  function trPrOf(tr) {
+    var p = kidsNamed(tr, "trPr")[0];
+    if (!p) { p = wEl(doc, "trPr"); tr.insertBefore(p, tr.firstChild); }
+    return p;
+  }
+  function setRowFlag(tr, name, on) {
+    var trPr = trPrOf(tr);
+    Array.prototype.slice.call(trPr.getElementsByTagNameNS(W_NS, name)).forEach(function (e) { e.parentNode.removeChild(e); });
+    if (on) wInsertOrdered(trPr, wEl(doc, name), W_TRPR_ORDER);
+  }
+  function setFill(tc, fill) {
+    var tcPr = kidsNamed(tc, "tcPr")[0];
+    if (!tcPr) { tcPr = wEl(doc, "tcPr"); tc.insertBefore(tcPr, tc.firstChild); }
+    Array.prototype.slice.call(tcPr.getElementsByTagNameNS(W_NS, "shd")).forEach(function (e) { e.parentNode.removeChild(e); });
+    var shd = wEl(doc, "shd");
+    shd.setAttribute("w:val", "clear"); shd.setAttribute("w:color", "auto"); shd.setAttribute("w:fill", fill);
+    wInsertOrdered(tcPr, shd, W_TCPR_ORDER);
+    var va = wEnsure(tcPr, doc, "vAlign", W_TCPR_ORDER);
+    va.setAttribute("w:val", "center");
+  }
+  function hasFill(tc) {
+    var tcPr = kidsNamed(tc, "tcPr")[0];
+    return !!(tcPr && tcPr.getElementsByTagNameNS(W_NS, "shd").length);
+  }
+  function keepRowWithNext(tr) {
+    var ps = tr.getElementsByTagNameNS(W_NS, "p");
+    for (var i = 0; i < ps.length; i++) wEnsure(wParaPr(ps[i], doc), doc, "keepNext", W_PPR_ORDER);
+  }
+  function styleHeaderRow(tr, fill, color) {
+    cellsOf(tr).forEach(function (tc) {
+      setFill(tc, fill);
+      wStyleRuns(tc, doc, { bold: true, color: color, sz: 21 });
+      var ps = tc.getElementsByTagNameNS(W_NS, "p");
+      for (var i = 0; i < ps.length; i++) wEnsure(wParaPr(ps[i], doc), doc, "jc", W_PPR_ORDER).setAttribute("w:val", "center");
+    });
+  }
+  function spacer() {
+    var p = wEl(doc, "p"), pPr = wEl(doc, "pPr"), sp = wEl(doc, "spacing");
+    sp.setAttribute("w:before", "0"); sp.setAttribute("w:after", "0");
+    sp.setAttribute("w:line", "140"); sp.setAttribute("w:lineRule", "exact");
+    pPr.appendChild(sp); p.appendChild(pPr);
+    return p;
+  }
+
+  // ---- 1. split the SB / RD / SSA / TD passbook table into separate tables ----
+  var passbookTables = [];
+  Array.prototype.slice.call(kidsNamed(bodyEl, "tbl")).forEach(function (tbl) {
+    var rows = rowsOf(tbl);
+    if (rows.length < 6) return;
+    var titles = [];
+    rows.forEach(function (r, i) {
+      if (i > 0 && cellsOf(r).length === 1 && /खाते\s*$/.test(textOf(r))) titles.push(i);
+    });
+    if (titles.length < 2) return;
+    var headerRow = rows[0], tblPr = kidsNamed(tbl, "tblPr")[0], grid = kidsNamed(tbl, "tblGrid")[0];
+    var parent = tbl.parentNode, anchor = tbl;
+    titles.forEach(function (start, k) {
+      var end = (k + 1 < titles.length) ? titles[k + 1] : rows.length;
+      var nt = wEl(doc, "tbl");
+      if (tblPr) nt.appendChild(tblPr.cloneNode(true));
+      if (grid) nt.appendChild(grid.cloneNode(true));
+      nt.appendChild(rows[start]);                       // section title row
+      nt.appendChild(headerRow.cloneNode(true));         // column headings
+      for (var i = start + 1; i < end; i++) nt.appendChild(rows[i]);
+      parent.insertBefore(nt, anchor);
+      if (k + 1 < titles.length) parent.insertBefore(spacer(), anchor);
+      passbookTables.push(nt);
+    });
+    parent.removeChild(tbl);
+  });
+
+  // ---- 2. restyle every table ----
+  Array.prototype.slice.call(kidsNamed(bodyEl, "tbl")).forEach(function (tbl) {
+    var rows = rowsOf(tbl);
+    if (!rows.length) return;
+
+    // soft grey borders everywhere
+    ["tblBorders", "tcBorders"].forEach(function (bn) {
+      Array.prototype.slice.call(tbl.getElementsByTagNameNS(W_NS, bn)).forEach(function (b) {
+        Array.prototype.slice.call(b.childNodes).forEach(function (side) {
+          if (side.nodeType !== 1) return;
+          var v = side.getAttribute("w:val");
+          if (v && v !== "nil" && v !== "none") side.setAttribute("w:color", GRID);
+        });
+      });
+    });
+
+    // header flag: clear everywhere first; long rows may split across pages
+    rows.forEach(function (tr) {
+      setRowFlag(tr, "tblHeader", false);
+      setRowFlag(tr, "cantSplit", textOf(tr).length <= 300);
+    });
+
+    var isPassbook = passbookTables.indexOf(tbl) >= 0;
+    if (isPassbook) {
+      var titleRow = rows[0], colRow = rows[1];
+      setRowFlag(titleRow, "tblHeader", true); setRowFlag(colRow, "tblHeader", true);
+      cellsOf(titleRow).forEach(function (tc) {
+        setFill(tc, SECT_FILL);
+        wStyleRuns(tc, doc, { bold: true, color: SECT_TXT, sz: 22 });
+        var ps = tc.getElementsByTagNameNS(W_NS, "p");
+        for (var i = 0; i < ps.length; i++) wEnsure(wParaPr(ps[i], doc), doc, "jc", W_PPR_ORDER).setAttribute("w:val", "center");
+      });
+      styleHeaderRow(colRow, NAVY, "FFFFFF");
+      keepRowWithNext(titleRow); keepRowWithNext(colRow);
+      if (rows[2]) keepRowWithNext(rows[2]);            // never leave a title/heading alone at a page end
+      rows.slice(2).forEach(function (tr, i) {
+        if (i % 2 === 1) cellsOf(tr).forEach(function (tc) { if (!hasFill(tc)) setFill(tc, ZEBRA); });
+      });
+    } else {
+      var r0cells = cellsOf(rows[0]);
+      var filled = r0cells.filter(function (tc) { return textOf(tc).length > 0; }).length;
+      var merged = r0cells.some(function (tc) {
+        return tc.getElementsByTagNameNS(W_NS, "vMerge").length || tc.getElementsByTagNameNS(W_NS, "gridSpan").length;
+      });
+      var labelTable = r0cells.length >= 3 && filled <= 1;   // row 0 is data, first column holds labels
+      var headerRows = 0;
+      if (!labelTable) headerRows = (merged && rows.length > 2) ? 2 : 1;
+      for (var h = 0; h < headerRows; h++) {
+        setRowFlag(rows[h], "tblHeader", true);
+        styleHeaderRow(rows[h], NAVY, "FFFFFF");
+        keepRowWithNext(rows[h]);
+      }
+      if (rows[headerRows]) keepRowWithNext(rows[headerRows]);
+      rows.slice(headerRows).forEach(function (tr, i) {
+        var cs = cellsOf(tr);
+        if (labelTable && cs[0] && !hasFill(cs[0])) setFill(cs[0], LABEL);
+        if (i % 2 === 1) cs.forEach(function (tc) { if (!hasFill(tc)) setFill(tc, ZEBRA); });
+      });
+    }
+
+    // v7.34 — हर खाने का पाठ ऊर्ध्व-केंद्रित (डेटा पंक्तियों में भी), ताकि कुछ भी
+    // ऊपरी रेखा से चिपका न दिखे।
+    rowsOf(tbl).forEach(function (tr) {
+      cellsOf(tr).forEach(function (tc) {
+        var tcPr = kidsNamed(tc, "tcPr")[0];
+        if (!tcPr) { tcPr = wEl(doc, "tcPr"); tc.insertBefore(tcPr, tc.firstChild); }
+        wEnsure(tcPr, doc, "vAlign", W_TCPR_ORDER).setAttribute("w:val", "center");
+      });
+    });
+
+    // the line introducing a table stays on the same page as the table start
+    var prev = tbl.previousSibling;
+    while (prev && prev.nodeType !== 1) prev = prev.previousSibling;
+    if (prev && prev.nodeName === "w:p" && textOf(prev)) wEnsure(wParaPr(prev, doc), doc, "keepNext", W_PPR_ORDER);
+  });
+}
+
 function cellTextOf(tc) {
   const ps = getDirectChildren(tc, "p");
   let s = "";
   for (const p of ps) s += getParagraphText(p);
   return s.trim();
+}
+
+// FIX: the template pads _BONAME_/_SONAME_ with hard-coded runs of spaces
+// ("शाखा डाकघर  _BONAME_  ग्राम पंचायत", 12 leading spaces before _SONAME_,
+// ~50 spaces in the पत्रांक line) and glues _BONAME_ to "शाखा डाकघर" with no
+// space at all. Tidy all of that after the placeholders are filled.
+function tidyNameSpacing(doc, bodyEl, bo) {
+  function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+  var names = [bo.bo_name_hi, bo.so_name_hi, bo.ho_name_hi]
+    .map(function (n) { return (n || "").replace(/\s+/g, " ").trim(); })
+    .filter(function (n) { return n.length > 0; });
+  var boName = (bo.bo_name_hi || "").replace(/\s+/g, " ").trim();
+  var ts = bodyEl.getElementsByTagNameNS(W_NS, "t");
+  for (var i = 0; i < ts.length; i++) {
+    var t = ts[i], s = t.textContent;
+    if (!s) continue;
+    if (s.indexOf("पत्रांक") === 0) continue;   // handled separately below (tab stop)
+    var orig = s;
+    names.forEach(function (n) {
+      var e = esc(n);
+      s = s.replace(new RegExp("^[ \\u00a0\\t]+(?=" + e + ")", "g"), "");      // leading pad
+      s = s.replace(new RegExp("[ \\u00a0]{2,}(?=" + e + ")", "g"), " ");       // pad before name
+      s = s.replace(new RegExp(e + "[ \\u00a0]{2,}", "g"), n + " ");            // pad after name
+    });
+    if (boName) {
+      // name glued to the following "शाखा डाकघर" → add the missing space
+      s = s.split(boName + "शाखा").join(boName + " शाखा");
+    }
+    if (s !== orig) {
+      t.textContent = s;
+      t.setAttribute("xml:space", "preserve");
+    }
+  }
+
+  // पत्रांक line: "पत्रांक:आई०आर०/बी०ओ०/<BO>" + ~50 padding spaces + "बैरिया, दिनांक : <date>".
+  // Replace the padding with a real tab stop so the right half lines up for
+  // every BO name length and never wraps.
+  var paras = bodyEl.getElementsByTagNameNS(W_NS, "p");
+  for (var k = 0; k < paras.length; k++) {
+    var p = paras[k];
+    var pts = p.getElementsByTagNameNS(W_NS, "t");
+    if (!pts.length) continue;
+    var first = pts[0], ft = first.textContent || "";
+    if (ft.indexOf("पत्रांक") !== 0) continue;
+    var m = ft.match(/^(.*?\S)[ \u00a0]{4,}(\S.*)$/);
+    if (!m) continue;
+    var run = first.parentNode;
+    first.textContent = m[1];
+    first.setAttribute("xml:space", "preserve");
+    var tabRun = run.cloneNode(true);
+    Array.prototype.slice.call(tabRun.getElementsByTagNameNS(W_NS, "t")).forEach(function (x) { x.parentNode.removeChild(x); });
+    tabRun.appendChild(doc.createElementNS(W_NS, "w:tab"));
+    var restRun = run.cloneNode(true);
+    var rts = restRun.getElementsByTagNameNS(W_NS, "t");
+    for (var q = rts.length - 1; q >= 1; q--) rts[q].parentNode.removeChild(rts[q]);
+    rts[0].textContent = m[2];
+    rts[0].setAttribute("xml:space", "preserve");
+    run.parentNode.insertBefore(tabRun, run.nextSibling);
+    run.parentNode.insertBefore(restRun, tabRun.nextSibling);
+    var pPr = p.getElementsByTagNameNS(W_NS, "pPr")[0];
+    if (!pPr) { pPr = doc.createElementNS(W_NS, "w:pPr"); p.insertBefore(pPr, p.firstChild); }
+    if (!pPr.getElementsByTagNameNS(W_NS, "tabs").length) {
+      var tabs = doc.createElementNS(W_NS, "w:tabs");
+      var tb = doc.createElementNS(W_NS, "w:tab");
+      tb.setAttribute("w:val", "left"); tb.setAttribute("w:pos", "5200");
+      tabs.appendChild(tb);
+      // schema order: tabs comes before spacing/ind/jc/rPr
+      var anchor = null, kids = pPr.childNodes;
+      for (var c = 0; c < kids.length; c++) {
+        var nm = kids[c].localName;
+        if (["suppressAutoHyphens","kinsoku","wordWrap","overflowPunct","topLinePunct","autoSpaceDE","autoSpaceDN","bidi","adjustRightInd","snapToGrid","spacing","ind","contextualSpacing","mirrorIndents","suppressOverlap","jc","textDirection","textAlignment","textboxTightWrap","outlineLvl","divId","cnfStyle","rPr","sectPr","pPrChange"].indexOf(nm) >= 0) { anchor = kids[c]; break; }
+      }
+      pPr.insertBefore(tabs, anchor);
+    }
+    break;
+  }
 }
 
 function fillMasterData(doc, bodyEl, bo, inspectionDateStr) {
@@ -8165,7 +8478,11 @@ const MASTER_DATA = {
     boSelect.appendChild(opt);
   });
 
-  boSelect.addEventListener("change", () => renderAutoFill(boSelect.value));
+  boSelect.addEventListener("change", () => {
+    // FIX: save the OUTGOING BO draft BEFORE auto-fill overwrites header fields
+    try { if (window.__boBeforeSwitch) window.__boBeforeSwitch(); } catch (e) { console.warn("pre-switch save failed:", e); }
+    renderAutoFill(boSelect.value);
+  });
 
   // --- BO search/filter: typing 1-2 letters narrows the dropdown ---
   const boSearchBox = document.getElementById("boSearchBox");
@@ -11311,7 +11628,9 @@ generateBtn.addEventListener("click", async () => {
       // template to flag fields needing attention, not meant for the final
       // report.
       stripAllHighlighting(bodyEl);
+      tidyNameSpacing(doc, bodyEl, bo);
       restyleReport(doc, bodyEl);
+      polishTables(doc, bodyEl);
 
       const serializer = new XMLSerializer();
       let newXml = serializer.serializeToString(doc);
@@ -11576,8 +11895,21 @@ generateBtn.addEventListener("click", async () => {
   function hasInspDraftData() {
     // Check if any field has data
     const ids = ["lastInspectionDate","lastInspector","supVisitDate","boOpeningDate","sdiVisitDates","moVisitDates","dtrBalance","boAccountBalance","walletBalance","physicalCash","mailSp","mailPl","mailCod","mailVpp","mailOrdinary"];
+    // FIX: header fields auto-filled from master data are NOT user data
+    var _hdrBo = MASTER_DATA[boSelect.value] || {};
+    var _hdrHist = _hdrBo.inspection_history || {};
+    var _hdrDefaults = {
+      lastInspectionDate: getInspFinalDate(boSelect.value) || _hdrHist.last_inspection_date || "",
+      supVisitDate: _hdrHist.sup_visit_date || "",
+      boOpeningDate: _hdrHist.bo_opening_date || "",
+      sdiVisitDates: _hdrHist.sdi_visit_dates || "",
+      moVisitDates: _hdrHist.mo_visit_dates || ""
+    };
     for (const id of ids) {
-      if (document.getElementById(id) && document.getElementById(id).value) return true;
+      var _el = document.getElementById(id);
+      if (!_el || !_el.value) continue;
+      if (Object.prototype.hasOwnProperty.call(_hdrDefaults, id) && _el.value === _hdrDefaults[id]) continue;
+      return true;
     }
     for (const spec of [...STOCK_TOGGLES, ...OTHER_TOGGLES]) {
       const el = document.getElementById(`toggle_${spec.id}`);
@@ -11646,6 +11978,8 @@ generateBtn.addEventListener("click", async () => {
     sb46Entries = [];
     try {
       const d = JSON.parse(raw);
+      // FIX: ignore a draft stamped with a different BO id (cross-contamination)
+      if (d && d.boId && d.boId !== boId) { console.warn("Draft/BO mismatch ignored:", boId, d.boId); return false; }
 
       // The IR Final date (recorded completed inspection) is authoritative —
       // a stale draft must never override it for "last inspection date".
@@ -11823,6 +12157,18 @@ generateBtn.addEventListener("click", async () => {
     }
   }
 
+  // Runs FIRST on every BO switch (called from the first change listener)
+  window.__boBeforeSwitch = function () {
+    var oldBoId = _prevBoIdForDraft;
+    var newBoId = boSelect.value;
+    if (!oldBoId || oldBoId === newBoId) return;
+    writeInspDraftNow();                      // flush any pending save first
+    if (hasInspDraftData()) {
+      saveInspDraft(oldBoId);                 // snapshot while form still shows old BO
+      writeInspDraftNow();                    // write NOW so a quick switch-back finds it
+    }
+  };
+
   // Wrap the boSelect change handler to save current draft before switching
   const _origBoSelectHandler = boSelect.onchange;
   boSelect.addEventListener("change", function() {
@@ -11832,9 +12178,13 @@ generateBtn.addEventListener("click", async () => {
     // Save the OUTGOING BO's draft under its OWN id — boSelect.value has
     // already changed to newBoId by this point, so we must pass oldBoId
     // explicitly rather than let saveInspDraft() fall back to boSelect.value.
-    if (oldBoId && oldBoId !== newBoId && hasInspDraftData()) {
-      saveInspDraft(oldBoId);
-    }
+    // (outgoing draft is already saved by window.__boBeforeSwitch, which runs
+    //  BEFORE renderAutoFill — saving here was too late and mixed BO data)
+
+    // Previous BO's generated-report link / status text must not stay on screen
+    try { dlLinks.style.display = "none"; dlLinks.innerHTML = ""; } catch (e) {}
+    try { statusMsg.textContent = ""; statusMsg.className = "status"; } catch (e) {}
+    try { var _bsc = document.getElementById("balSameChk"); if (_bsc) _bsc.checked = false; } catch (e) {}
 
     // Blank every manually-entered field immediately so the new BO never
     // shows data left over from whichever BO was selected before it.
