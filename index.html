@@ -4492,6 +4492,25 @@ function replaceClauseInParagraph(doc, bodyEl, matchClause, replacementClause) {
   return false;
 }
 
+function replaceClauseByAnchor(doc, bodyEl, anchor, clausePattern, replacementClause) {
+  // Robust variant of replaceClauseInParagraph used by Q35(i).
+  // Locates the paragraph by a distinctive anchor phrase ("हस्ताक्षर नमूना
+  // पुस्तिका") and rewrites ONLY the trailing binary-choice clause, matched
+  // by a whitespace-tolerant regex, so the swap cannot be broken by the
+  // template's irregular spacing / punctuation around "उपलब्ध है / नहीं है।".
+  const paragraphs = getAllParagraphsInDoc(bodyEl);
+  for (const p of paragraphs) {
+    const full = getParagraphText(p);
+    if (!full.includes(anchor)) continue;
+    const newText = full.replace(clausePattern, replacementClause);
+    if (newText !== full) {
+      setParagraphTextPreserveFirstRun(doc, p, newText);
+      return true;
+    }
+  }
+  return false;
+}
+
 function replaceParagraphFullText(doc, bodyEl, matchFullText, newFullText) {
   const paragraphs = getAllParagraphsInDoc(bodyEl);
   for (const p of paragraphs) {
@@ -5158,6 +5177,13 @@ const TOGGLE_QUESTIONS = [
     matchClause: "उपलब्ध है / नहीं है।",
     yesClause: "उपलब्ध है।",
     noClause: "उपलब्ध नहीं है।",
+    // Q35(i) को पूरे वाक्यांश पर नहीं, बल्कि इस विशिष्ट एंकर पर मिलाया जाता है,
+    // ताकि टेम्पलेट की अनियमित स्पेसिंग/विरामचिह्न से मिलान न टूटे।
+    anchor: "हस्ताक्षर नमूना पुस्तिका",
+    clausePattern: /उपलब्ध\s*है\s*\/\s*नहीं\s*है\s*।/,
+    // यदि अधिकारी ने चयन नहीं किया, तो रिपोर्ट में अस्पष्ट "है / नहीं है" नहीं
+    // छपेगा — स्पष्ट रूप से चिह्नित रिक्त स्थान जाएगा।
+    unsetClause: "उपलब्ध ______ (कृपया चुनें)।",
   },
   {
     id: "q45_qr_register",
@@ -5181,6 +5207,15 @@ function applyToggleAnswers(doc, bodyEl, toggleAnswers) {
   // toggleAnswers: { [id]: "yes" | "no" | "" }
   for (const spec of TOGGLE_QUESTIONS) {
     const choice = toggleAnswers[spec.id];
+    if (spec.anchor) {
+      // Q35(i): एंकर-आधारित मज़बूत मिलान; हर मान (unset सहित) संभाला जाता है।
+      const replacement =
+        choice === "yes" ? spec.yesClause :
+        choice === "no" ? spec.noClause :
+        spec.unsetClause;
+      replaceClauseByAnchor(doc, bodyEl, spec.anchor, spec.clausePattern, replacement);
+      continue;
+    }
     if (choice !== "yes" && choice !== "no") continue; // leave template default untouched
     const replacement = choice === "yes" ? spec.yesClause : spec.noClause;
     replaceClauseInParagraph(doc, bodyEl, spec.matchClause, replacement);
@@ -9027,7 +9062,7 @@ const MASTER_DATA = {
   ];
 
   const OTHER_TOGGLES = [
-    { id: "q35_signature_specimen", question: "35(i)", label: "हस्ताक्षर नमूना पुस्तिका उपलब्धता (हर प्रकार के खाते हेतु)", yesLabel: "हाँ, उपलब्ध है", noLabel: "उपलब्ध नहीं है" },
+    { id: "q35_signature_specimen", question: "35(i)", label: "हस्ताक्षर नमूना पुस्तिका उपलब्धता (हर प्रकार के खाते हेतु)", yesLabel: "हाँ, उपलब्ध है", noLabel: "उपलब्ध नहीं है", unsetLabel: "— चुनें (रिपोर्ट में रिक्त स्थान रहेगा) —" },
     { id: "q45_qr_register", question: "45", label: "क्यूआर कार्ड स्टॉक रजिस्टर उपलब्धता", yesLabel: "हाँ, उपलब्ध है", noLabel: "उपलब्ध नहीं है" },
     { id: "q47_merchant_ippb", question: "47", label: "मर्चेंट आईपीपीबी खाते खोले गए हैं", yesLabel: "हाँ, खोले गए हैं", noLabel: "नहीं खोले गए हैं" },
     { id: "q52c_rd_loan_remark", question: "36(I)", label: "RD लोन खातों की जाँच भौतिक रूप से नहीं हो सकी (पासबुक नहीं मिली)", yesLabel: "जाँच हुई", noLabel: "नहीं हो सकी — टिप्पणी जुड़ें" },
@@ -9040,7 +9075,7 @@ const MASTER_DATA = {
       div.innerHTML = `
         <label for="toggle_${spec.id}">प्रश्न ${spec.question} — ${spec.label}</label>
         <select id="toggle_${spec.id}">
-          <option value="">— चुनें (मानक पाठ रहने दें) —</option>
+          <option value="">${spec.unsetLabel || "— चुनें (मानक पाठ रहने दें) —"}</option>
           <option value="yes">${spec.yesLabel}</option>
           <option value="no">${spec.noLabel}</option>
         </select>
