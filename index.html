@@ -2988,6 +2988,21 @@ function loadJourneyForEdit(idx){
     });
   });
   // v7.38 — दिन-अंतर हर leg के लिए ऊपर ही तय हो चुका है (multi-day / multi-halt)
+  // v7.40 — पुरानी जर्नी में जो समय खाली छूट गया था (outward का arrival /
+  // return का departure), उसे भर दें — मौजूद समय को छुआ नहीं जाता।
+  (function(){
+    var _i0=null,_r0=null;
+    for(var _i=0;_i<currentLegs.length;_i++){
+      if(currentLegs[_i].isReturn){if(_r0===null)_r0=_i;}
+      else if(_i0===null)_i0=_i;
+    }
+    if(_i0!==null&&currentLegs[_i0].departure&&!currentLegs[_i0].arrival&&currentLegs[_i0].dist){
+      currentLegs[_i0].arrival=minToTime(timeToMin(currentLegs[_i0].departure)+travelMinutes(currentLegs[_i0].dist,currentLegs[_i0].speed));
+    }
+    if(_r0!==null&&currentLegs[_r0].arrival&&!currentLegs[_r0].departure&&currentLegs[_r0].dist){
+      currentLegs[_r0].departure=minToTime(timeToMin(currentLegs[_r0].arrival)-travelMinutes(currentLegs[_r0].dist,currentLegs[_r0].speed));
+    }
+  })();
   showForm(j.date);
   document.getElementById('jfTitle').textContent='EDITING journey for '+j.date+' (modify and Save to update)';
   document.getElementById('addReturnBtn').disabled=currentLegs.some(function(l){return l.isReturn;});
@@ -3977,6 +3992,7 @@ var TBL_BORDERS={top:{style:'single',size:4,color:'000000'},bottom:{style:'singl
 function mkCell(t,w,o){o=o||{};return new D.TableCell({width:{size:w,type:'dxa'},borders:BORDERS,children:[new D.Paragraph({children:[new D.TextRun({text:String(t||''),bold:o.bold||false,size:o.size||18,font:'Times New Roman'})],alignment:o.align||'left'})],verticalAlign:'center'});}
 function mkHdr(t,w,fs){return new D.TableCell({width:{size:w,type:'dxa'},borders:BORDERS,shading:{fill:'d9e2f3',type:'clear',color:'auto'},children:[new D.Paragraph({children:[new D.TextRun({text:t,bold:true,size:fs||18,font:'Times New Roman'})],alignment:'center'})],verticalAlign:'center'});}
 function mkPara(t,o){o=o||{};return new D.Paragraph({children:[new D.TextRun({text:t,bold:o.bold||false,size:o.size||22,font:'Times New Roman'})],alignment:o.align,heading:o.heading,spacing:{before:o.before||0,after:o.after||60}});}
+function mkSpanCell(t,span,w){return new D.TableCell({columnSpan:span,width:{size:w,type:'dxa'},borders:BORDERS,children:[new D.Paragraph({children:[new D.TextRun({text:String(t||''),size:18,font:'Times New Roman'})],alignment:'center'})],verticalAlign:'center'});}
 function mkTable(rows,cw,tw){return new D.Table({width:{size:tw,type:'dxa'},columnWidths:cw,layout:'fixed',borders:TBL_BORDERS,rows:rows});}
 
 async function generateTourDiary(){
@@ -3998,13 +4014,14 @@ async function generateTourDiary(){
     });
     // Bus / Train / Other की यात्रा हो तो Tour Diary में "Fare (₹)" कॉलम भी जुड़े
     var anyFareLeg=legs.some(function(l){return (l.mode==='Bus'||l.mode==='Train'||l.mode==='Other');});
-    var jcw=anyFareLeg?[2184,1297,2184,1297,975,867,900,4696]:[2364,1397,2364,1397,1075,967,4836];
+    var jcw=anyFareLeg?[2050,1200,2050,1200,1350,1000,850,4700]:[2100,1250,2100,1250,1400,1050,5250];
     var jtw=14400;
     function bJT(list){
       var hdr=[mkHdr('From',jcw[0]),mkHdr('Departure',jcw[1]),mkHdr('To',jcw[2]),mkHdr('Arrival',jcw[3]),mkHdr('Mode',jcw[4]),mkHdr('Dist(Km)',jcw[5])];
       if(anyFareLeg)hdr.push(mkHdr('Fare (₹)',jcw[6]));
       hdr.push(mkHdr('Purpose of Journey',jcw[anyFareLeg?7:6]));
       var rows=[new D.TableRow({tableHeader:true,children:hdr})];
+      if(!list.length)rows.push(new D.TableRow({children:[mkSpanCell('No journeys in this fortnight.',hdr.length,jtw)]}));
       list.forEach(function(l){
         var isFM=(l.mode==='Bus'||l.mode==='Train'||l.mode==='Other');
         var cells=[mkCell(l.from,jcw[0]),mkCell(fmtDT(l.departure),jcw[1]),mkCell(l.to,jcw[2]),mkCell(fmtDT(l.arrival),jcw[3]),mkCell(l.mode,jcw[4]),mkCell(l.dist,jcw[5])];
@@ -4014,7 +4031,7 @@ async function generateTourDiary(){
       });
       return mkTable(rows,jcw,jtw);
     }
-    var wlcw=[1878,12522],wltw=14400;
+    var wlcw=[1500,12900],wltw=14400;
     function bWT(fn){
       var sd=fn===1?1:16,ed=fn===1?15:dim;
       var rows=[new D.TableRow({tableHeader:true,children:[mkHdr('Date',wlcw[0]),mkHdr('Details of Work',wlcw[1])]})];
@@ -4075,9 +4092,10 @@ async function generateTABill(){
     if(document.getElementById('hasHotel').checked){ha=parseFloat(document.getElementById('hotelAmount').value)||0;hf=document.getElementById('hotelFrom').value;ht=document.getElementById('hotelTo').value;}
     var adv=0;if(document.getElementById('hasAdvance').checked)adv=parseFloat(document.getElementById('advanceAmount').value)||0;
     var tot=tf+daAmt+ha-adv,totR=Math.round(tot);
-    var tcw=[1600,1224,1600,1224,1129,847,1035,847,847,847,3200],ttw=14400,cfs=16;
+    var tcw=[1500,1150,1500,1150,1350,850,1050,800,850,800,3400],ttw=14400,cfs=16;
     var hdr=new D.TableRow({tableHeader:true,children:[mkHdr('From',tcw[0],cfs),mkHdr('Departure',tcw[1],cfs),mkHdr('To',tcw[2],cfs),mkHdr('Arrival',tcw[3],cfs),mkHdr('Mode',tcw[4],cfs),mkHdr('Rate/Km',tcw[5],cfs),mkHdr('Fare Paid',tcw[6],cfs),mkHdr('DA',tcw[7],cfs),mkHdr('Dist(Km)',tcw[8],cfs),mkHdr('Halt(days)',tcw[9],cfs),mkHdr('Purpose of Journey',tcw[10],cfs)]});
     var dRows=billRows.map(function(j){return new D.TableRow({children:[mkCell(j.from,tcw[0],{size:cfs}),mkCell(fmtDT(j.dep),tcw[1],{size:cfs}),mkCell(j.to,tcw[2],{size:cfs}),mkCell(fmtDT(j.arr),tcw[3],{size:cfs}),mkCell(j.mode,tcw[4],{size:cfs}),mkCell(j.rate,tcw[5],{size:cfs}),mkCell(j.fare,tcw[6],{size:cfs}),mkCell(j.da,tcw[7],{size:cfs}),mkCell(j.dist,tcw[8],{size:cfs}),mkCell(j.halt,tcw[9],{size:cfs}),mkCell(j.purpose,tcw[10],{size:cfs})]});});
+    if(!dRows.length)dRows.push(new D.TableRow({children:[mkSpanCell('No journeys in this month.',tcw.length,ttw)]}));
     var tRow=new D.TableRow({children:[mkCell('',tcw[0],{size:cfs}),mkCell('',tcw[1],{size:cfs}),mkCell('',tcw[2],{size:cfs}),mkCell('',tcw[3],{size:cfs}),mkCell('',tcw[4],{size:cfs}),mkCell('',tcw[5],{size:cfs}),mkCell(tf.toFixed(2),tcw[6],{size:cfs,bold:true}),mkCell(tDA.toFixed(1),tcw[7],{size:cfs,bold:true}),mkCell('',tcw[8],{size:cfs}),mkCell('',tcw[9],{size:cfs}),mkCell('Total',tcw[10],{size:cfs,bold:true})]});
     var s0=[];
     s0.push(new D.Paragraph({children:[new D.TextRun({text:'Travelling Allowances Bill for the month of '+month+' '+y,bold:true,size:28,font:'Times New Roman'})],alignment:'center',heading:'Heading1',spacing:{after:200}}));
@@ -4219,6 +4237,14 @@ window.createInspectionJourney=function(dateISO,boName,boDist){
   var depDT=y+'-'+pad2(mi+1)+'-'+pad2(dayNum)+'T10:00:00';
   var arrDT=y+'-'+pad2(mi+1)+'-'+pad2(dayNum)+'T17:00:00';
   var dd=(boDist||0);
+  // v7.40 — पूरा समय-जोड़ा भरें: outward का arrival और return का departure
+  // (पहले ये जान-बूझकर खाली छूटते थे, इसलिए डायरी में दो ख़ाने खाली दिखते थे)
+  var spd=randomSpeed();
+  var tOut=dd>0?travelMinutes(dd,spd):0;
+  var outArr=minToTime(timeToMin('10:00')+tOut);
+  var retDep=minToTime(timeToMin('17:00')-tOut);
+  var outArrDT=y+'-'+pad2(mi+1)+'-'+pad2(dayNum)+'T'+outArr+':00';
+  var retDepDT=y+'-'+pad2(mi+1)+'-'+pad2(dayNum)+'T'+retDep+':00';
   var existingIdx=-1;
   for(var i=0;i<journeys.length;i++){if(journeys[i].date===dateDMY){existingIdx=i;break;}}
   if(existingIdx>=0){
@@ -4226,8 +4252,8 @@ window.createInspectionJourney=function(dateISO,boName,boDist){
     (exj.legs||[]).forEach(function(l){if(l.to===boName)cov=true;});
     if(cov)return{ok:false,reason:'exists',date:dateDMY};
     if(!exj.legs)exj.legs=[];
-    exj.legs.push({from:HQ_NAME,to:boName,departure:depDT,arrival:'',mode:'Motorcycle',dist:dd,purpose:purpose,isReturn:false});
-    exj.legs.push({from:boName,to:HQ_NAME,departure:'',arrival:arrDT,mode:'Motorcycle',dist:dd,purpose:'',isReturn:true});
+    exj.legs.push({from:HQ_NAME,to:boName,departure:depDT,arrival:outArrDT,mode:'Motorcycle',dist:dd,speed:spd,purpose:purpose,isReturn:false});
+    exj.legs.push({from:boName,to:HQ_NAME,departure:retDepDT,arrival:arrDT,mode:'Motorcycle',dist:dd,speed:spd,purpose:'',isReturn:true});
     exj.dist=(exj.dist||0)+dd*2;
     if(da>(exj.da||0))exj.da=da;
     if(!exj.purpose)exj.purpose=purpose;
@@ -4238,8 +4264,8 @@ window.createInspectionJourney=function(dateISO,boName,boDist){
   var journey={
     date:dateDMY,
     legs:[
-      {from:HQ_NAME,to:boName,departure:depDT,arrival:'',mode:'Motorcycle',dist:dd,purpose:purpose,isReturn:false},
-      {from:boName,to:HQ_NAME,departure:'',arrival:arrDT,mode:'Motorcycle',dist:dd,purpose:'',isReturn:true}
+      {from:HQ_NAME,to:boName,departure:depDT,arrival:outArrDT,mode:'Motorcycle',dist:dd,speed:spd,purpose:purpose,isReturn:false},
+      {from:boName,to:HQ_NAME,departure:retDepDT,arrival:arrDT,mode:'Motorcycle',dist:dd,speed:spd,purpose:'',isReturn:true}
     ],
     da:da,dist:dd*2,purpose:purpose,workLogEntry:purpose,office:boName,
     depTime:'10:00',retTime:'17:00',depDT:depDT,retDT:arrDT
@@ -11591,7 +11617,10 @@ const MASTER_DATA = {
     var p = dateDMY.split(".");
     var arrDT = p[2] + "-" + p[1] + "-" + p[0] + "T" + t + ":00";
     var dd = lastOut ? (parseFloat(lastOut.dist) || 0) : 0;
-    legs.push({ from: from, to: HQ_NAME, departure: "", arrival: arrDT, mode: (lastOut && lastOut.mode) || "Motorcycle", dist: dd, purpose: "", isReturn: true });
+    var _spd = randomSpeed();
+    var _depT = minToTime(timeToMin(t) - (dd > 0 ? travelMinutes(dd, _spd) : 0));
+    var _depDT = p[2] + "-" + p[1] + "-" + p[0] + "T" + _depT + ":00";
+    legs.push({ from: from, to: HQ_NAME, departure: _depDT, arrival: arrDT, mode: (lastOut && lastOut.mode) || "Motorcycle", dist: dd, speed: _spd, purpose: "", isReturn: true });
     j.dist = (parseFloat(j.dist) || 0) + dd;
     j.da = recalcJourneyDA(j);
     autoSave(); renderCalendar(); renderJourneyList(); updateSummary();
