@@ -85,6 +85,7 @@
   .calendar td{border:1px solid #e8e5e0;padding:0;text-align:center;height:52px;vertical-align:top;cursor:pointer;position:relative;transition:background 0.15s,box-shadow 0.15s;overflow:hidden;}
   .calendar td:hover{background:#fff8e7;box-shadow:inset 0 0 0 2px var(--gold);}
   .calendar td.has-journey{background:#d4edda;}
+.journey-away{background:#eef7ef;}
   .calendar td.has-journey::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--green);}
   .calendar td.is-holiday{background:#ffcccc;}
   .calendar td.is-holiday::before{content:'H';position:absolute;top:1px;right:3px;font-size:0.55rem;color:#dc3545;font-weight:bold;}
@@ -2853,9 +2854,38 @@ function travelMinutes(distKm,speedKmph){return Math.round(distKm/speedKmph*60);
 // ============================================================
 // CALENDAR
 // ============================================================
+// v7.39 — multi-day journey जिन-जिन दिनों तक चली, वे सब calendar पर अंकित हों
+function computeJourneySpan(){
+  var span={};
+  journeys.forEach(function(j){
+    var lg=j.legs||[];if(!lg.length)return;
+    var last=null;
+    for(var q=lg.length-1;q>=0;q--){if(lg[q].arrival){last=lg[q].arrival;break;}}
+    if(!last)return;
+    var pp=String(j.date).split('.');if(pp.length!==3)return;
+    var rr=String(last).split('T')[0].split('-');if(rr.length!==3)return;
+    var d0=new Date(parseInt(pp[2],10),parseInt(pp[1],10)-1,parseInt(pp[0],10));
+    var d1=new Date(parseInt(rr[0],10),parseInt(rr[1],10)-1,parseInt(rr[2],10));
+    if(isNaN(d0.getTime())||isNaN(d1.getTime()))return;
+    for(var dd=new Date(d0);dd<=d1;dd.setDate(dd.getDate()+1)){
+      if(dd.getTime()===d0.getTime())continue;
+      var ks=pad2(dd.getDate())+'.'+pad2(dd.getMonth()+1)+'.'+dd.getFullYear();
+      span[ks]=j.date;
+    }
+  });
+  return span;
+}
+function openJourneyDay(ds){
+  var idx=-1;
+  for(var i=0;i<journeys.length;i++){if(journeys[i].date===ds){idx=i;break;}}
+  if(idx<0)return;
+  if(!confirm('This day is part of the journey that started on '+ds+'.\n\nOpen that journey for editing?'))return;
+  loadJourneyForEdit(idx);
+}
 function renderCalendar(){
   var mi=getMonthIdx(),y=getYear(),dim=getDaysInMonth(),firstDay=new Date(y,mi,1).getDay();
   var h='<thead><tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr></thead><tbody>';
+  var span=computeJourneySpan();
   var day=1;
   for(var w=0;w<6;w++){h+='<tr>';
     for(var d=0;d<7;d++){
@@ -2864,18 +2894,20 @@ function renderCalendar(){
       var ds=pad2(day)+'.'+pad2(mi+1)+'.'+y;
       var dt=new Date(y,mi,day),dn=dt.getDay();
       var hasJ=journeys.some(function(j){return j.date===ds;});
+      var awayDay=span[ds]||'';
       var isHol=!!holidays[ds];
       var lv=getLeaveForDate(ds);
-      var cls='';if(hasJ)cls+='has-journey ';if(isHol)cls+='is-holiday ';
+      var cls='';if(hasJ)cls+='has-journey ';else if(awayDay)cls+='journey-away ';if(isHol)cls+='is-holiday ';
       if(lv){if(lv.type==='RH')cls+='is-leave-rh ';else if(lv.type==='CL')cls+='is-leave-cl ';else if(lv.type==='EL')cls+='is-leave-el ';}
       cls+=selectedDate===ds?'selected':'';
       var sunCls=dn===0?' cal-day-sun':'';
       // v7.31 — अवकाश (leave) के दिन जर्नी नहीं। पर सार्वजनिक छुट्टी के दिन जर्नी दर्ज
       // की जा सकती है (राजकीय कार्य / official exigency) — पुष्टि लेकर।
-      var clickAttr=lv?'':('onclick="selectDate(\''+ds+'\')"');
+      var clickAttr=lv?'':(awayDay?('onclick="openJourneyDay(\''+awayDay+'\')"'):('onclick="selectDate(\''+ds+'\')"'));
       var cellStyle=lv?'cursor:default;':'';
       h+='<td class="'+cls+'" '+clickAttr+(cellStyle?' style="'+cellStyle+'"':'')+'><span class="cal-day-num'+sunCls+'">'+day+'</span>';
       if(hasJ)h+='<div class="cal-badge">journey'+(isHol?' (छुट्टी)':'')+'</div>';
+      else if(awayDay)h+='<div class="cal-badge">journey (away)</div>';
       else if(lv){h+='<div class="cal-leave-badge '+lv.type.toLowerCase()+'">'+lv.type+'</div>';
         h+='<div class="cal-leave-label">'+(lv.type==='RH'?'Restricted Holiday':lv.type==='CL'?'Casual Leave':'Earned Leave')+'</div>';}
       else if(isHol){var hn=holidays[ds]||'';if(hn.length>10)hn=hn.substring(0,9)+'..';h+='<div class="cal-hol-badge">'+hn+'</div>';}
@@ -3689,6 +3721,8 @@ function generateWorkLog(){
   var store={};
   try{store=JSON.parse(localStorage.getItem('sdi_worklog_months_v1')||'{}')||{};}catch(e){store={};}
   var away=computeAwayDays();var DEF_HQ='Stayed at HQ and did office work';
+  // v7.39 — जर्नी के दिन का purpose (custom text सहित) work-log में आना चाहिए
+  var jp={};journeys.forEach(function(j){var t=(j.workLogEntry&&j.workLogEntry.trim())?j.workLogEntry.trim():(j.purpose||'');if(t)jp[j.date]=t;});
   if(body){Array.prototype.forEach.call(body.querySelectorAll('tr'),function(tr){
     var dc=tr.querySelector('td:nth-child(2)'),wi=tr.querySelector('.wl-work');
     if(!dc||!wi)return;
@@ -3696,7 +3730,7 @@ function generateWorkLog(){
     if(pp.length!==3)return;
     var k=pp[1]+'-'+pp[2];
     if(!store[k])store[k]={};
-    var _v=String(wi.value).trim();if(_v&&_v!==DEF_HQ&&_v!==away[ds])store[k][ds]=wi.value;else delete store[k][ds];
+    var _v=String(wi.value).trim();if(_v&&_v!==DEF_HQ&&_v!==away[ds]&&_v!==jp[ds])store[k][ds]=wi.value;else delete store[k][ds];
   });}
   try{localStorage.setItem('sdi_worklog_months_v1',JSON.stringify(store));}catch(e){}
   var mk=pad2(mi+1)+'-'+y, cur=store[mk]||{};
@@ -3704,7 +3738,9 @@ function generateWorkLog(){
   for(var d=1;d<=dim;d++){
     var ds=pad2(d)+'.'+pad2(mi+1)+'.'+y;var dt=new Date(y,mi,d),dn=dt.getDay();
     var tr=document.createElement('tr');if(holidays[ds])tr.className='wl-holiday';
-    var pv=(cur[ds]!==undefined)?cur[ds]:'';if((!String(pv).trim()||pv===DEF_HQ)&&away[ds])pv=away[ds];
+    var pv=(cur[ds]!==undefined)?cur[ds]:'';
+    if((!String(pv).trim()||pv===DEF_HQ)&&away[ds])pv=away[ds];
+    if(!String(pv).trim()&&jp[ds])pv=jp[ds];
     tr.innerHTML='<td>'+d+'</td><td>'+ds+'</td><td><input type="text" class="wl-work" value="'+esc(pv)+'"></td>';
     body.appendChild(tr);
   }
