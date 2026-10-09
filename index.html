@@ -2936,25 +2936,26 @@ function loadJourneyForEdit(idx){
       mode:l.mode||'Motorcycle',
       fare:l.fare||'',
       dist:l.dist,
+      distManual:true,
       purposeType:pt,
       customPurpose:cp,
       isReturn:l.isReturn,
       speed:randomSpeed(),
       isCustom:isCustom,
-      returnDayOffset:0
+      returnDayOffset:(function(){
+        var src=l.departure||l.arrival;if(!src)return 0;
+        var sd=new Date(src);if(isNaN(sd.getTime()))return 0;
+        var pp=String(j.date).split('.');if(pp.length!==3)return 0;
+        var b=new Date(parseInt(pp[2],10),parseInt(pp[1],10)-1,parseInt(pp[0],10));
+        if(isNaN(b.getTime()))return 0;
+        var a2=new Date(sd.getFullYear(),sd.getMonth(),sd.getDate());
+        var b2=new Date(b.getFullYear(),b.getMonth(),b.getDate());
+        var k=Math.round((a2-b2)/86400000);
+        return k>0?k:0;
+      })()
     });
   });
-  // Check for overnight: if return leg arrival is on next day vs departure
-  currentLegs.forEach(function(l){
-    if(l.isReturn){
-      var savedLeg=j.legs.find(function(x){return x.isReturn;});
-      if(savedLeg&&savedLeg.arrival&&savedLeg.departure){
-        var depDate=savedLeg.departure.split('T')[0];
-        var arrDate=savedLeg.arrival.split('T')[0];
-        if(depDate!==arrDate){l.returnDayOffset=1;}
-      }
-    }
-  });
+  // v7.38 — दिन-अंतर हर leg के लिए ऊपर ही तय हो चुका है (multi-day / multi-halt)
   showForm(j.date);
   document.getElementById('jfTitle').textContent='EDITING journey for '+j.date+' (modify and Save to update)';
   document.getElementById('addReturnBtn').disabled=currentLegs.some(function(l){return l.isReturn;});
@@ -2977,7 +2978,7 @@ function addReturnLeg(){
   // Distance for return = HQ dist of the office we're returning from
   // If office is known, auto-fill; otherwise leave blank for manual entry
   var retDist=getOfficeDist(fromName);if(retDist!==null&&!(retDist>0))retDist=null;
-  currentLegs.push({from:fromName,to:HQ_NAME,departure:'',arrival:'',mode:'Motorcycle',fare:'',dist:(retDist!==null&&retDist>0)?retDist:'',purposeType:'',customPurpose:'',isReturn:true,speed:randomSpeed(),knownTime:'arr',distAutoCalc:retDist!==null,isCustom:false,returnDayOffset:0});
+  currentLegs.push({from:fromName,to:HQ_NAME,departure:'',arrival:'',mode:'Motorcycle',fare:'',dist:(retDist!==null&&retDist>0)?retDist:'',distManual:false,purposeType:'',customPurpose:'',isReturn:true,speed:randomSpeed(),knownTime:'arr',distAutoCalc:retDist!==null,isCustom:false,returnDayOffset:0});
   renderLegs();document.getElementById('addReturnBtn').disabled=true;
   // Show info message
   var info=document.getElementById('jfInfo');
@@ -3000,7 +3001,26 @@ function removeLeg(idx){
   renderLegs();
 }
 
+// v7.37 — वापसी-leg का "from" और उसकी auto दूरी अपने-आप दुरुस्त रहे।
+// कारण: अगर अधिकारी पहले "+ Plan Return to HQ" दबा दे (जब बीच की leg का
+// "To" अभी खाली था), तो उस वक़्त from = HQ मानकर दूरी 0 बैठ जाती थी और
+// बाद में बीच की leg भरने पर भी 0 ही रह जाती थी।
+function syncReturnLegs(){
+  for(var i=1;i<currentLegs.length;i++){
+    var l=currentLegs[i];
+    if(!l.isReturn)continue;
+    var prev=currentLegs[i-1];
+    var wantFrom=(prev&&prev.to)?prev.to:HQ_NAME;
+    if(l.from!==wantFrom)l.from=wantFrom;
+    if(!l.distManual){
+      var d=getOfficeDist(wantFrom);
+      if(d!==null&&d>0){l.dist=d;l.distAutoCalc=true;}
+      else{l.dist='';l.distAutoCalc=false;}
+    }
+  }
+}
 function renderLegs(){
+  syncReturnLegs();
   var container=document.getElementById('legsContainer');container.innerHTML='';
   currentLegs.forEach(function(leg,idx){
     var div=document.createElement('div');div.className='leg-row';
@@ -3197,7 +3217,7 @@ function addReturnOnlyLeg(){
   }
   if(!fromName)fromName=''; // leave blank for manual entry
   var retDist=fromName?getOfficeDist(fromName):null;
-  currentLegs.push({from:fromName,to:HQ_NAME,departure:'',arrival:'',mode:'Motorcycle',dist:(retDist!==null&&retDist>0)?retDist:'',purposeType:'',customPurpose:'',isReturn:true,speed:randomSpeed(),knownTime:'arr',distAutoCalc:(retDist!==null&&retDist>0),isCustom:!fromName,returnDayOffset:0});
+  currentLegs.push({from:fromName,to:HQ_NAME,departure:'',arrival:'',mode:'Motorcycle',dist:(retDist!==null&&retDist>0)?retDist:'',distManual:false,purposeType:'',customPurpose:'',isReturn:true,speed:randomSpeed(),knownTime:'arr',distAutoCalc:(retDist!==null&&retDist>0),isCustom:!fromName,returnDayOffset:0});
   renderLegs();
   document.getElementById('addReturnBtn').disabled=true;
   var info=document.getElementById('jfInfo');
@@ -3222,13 +3242,15 @@ function onLegDistInput(idx){
   var el=document.getElementById('legDist_'+idx);
   if(!el)return;
   currentLegs[idx].dist=parseFloat(el.value)||0;
-  if(currentLegs[idx].distAutoCalc)currentLegs[idx].distAutoCalc=false;
+  currentLegs[idx].distAutoCalc=false;
+  currentLegs[idx].distManual=true;
 }
 function onLegDistChange(idx){
   var distEl=document.getElementById('legDist_'+idx);
   if(!distEl)return;
   currentLegs[idx].dist=parseFloat(distEl.value)||0;
   currentLegs[idx].distAutoCalc=false;
+  currentLegs[idx].distManual=true;
   autoCalcTimes(idx);
   // Only HQ-relative legs carry a distance that belongs to an office record:
   // the first outward leg (HQ -> office) or the return leg (office -> HQ).
