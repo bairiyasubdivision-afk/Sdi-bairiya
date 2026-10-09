@@ -3014,9 +3014,11 @@ function renderLegs(){
     var fromHTML='<div class="lf"><label>From</label><input type="text" value="'+esc(leg.from)+'" readonly></div>';
     // To field
     var toHTML;
-    if(isRet){var _off=parseInt(leg.returnDayOffset,10)||0;toHTML='<div class="lf"><label>To</label><input type="text" value="'+esc(leg.to)+'" readonly></div><div class="lf" style="min-width:150px;"><label>Return after (days)</label><input type="number" id="legRetDayOffset_'+idx+'" min="0" max="31" step="1" value="'+_off+'" onchange="onRetDayOffsetChange('+idx+')"></div><div class="lf" style="min-width:180px;"><label>Return date</label><div id="legRetDateLbl_'+idx+'" style="font-size:0.85rem;padding:6px 0;color:#16213E;font-weight:600;">'+retDateLabel(_off)+'</div></div>';}
-    else if(leg.isCustom){toHTML='<div class="lf"><label>To (Custom Place)</label><input type="text" id="legTo_'+idx+'" value="'+esc(leg.to)+'" placeholder="Enter office/place name" onchange="onCustomOfficeChange('+idx+')"><button class="btn btn-sm btn-secondary" onclick="switchToDropdown('+idx+')" style="margin-left:4px;font-size:0.75rem;padding:2px 6px;" title="Switch back to list">&#8634;</button></div>';}
-    else{toHTML='<div class="lf"><label>To (Office)</label><select id="legTo_'+idx+'" onchange="onLegOfficeChange('+idx+')">'+buildOfficeDDL()+'</select></div>';}
+    var dayCtl='';
+    if(idx>0){var _dOff=parseInt(leg.returnDayOffset,10)||0;dayCtl='<div class="lf" style="min-width:118px;"><label>Day (+N)</label><input type="number" id="legDayOffset_'+idx+'" min="0" max="31" step="1" value="'+_dOff+'" title="0 = journey day, 1 = next day, 2 = day after ..." onchange="onLegDayOffsetChange('+idx+')"></div><div class="lf" style="min-width:164px;"><label>Leg date</label><div id="legDateLbl_'+idx+'" style="font-size:0.85rem;padding:6px 0;color:#16213E;font-weight:600;">'+legDateLabel(_dOff)+'</div></div>';}
+    if(isRet){toHTML='<div class="lf"><label>To</label><input type="text" value="'+esc(leg.to)+'" readonly></div>'+dayCtl;}
+    else if(leg.isCustom){toHTML='<div class="lf"><label>To (Custom Place)</label><input type="text" id="legTo_'+idx+'" value="'+esc(leg.to)+'" placeholder="Enter office/place name" onchange="onCustomOfficeChange('+idx+')"><button class="btn btn-sm btn-secondary" onclick="switchToDropdown('+idx+')" style="margin-left:4px;font-size:0.75rem;padding:2px 6px;" title="Switch back to list">&#8634;</button></div>'+dayCtl;}
+    else{toHTML='<div class="lf"><label>To (Office)</label><select id="legTo_'+idx+'" onchange="onLegOfficeChange('+idx+')">'+buildOfficeDDL()+'</select></div>'+dayCtl;}
     // Departure
     var depReadonly=leg.departure&&leg.knownTime==='arr'?'auto-calc':'';
     var depHTML='<div class="lf"><label>Departure</label><input type="time" id="legDep_'+idx+'" value="'+leg.departure+'" class="'+depReadonly+'" '+(depReadonly?'readonly':'')+' onchange="onLegTimeChange('+idx+',\'dep\')"></div>';
@@ -3053,7 +3055,7 @@ function renderLegs(){
   });
   var _hs=document.getElementById('legStayHint');
   if(!_hs){_hs=document.createElement('div');_hs.id='legStayHint';_hs.className='jf-info';if(container.parentNode)container.parentNode.insertBefore(_hs,container.nextSibling);}
-  if(currentLegs.length>0&&!currentLegs.some(function(l){return l.isReturn;})){_hs.textContent='Staying overnight at the last place? Use "+ Plan Return to HQ", then set "Return after (days)" to how many days later you come back to HQ.';_hs.style.display='block';}else{_hs.style.display='none';}
+  if(currentLegs.length>0&&!currentLegs.some(function(l){return l.isReturn;})){_hs.textContent='Stopping overnight somewhere? Add that place with "+ Add Stop" and set its "Day (+N)"; then use "+ Plan Return to HQ" for the final leg and set its "Day (+N)" too.';_hs.style.display='block';}else{_hs.style.display='none';}
   updateLegInfo();
 }
 
@@ -3141,15 +3143,28 @@ function onRetDayChange(idx){
   currentLegs[idx].returnDayOffset=chk.checked?1:0;
   autoSave();
 }
-function onRetDayOffsetChange(idx){
-  var el=document.getElementById('legRetDayOffset_'+idx);
+function onLegDayOffsetChange(idx){
+  var el=document.getElementById('legDayOffset_'+idx);
   if(!el)return;
   var v=parseInt(el.value,10);if(isNaN(v)||v<0)v=0;if(v>31)v=31;
   currentLegs[idx].returnDayOffset=v;
-  var lbl=document.getElementById('legRetDateLbl_'+idx);
-  if(lbl)lbl.textContent=retDateLabel(v);
+  var lbl=document.getElementById('legDateLbl_'+idx);
+  if(lbl)lbl.textContent=legDateLabel(v);
   autoSave();
 }
+function legDateLabel(off){
+  off=parseInt(off,10)||0;
+  if(!selectedDate)return '';
+  var p=String(selectedDate).split('.');
+  if(p.length!==3)return '';
+  var d=new Date(parseInt(p[2],10),parseInt(p[1],10)-1,parseInt(p[0],10)+off);
+  var mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var out=String(d.getDate())+' '+mn[d.getMonth()]+' '+d.getFullYear();
+  if(off===0)out+=' (journey day)';else if(off===1)out+=' (next day)';else out+=' (+'+off+' days)';
+  return out;
+}
+function onRetDayOffsetChange(idx){onLegDayOffsetChange(idx);}
+function retDateLabel(off){return legDateLabel(off);}
 function retDateLabel(off){
   off=parseInt(off,10)||0;
   if(!selectedDate)return '';
@@ -3426,7 +3441,7 @@ function saveDayJourney(){
     var arrDT='';
     if(l.arrival){var arrMin=timeToMin(l.arrival);var depMin=l.departure?timeToMin(l.departure):0;var _aObj=new Date(y,mi,dayNum+_off);if(depMin&&arrMin<depMin)_aObj.setDate(_aObj.getDate()+1);arrDT=_aObj.getFullYear()+'-'+pad2(_aObj.getMonth()+1)+'-'+pad2(_aObj.getDate())+'T'+l.arrival+':00';}
     var purpose=l.isReturn?'':buildPurpose(l.purposeType,l.to,l.customPurpose);
-    if(purpose&&!l.isReturn)outwardPurposes.push({office:l.to,purpose:purpose,purposeType:l.purposeType});
+    if(purpose&&!l.isReturn&&_off===0)outwardPurposes.push({office:l.to,purpose:purpose,purposeType:l.purposeType});
 
     journey.legs.push({from:l.from,to:l.to,departure:depDT,arrival:arrDT,mode:l.mode,dist:oneWay,purpose:purpose,isReturn:l.isReturn,fare:(l.fare===undefined?'':l.fare)});
   });
