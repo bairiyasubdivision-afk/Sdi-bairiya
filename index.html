@@ -5328,9 +5328,24 @@ const BUSINESS_CATEGORIES = [
   "rd", "ssa", "td", "ippb", "pli", "rpli", "stamp_sales", "sb_deposits",
 ];
 
-function fillBusinessTable(doc, bodyEl, entriesByCategory) {
+// Q53 की व्यवसाय-तुलना तालिका को उसके हेडर ("व्यवसाय") से ढूँढें — स्थिर
+// index पर भरोसा न करें। निरीक्षण-रिपोर्ट बनाते समय fillBusinessTable से पहले
+// चलने वाले बदलाव (जैसे Q41(ii) की खाली RD-बंद तालिका हटाना) तालिकाओं की
+// गिनती बदल देते हैं, जिससे BUSINESS_TABLE_INDEX (9) खिसक कर गलत तालिका
+// (गाँव की तालिका) पर चला जाता था और Q53 खाली रह जाती थी।
+function findBusinessTable(bodyEl) {
   const tables = getDocTables(bodyEl);
-  const t9 = tables[BUSINESS_TABLE_INDEX];
+  for (const t of tables) {
+    const rows = getTableRows(t);
+    if (!rows.length) continue;
+    const cells = getRowCells(rows[0]);
+    if (cells.length >= 2 && cellTextOf(cells[1]).indexOf("व्यवसाय") >= 0) return t;
+  }
+  return tables[BUSINESS_TABLE_INDEX] || null;
+}
+
+function fillBusinessTable(doc, bodyEl, entriesByCategory) {
+  const t9 = findBusinessTable(bodyEl);
   if (!t9) return;
   const rows = getTableRows(t9);
 
