@@ -2983,7 +2983,7 @@ function addReturnLeg(){
   var info=document.getElementById('jfInfo');
   if(info){
     if(retDist!==null){
-      info.textContent='Enter your arrival time at HQ on the Return leg. If returning next day, check the Next Day box on the return leg.';
+      info.textContent='Enter your arrival time at HQ on the Return leg. Staying at '+fromName+' for several days? Set "Return after (days)" to how many days later you return to HQ — the return leg will be dated accordingly and DA will count the stay days.';
     } else {
       info.textContent='Enter distance and arrival time at HQ on the Return leg — the app will auto-calculate when to leave each office.';
     }
@@ -3014,7 +3014,7 @@ function renderLegs(){
     var fromHTML='<div class="lf"><label>From</label><input type="text" value="'+esc(leg.from)+'" readonly></div>';
     // To field
     var toHTML;
-    if(isRet){var ndChk=leg.returnDayOffset?' checked':'';toHTML='<div class="lf"><label>To</label><input type="text" value="'+esc(leg.to)+'" readonly></div><div class="lf" style="min-width:100px;"><label>&nbsp;</label><label style="display:flex;align-items:center;gap:4px;font-size:0.8rem;cursor:pointer;"><input type="checkbox" id="legRetNextDay_'+idx+'"'+ndChk+' onchange="onRetDayChange('+idx+')"> Next Day</label></div>';}
+    if(isRet){var _off=parseInt(leg.returnDayOffset,10)||0;toHTML='<div class="lf"><label>To</label><input type="text" value="'+esc(leg.to)+'" readonly></div><div class="lf" style="min-width:150px;"><label>Return after (days)</label><input type="number" id="legRetDayOffset_'+idx+'" min="0" max="31" step="1" value="'+_off+'" onchange="onRetDayOffsetChange('+idx+')"></div><div class="lf" style="min-width:180px;"><label>Return date</label><div id="legRetDateLbl_'+idx+'" style="font-size:0.85rem;padding:6px 0;color:#16213E;font-weight:600;">'+retDateLabel(_off)+'</div></div>';}
     else if(leg.isCustom){toHTML='<div class="lf"><label>To (Custom Place)</label><input type="text" id="legTo_'+idx+'" value="'+esc(leg.to)+'" placeholder="Enter office/place name" onchange="onCustomOfficeChange('+idx+')"><button class="btn btn-sm btn-secondary" onclick="switchToDropdown('+idx+')" style="margin-left:4px;font-size:0.75rem;padding:2px 6px;" title="Switch back to list">&#8634;</button></div>';}
     else{toHTML='<div class="lf"><label>To (Office)</label><select id="legTo_'+idx+'" onchange="onLegOfficeChange('+idx+')">'+buildOfficeDDL()+'</select></div>';}
     // Departure
@@ -3051,6 +3051,9 @@ function renderLegs(){
     var mSel=document.getElementById('legMode_'+idx);
     if(mSel)mSel.value=leg.mode;
   });
+  var _hs=document.getElementById('legStayHint');
+  if(!_hs){_hs=document.createElement('div');_hs.id='legStayHint';_hs.className='jf-info';if(container.parentNode)container.parentNode.insertBefore(_hs,container.nextSibling);}
+  if(currentLegs.length>0&&!currentLegs.some(function(l){return l.isReturn;})){_hs.textContent='Staying overnight at the last place? Use "+ Plan Return to HQ", then set "Return after (days)" to how many days later you come back to HQ.';_hs.style.display='block';}else{_hs.style.display='none';}
   updateLegInfo();
 }
 
@@ -3137,6 +3140,26 @@ function onRetDayChange(idx){
   if(!chk)return;
   currentLegs[idx].returnDayOffset=chk.checked?1:0;
   autoSave();
+}
+function onRetDayOffsetChange(idx){
+  var el=document.getElementById('legRetDayOffset_'+idx);
+  if(!el)return;
+  var v=parseInt(el.value,10);if(isNaN(v)||v<0)v=0;if(v>31)v=31;
+  currentLegs[idx].returnDayOffset=v;
+  var lbl=document.getElementById('legRetDateLbl_'+idx);
+  if(lbl)lbl.textContent=retDateLabel(v);
+  autoSave();
+}
+function retDateLabel(off){
+  off=parseInt(off,10)||0;
+  if(!selectedDate)return '';
+  var p=String(selectedDate).split('.');
+  if(p.length!==3)return '';
+  var d=new Date(parseInt(p[2],10),parseInt(p[1],10)-1,parseInt(p[0],10)+off);
+  var mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var out=String(d.getDate())+' '+mn[d.getMonth()]+' '+d.getFullYear();
+  if(off===0)out+=' (same day)';else if(off===1)out+=' (next day)';else out+=' (+'+off+' days)';
+  return out;
 }
 
 function addReturnOnlyLeg(){
@@ -3368,6 +3391,7 @@ function saveDayJourney(){
   var err=document.getElementById('jfError');
   if(!selectedDate){err.textContent='Select a date.';err.classList.add('show');return;}
   if(currentLegs.length===0){err.textContent='Add at least one leg.';err.classList.add('show');return;}
+  for(var _ai=0;_ai<currentLegs.length;_ai++){if(!currentLegs[_ai].isReturn&&currentLegs[_ai].to===HQ_NAME)currentLegs[_ai].isReturn=true;}
   var hasOutward=false;
   for(var i=0;i<currentLegs.length;i++){
     var l=currentLegs[i];
@@ -3395,11 +3419,12 @@ function saveDayJourney(){
     if(!firstDep&&l.departure)firstDep=l.departure;
     lastArr=l.arrival||lastArr;
 
-    var legDay=dayNum;
-    if(l.isReturn&&l.returnDayOffset)legDay=Math.min(dayNum+l.returnDayOffset,getDaysInMonth());
-    var depDT=l.departure?y+'-'+pad2(mi+1)+'-'+pad2(legDay)+'T'+l.departure+':00':'';
+    var _off=parseInt(l.returnDayOffset,10)||0;if(_off<0)_off=0;
+    var _dObj=new Date(y,mi,dayNum+_off);
+    var _depD=_dObj.getFullYear()+'-'+pad2(_dObj.getMonth()+1)+'-'+pad2(_dObj.getDate());
+    var depDT=l.departure?_depD+'T'+l.departure+':00':'';
     var arrDT='';
-    if(l.arrival){var arrMin=timeToMin(l.arrival);var depMin=l.departure?timeToMin(l.departure):0;var arrDay=legDay;if(depMin&&arrMin<depMin)arrDay=legDay+1;arrDT=y+'-'+pad2(mi+1)+'-'+pad2(Math.min(arrDay,getDaysInMonth()))+'T'+l.arrival+':00';}
+    if(l.arrival){var arrMin=timeToMin(l.arrival);var depMin=l.departure?timeToMin(l.departure):0;var _aObj=new Date(y,mi,dayNum+_off);if(depMin&&arrMin<depMin)_aObj.setDate(_aObj.getDate()+1);arrDT=_aObj.getFullYear()+'-'+pad2(_aObj.getMonth()+1)+'-'+pad2(_aObj.getDate())+'T'+l.arrival+':00';}
     var purpose=l.isReturn?'':buildPurpose(l.purposeType,l.to,l.customPurpose);
     if(purpose&&!l.isReturn)outwardPurposes.push({office:l.to,purpose:purpose,purposeType:l.purposeType});
 
@@ -3446,7 +3471,7 @@ function saveDayJourney(){
   }
   journeys.push(journey);journeys.sort(function(a,b){var x=_dk(a.date),y=_dk(b.date);return x<y?-1:(x>y?1:0);});
   autoSave();
-  renderCalendar();renderJourneyList();updateSummary();cancelForm();
+  renderCalendar();renderJourneyList();updateSummary();generateWorkLog();cancelForm();
 }
 
 // Build combined purpose for journey table (first outward leg only)
@@ -3474,7 +3499,7 @@ function buildWorkLogEntry(outwardPurposes){
   return parts.join(' and ');
 }
 
-function deleteJourney(idx){journeys.splice(idx,1);autoSave();renderCalendar();renderJourneyList();updateSummary();}
+function deleteJourney(idx){journeys.splice(idx,1);autoSave();renderCalendar();renderJourneyList();updateSummary();generateWorkLog();}
 function editJourney(idx){
   var j=journeys[idx];
   if(!j)return;
@@ -3568,6 +3593,31 @@ function buildLegs(){
 // ============================================================
 // WORK LOG — auto-generates with proper entries
 // ============================================================
+// v7.35 — multi-day journeys (वाराणसी में रुककर बाद के दिन वापसी): जिन दिनों अधिकारी
+// HQ से बाहर रहा, उनका auto विवरण। जर्नी का पहला दिन छोड़ा जाता है (उसका purpose अलग से आता है)।
+function computeAwayDays(){
+  var away={};
+  journeys.forEach(function(j){
+    var lg=j.legs||[];if(!lg.length)return;
+    var ret=null,place=null;
+    for(var q=lg.length-1;q>=0;q--){if(lg[q].isReturn&&lg[q].arrival){ret=lg[q].arrival;place=lg[q].from;break;}}
+    if(!ret)return;
+    var pp=String(j.date).split('.');if(pp.length!==3)return;
+    var rr=String(ret).split('T')[0].split('-');if(rr.length!==3)return;
+    var d0=new Date(parseInt(pp[2],10),parseInt(pp[1],10)-1,parseInt(pp[0],10));
+    var d1=new Date(parseInt(rr[0],10),parseInt(rr[1],10)-1,parseInt(rr[2],10));
+    if(isNaN(d0.getTime())||isNaN(d1.getTime()))return;
+    if(d0.getTime()===d1.getTime())return;
+    var back=pad2(d1.getDate())+'.'+pad2(d1.getMonth()+1)+'.'+d1.getFullYear();
+    var pl=place||'out of station';
+    for(var dd=new Date(d0);dd<=d1;dd.setDate(dd.getDate()+1)){
+      if(dd.getTime()===d0.getTime())continue;
+      var ks=pad2(dd.getDate())+'.'+pad2(dd.getMonth()+1)+'.'+dd.getFullYear();
+      away[ks]=(dd.getTime()===d1.getTime())?('Returned from '+pl+' to HQ'):('Stayed at '+pl+' on official duty (returned to HQ on '+back+')');
+    }
+  });
+  return away;
+}
 function generateWorkLog(){
   var mi=getMonthIdx(),y=getYear(),dim=getDaysInMonth();
   var body=document.getElementById('workLogBody');
@@ -3579,6 +3629,7 @@ function generateWorkLog(){
   // प्रविष्टियाँ भी सुरक्षित रहें।
   var store={};
   try{store=JSON.parse(localStorage.getItem('sdi_worklog_months_v1')||'{}')||{};}catch(e){store={};}
+  var away=computeAwayDays();var DEF_HQ='Stayed at HQ and did office work';
   if(body){Array.prototype.forEach.call(body.querySelectorAll('tr'),function(tr){
     var dc=tr.querySelector('td:nth-child(2)'),wi=tr.querySelector('.wl-work');
     if(!dc||!wi)return;
@@ -3586,7 +3637,7 @@ function generateWorkLog(){
     if(pp.length!==3)return;
     var k=pp[1]+'-'+pp[2];
     if(!store[k])store[k]={};
-    if(String(wi.value).trim())store[k][ds]=wi.value;else delete store[k][ds];
+    var _v=String(wi.value).trim();if(_v&&_v!==DEF_HQ&&_v!==away[ds])store[k][ds]=wi.value;else delete store[k][ds];
   });}
   try{localStorage.setItem('sdi_worklog_months_v1',JSON.stringify(store));}catch(e){}
   var mk=pad2(mi+1)+'-'+y, cur=store[mk]||{};
@@ -3594,7 +3645,7 @@ function generateWorkLog(){
   for(var d=1;d<=dim;d++){
     var ds=pad2(d)+'.'+pad2(mi+1)+'.'+y;var dt=new Date(y,mi,d),dn=dt.getDay();
     var tr=document.createElement('tr');if(holidays[ds])tr.className='wl-holiday';
-    var pv=(cur[ds]!==undefined)?cur[ds]:'';
+    var pv=(cur[ds]!==undefined)?cur[ds]:'';if((!String(pv).trim()||pv===DEF_HQ)&&away[ds])pv=away[ds];
     tr.innerHTML='<td>'+d+'</td><td>'+ds+'</td><td><input type="text" class="wl-work" value="'+esc(pv)+'"></td>';
     body.appendChild(tr);
   }
@@ -3603,13 +3654,15 @@ function generateWorkLog(){
 function generateWorkLogFromJourneys(){
   var mi=getMonthIdx(),y=getYear(),dim=getDaysInMonth();
   var dp={};journeys.forEach(function(j){if(j.workLogEntry&&j.workLogEntry.trim())dp[j.date]=j.workLogEntry;});
+  var away=computeAwayDays();
   var body=document.getElementById('workLogBody');body.innerHTML='';
   for(var d=1;d<=dim;d++){
     var ds=pad2(d)+'.'+pad2(mi+1)+'.'+y;var dt=new Date(y,mi,d),dn=dt.getDay();
     var isHol=!!holidays[ds];var lv=getLeaveForDate(ds);
     var w=dp[ds]||'';
     if(!w){
-      if(lv)w=lv.label;
+      if(away[ds])w=away[ds];
+      else if(lv)w=lv.label;
       else if(isHol)w=holidays[ds]||'Holiday';
       else if(dn===0)w='SUNDAY';
       else w='Stayed at HQ and did office work';
@@ -3871,6 +3924,7 @@ async function generateTourDiary(){
       var sd=fn===1?1:16,ed=fn===1?15:dim;
       var rows=[new D.TableRow({tableHeader:true,children:[mkHdr('Date',wlcw[0]),mkHdr('Details of Work',wlcw[1])]})];
       // Build work entries: first check HTML table, then fall back to auto-generating from journeys
+      var away=computeAwayDays();
       var we={};
       document.querySelectorAll('#workLogBody tr').forEach(function(r){var dc=r.querySelector('td:nth-child(2)'),wi=r.querySelector('.wl-work');if(dc&&wi&&wi.value.trim())we[dc.textContent.trim()]=wi.value;});
       // Auto-fill from journeys for any dates not in HTML table
@@ -3882,7 +3936,8 @@ async function generateTourDiary(){
         var lv=getLeaveForDate(ds);
         var w=we[ds]||'';
         if(!w){
-          if(lv)w=lv.label;
+          if(away[ds])w=away[ds];
+          else if(lv)w=lv.label;
           else if(isHol)w=holidays[ds]||'Holiday';
           else if(dn===0)w='SUNDAY';
           else w='Stayed at HQ and did office work';
