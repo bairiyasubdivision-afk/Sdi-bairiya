@@ -5289,6 +5289,24 @@ function fillRdClosedTable(doc, bodyEl, entries) {
   if (!t8) return;
   const rows = getTableRows(t8);
 
+  // v7.42 — कोई भी प्रविष्टि न भरी हो तो तालिका दिखाएँ ही नहीं; उसकी जगह मानक टिप्पणी लिखें।
+  const _rdHas = (entries || []).some(function (e) { return !!(e && (e.acct || e.dlt || e.amount || e.balance)); });
+  if (!_rdHas) {
+    var _note = "समय से पहले बंद हुए आरडी खातों की जाँच प्रयास करने के उपरांत भी नहीं हो सकी। लेखा कार्यालय उपलब्ध आरडी खातों की सूची एवं पता वित्त से उपलब्ध कराएँ ताकि एसबी-46 जारी किया जा सके।";
+    var _p = doc.createElementNS(W_NS, "w:p");
+    var _r = doc.createElementNS(W_NS, "w:r");
+    var _rPr = doc.createElementNS(W_NS, "w:rPr");
+    var _sz = doc.createElementNS(W_NS, "w:sz"); _sz.setAttribute("w:val", "22"); _rPr.appendChild(_sz);
+    _r.appendChild(_rPr);
+    var _t = doc.createElementNS(W_NS, "w:t"); _t.setAttribute("xml:space", "preserve"); _t.textContent = _note;
+    _r.appendChild(_t); _p.appendChild(_r);
+    if (t8.parentNode) {
+      t8.parentNode.insertBefore(_p, t8);
+      t8.parentNode.removeChild(t8);
+    }
+    return;
+  }
+
   (entries || []).forEach((entry, i) => {
     const rowIdx = i + 1; // row 0 is header
     if (rowIdx >= rows.length || i >= RD_CLOSED_MAX_ROWS || !entry) return;
