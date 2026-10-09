@@ -5375,20 +5375,51 @@ const PASSBOOK_SECTIONS = [
   { key: "td", startRow: 26, count: 6 },
 ];
 
+const PASSBOOK_INCOMPLETE_NOTE = "बहुत प्रयास के बाद भी इस स्कीम की सभी पासबुक प्राप्त नहीं की जा सकी। लेखा कार्यालय एसबी-46 जारी करने हेतु आवश्यक जानकारी फिनैकल के लास्ट बैलेंस रिपोर्ट मेन्यू से उपलब्ध कराएँ।";
+const PASSBOOK_VERIFY_NOTE = "पासबुक का सत्यापन करने पर पासबुक के प्रथम पृष्ठ पर डिजिटल एंट्री मिली, परंतु एसपीएम शत-प्रतिशत सुनिश्चित करेंगे कि प्रत्येक खाते में प्रविष्टि पासबुक प्रिंटर से ही हो।";
+
+// v? — Q36: पासबुक तालिका में पूरी चौड़ाई वाली टिप्पणी पंक्ति बनाएँ (सभी कॉलम एक में)
+function makePassbookNoteRow(doc, text, span) {
+  var tr = doc.createElementNS(W_NS, "w:tr");
+  var tc = doc.createElementNS(W_NS, "w:tc");
+  var tcPr = doc.createElementNS(W_NS, "w:tcPr");
+  var gs = doc.createElementNS(W_NS, "w:gridSpan");
+  gs.setAttribute("w:val", String(span));
+  tcPr.appendChild(gs);
+  tc.appendChild(tcPr);
+  var p = doc.createElementNS(W_NS, "w:p");
+  var r = doc.createElementNS(W_NS, "w:r");
+  var rPr = doc.createElementNS(W_NS, "w:rPr");
+  var sz = doc.createElementNS(W_NS, "w:sz"); sz.setAttribute("w:val", "22"); rPr.appendChild(sz);
+  r.appendChild(rPr);
+  var t = doc.createElementNS(W_NS, "w:t");
+  t.setAttribute("xml:space", "preserve");
+  t.textContent = text;
+  r.appendChild(t);
+  p.appendChild(r);
+  tc.appendChild(p);
+  tr.appendChild(tc);
+  return tr;
+}
+
 function fillPassbookTable(doc, bodyEl, passbookData) {
   // passbookData: { sb: [{acct, dlt, deposit, withdrawal, balance}, ...], rd: [...], ssa: [...], td: [...] }
   const tables = getDocTables(bodyEl);
   const t5 = tables[PASSBOOK_TABLE_INDEX];
   if (!t5) return;
-  const rows = getTableRows(t5);
 
+  // पहले सब स्कीम के खाने भरें, साथ ही हर स्कीम में दर्ज हुए खातों की गिनती रखें।
+  const filledCounts = {};
   for (const section of PASSBOOK_SECTIONS) {
+    const rows = getTableRows(t5);
     const entries = (passbookData && passbookData[section.key]) || [];
+    let filledCount = 0;
     for (let i = 0; i < section.count; i++) {
       const rowIdx = section.startRow + i;
       if (rowIdx >= rows.length) break;
       const entry = entries[i];
       if (!entry || !entry.acct) continue; // no account number → nothing meaningful to write
+      filledCount++;
       const cells = getRowCells(rows[rowIdx]);
       if (cells.length < 5) continue;
       if (entry.acct) setCellText(doc, cells[0], entry.acct);
@@ -5399,7 +5430,29 @@ function fillPassbookTable(doc, bodyEl, passbookData) {
       if (entry.withdrawal) setCellText(doc, cells[3], entry.withdrawal);
       if (entry.balance) setCellText(doc, cells[4], entry.balance);
     }
+    filledCounts[section.key] = filledCount;
   }
+
+  // v? — Q36: जिस स्कीम की सभी 06 पासबुक दर्ज नहीं हुईं, उस स्कीम की अंतिम पंक्ति के
+  // तुरंत बाद पूरी चौड़ाई वाली टिप्पणी पंक्ति जोड़ें। पंक्तियाँ पीछे से (td→sb) जोड़ी
+  // जाती हैं ताकि ऊपर की स्कीम की row index न बदलें।
+  for (let s = PASSBOOK_SECTIONS.length - 1; s >= 0; s--) {
+    const section = PASSBOOK_SECTIONS[s];
+    if (filledCounts[section.key] >= section.count) continue; // पूरी हो चुकी — कुछ नहीं
+    const rows = getTableRows(t5);
+    const lastIdx = section.startRow + section.count - 1;
+    const anchorRow = rows[lastIdx];
+    if (!anchorRow) continue;
+    const noteRow = makePassbookNoteRow(doc, PASSBOOK_INCOMPLETE_NOTE, 5);
+    if (anchorRow.nextSibling) {
+      anchorRow.parentNode.insertBefore(noteRow, anchorRow.nextSibling);
+    } else {
+      anchorRow.parentNode.appendChild(noteRow);
+    }
+  }
+
+  // v? — Q36: पासबुक सत्यापन तालिकाओं के बाद एक बार सत्यापन टिप्पणी जोड़ें।
+  addParagraphAfterElement(doc, bodyEl, t5, PASSBOOK_VERIFY_NOTE);
 }
 
 // Mark SB-46 accounts in passbook table — append "(SB-46)" after account number
@@ -5434,38 +5487,83 @@ function markSB46InPassbookTable(doc, bodyEl, sb46Data) {
 
 
 // -----------------------------------------------------------------------
-// Question 52(c) — RD loan accounts remark (if passbooks not available)
+// Question 36(I) — RD loan accounts remark (if passbooks not available)
+// पहले यह टिप्पणी प्रश्न 52 के बाद जुड़ती थी; अब यह प्रश्न 36 की पासबुक तालिका
+// के बाद जोड़ी जाती है (फ़ील्ड का नाम 52(c) होते हुए भी यह वस्तुतः 36(I) का है)।
 // -----------------------------------------------------------------------
 function fillRDLoanRemark(doc, bodyEl, showRemark) {
   if (!showRemark) return;
   var paragraphs = getAllParagraphsInDoc(bodyEl);
-  var remarkText = "RD के लोन खातों की जाँच भौतिक रूप से पासबुक न मिलने के कारण नहीं हो सकी। बीपीएम ऐसे खातों की सूची अलग से नहीं बना रहे हैं। उपडाकपाल उनकी सूची अधोहस्ताक्षरी को उपलब्ध कराएं।";
-  // Find Q52 paragraph
+  var remarkText = "काफ़ी प्रयासों के बाद भी आरडी लोन खातों की जाँच नहीं की जा सकी। शाखा डाकघर में इसके रजिस्टर का संधारण नहीं किया जा सका। लेखा कार्यालय उपरोक्त जानकारी उपलब्ध कराएँ जिससे जाँच की जाना संभव हो।";
+  // प्रश्न 36 का पैराग्राफ़ ढूँढें
+  var q36para = null;
   for (var i = 0; i < paragraphs.length; i++) {
-    var full = getParagraphText(paragraphs[i]);
-    if (full.indexOf("52.") === 0 || full.indexOf("52\u0964") === 0 || (full.indexOf("52") >= 0 && full.indexOf("\u092a\u094d\u0930\u0926\u0930\u094d\u0936\u093f\u0924") >= 0)) {
-      // Insert remark paragraph after Q52
-      var newP = doc.createElement("w:p");
-      var newR = doc.createElement("w:r");
-      var newRPr = doc.createElement("w:rPr");
-      var newSz = doc.createElement("w:sz"); newSz.setAttribute("w:val", "22"); newRPr.appendChild(newSz);
-      var newFont = doc.createElement("w:rFonts"); newFont.setAttribute("w:ascii","Devanagari"); newFont.setAttribute("w:hAnsi","Devanagari"); newRPr.appendChild(newFont);
-      newR.appendChild(newRPr);
-      var newT = doc.createElement("w:t");
-      newT.setAttribute("xml:space","preserve");
-      newT.textContent = remarkText;
-      newR.appendChild(newT);
-      newP.appendChild(newR);
-      // Insert after Q52 paragraph
-      if (paragraphs[i].nextSibling) {
-        paragraphs[i].parentNode.insertBefore(newP, paragraphs[i].nextSibling);
-      } else {
-        paragraphs[i].parentNode.appendChild(newP);
-      }
-      return true;
+    if (getParagraphText(paragraphs[i]).indexOf("36.") === 0) { q36para = paragraphs[i]; break; }
+  }
+  if (!q36para) return false;
+  // 36 के पैराग्राफ़ के बाद पहली पासबुक तालिका (w:tbl) खोजें
+  var anchorTable = null;
+  var node = q36para.nextSibling;
+  while (node) {
+    if (node.nodeType === 1 && node.localName === "tbl" && node.namespaceURI === W_NS) { anchorTable = node; break; }
+    node = node.nextSibling;
+  }
+  if (!anchorTable) return false;
+  // टिप्पणी पैराग्राफ़ बनाएँ और तालिका के बाद जोड़ें
+  var newP = doc.createElementNS(W_NS, "w:p");
+  var newR = doc.createElementNS(W_NS, "w:r");
+  var newRPr = doc.createElementNS(W_NS, "w:rPr");
+  var newSz = doc.createElementNS(W_NS, "w:sz"); newSz.setAttribute("w:val", "22"); newRPr.appendChild(newSz);
+  var newFont = doc.createElementNS(W_NS, "w:rFonts"); newFont.setAttribute("w:ascii","Devanagari"); newFont.setAttribute("w:hAnsi","Devanagari"); newRPr.appendChild(newFont);
+  newR.appendChild(newRPr);
+  var newT = doc.createElementNS(W_NS, "w:t");
+  newT.setAttribute("xml:space","preserve");
+  newT.textContent = remarkText;
+  newR.appendChild(newT);
+  newP.appendChild(newR);
+  if (anchorTable.nextSibling) {
+    anchorTable.parentNode.insertBefore(newP, anchorTable.nextSibling);
+  } else {
+    anchorTable.parentNode.appendChild(newP);
+  }
+  return true;
+}
+
+// -----------------------------------------------------------------------
+// v? — स्थिर पाठ बदलाव: Q49.10 का पूरा नया पाठ, तथा Q58.13 के बाद
+// आईपीपीबी/डीओपी एसओपी अनुपालन की टिप्पणी।
+// -----------------------------------------------------------------------
+function fillFixedWordingNotes(doc, bodyEl) {
+  // Q49.10 — पूरा पैराग्राफ़ नए पाठ से बदलें (क्रमांक "49.10" वही रहेगा)।
+  var q4910Text = "49.10 जाँच की गई कि आईटी 2.0 के रोल आउट के उपरांत पीएलआई/आरपीएलआई की राशि लेखा कार्यालय से जनरेट होने वाली शाखा डाकघर की डीटीआर (DTR) में परिलक्षित हो रही है।";
+  var paragraphs = getAllParagraphsInDoc(bodyEl);
+  for (var i = 0; i < paragraphs.length; i++) {
+    if (getParagraphText(paragraphs[i]).indexOf("49.10") === 0) {
+      setParagraphTextPreserveFirstRun(doc, paragraphs[i], q4910Text);
+      break;
     }
   }
-  return false;
+
+  // Q58.13 — पैराग्राफ़ के बाद एसओपी अनुपालन की टिप्पणी जोड़ें।
+  var q58Note = "एसपीएम आईपीपीबी/डीओपी एसओपी का अनुपालन नहीं कर रहे हैं। इस विषय में मंडलीय कार्यालय सभी एसपीएम को नवीनतम एसओपी उपलब्ध कराएँ तथा एसपीएम शत-प्रतिशत अनुपालन करना सुनिश्चित करें।";
+  var all = getAllParagraphsInDoc(bodyEl);
+  for (var j = 0; j < all.length; j++) {
+    if (getParagraphText(all[j]).indexOf("58.13") === 0) {
+      var np = doc.createElementNS(W_NS, "w:p");
+      var nr = doc.createElementNS(W_NS, "w:r");
+      var nt = doc.createElementNS(W_NS, "w:t");
+      nt.setAttribute("xml:space", "preserve");
+      nt.textContent = q58Note;
+      nr.appendChild(nt);
+      np.appendChild(nr);
+      if (all[j].nextSibling) {
+        all[j].parentNode.insertBefore(np, all[j].nextSibling);
+      } else {
+        all[j].parentNode.appendChild(np);
+      }
+      break;
+    }
+  }
 }
 
 // Fill PLI/RPLI table (Q49.11) — Policy No, Paid Till, Amount.
@@ -8917,7 +9015,7 @@ const MASTER_DATA = {
     { id: "q35_signature_specimen", question: "35(i)", label: "हस्ताक्षर नमूना पुस्तिका उपलब्धता (हर प्रकार के खाते हेतु)", yesLabel: "हाँ, उपलब्ध है", noLabel: "उपलब्ध नहीं है" },
     { id: "q45_qr_register", question: "45", label: "क्यूआर कार्ड स्टॉक रजिस्टर उपलब्धता", yesLabel: "हाँ, उपलब्ध है", noLabel: "उपलब्ध नहीं है" },
     { id: "q47_merchant_ippb", question: "47", label: "मर्चेंट आईपीपीबी खाते खोले गए हैं", yesLabel: "हाँ, खोले गए हैं", noLabel: "नहीं खोले गए हैं" },
-    { id: "q52c_rd_loan_remark", question: "52(c)", label: "RD फाइनेंस खातों की जाँच भौतिक रूप से नहीं हो सकी (पासबुक नहीं मिली)", yesLabel: "जाँच हुई", noLabel: "नहीं हो सकी — टिप्पणी जुड़ें" },
+    { id: "q52c_rd_loan_remark", question: "36(I)", label: "RD लोन खातों की जाँच भौतिक रूप से नहीं हो सकी (पासबुक नहीं मिली)", yesLabel: "जाँच हुई", noLabel: "नहीं हो सकी — टिप्पणी जुड़ें" },
   ];
 
   function buildToggleUI(container, specs) {
@@ -11835,6 +11933,8 @@ generateBtn.addEventListener("click", async () => {
       fillLotTable(doc, bodyEl, lotData);
       fillRdClosedTable(doc, bodyEl, rdClosedData);
       fillBusinessTable(doc, bodyEl, businessData);
+      // v? — स्थिर पाठ बदलाव: Q49.10 नया पाठ, Q58.13 के बाद एसओपी टिप्पणी
+      fillFixedWordingNotes(doc, bodyEl);
 
       if (signatureData) {
         const relsXmlText = await zip.file("word/_rels/document.xml.rels").async("string");
