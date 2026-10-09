@@ -2976,8 +2976,8 @@ function addReturnLeg(){
   var lastLeg=currentLegs[currentLegs.length-1];var fromName=lastLeg.to||HQ_NAME;
   // Distance for return = HQ dist of the office we're returning from
   // If office is known, auto-fill; otherwise leave blank for manual entry
-  var retDist=getOfficeDist(fromName);
-  currentLegs.push({from:fromName,to:HQ_NAME,departure:'',arrival:'',mode:'Motorcycle',fare:'',dist:retDist!==null?retDist:'',purposeType:'',customPurpose:'',isReturn:true,speed:randomSpeed(),knownTime:'arr',distAutoCalc:retDist!==null,isCustom:false,returnDayOffset:0});
+  var retDist=getOfficeDist(fromName);if(retDist!==null&&!(retDist>0))retDist=null;
+  currentLegs.push({from:fromName,to:HQ_NAME,departure:'',arrival:'',mode:'Motorcycle',fare:'',dist:(retDist!==null&&retDist>0)?retDist:'',purposeType:'',customPurpose:'',isReturn:true,speed:randomSpeed(),knownTime:'arr',distAutoCalc:retDist!==null,isCustom:false,returnDayOffset:0});
   renderLegs();document.getElementById('addReturnBtn').disabled=true;
   // Show info message
   var info=document.getElementById('jfInfo');
@@ -3029,8 +3029,8 @@ function renderLegs(){
     var modeHTML='<div class="lf"><label>Mode</label><select id="legMode_'+idx+'" onchange="onLegModeChange('+idx+')"><option'+(leg.mode==='Motorcycle'?' selected':'')+'>Motorcycle</option><option'+(leg.mode==='Bus'?' selected':'')+'>Bus</option><option'+(leg.mode==='Car'?' selected':'')+'>Car</option><option'+(leg.mode==='Train'?' selected':'')+'>Train</option><option'+(leg.mode==='Other'?' selected':'')+'>Other</option></select></div>';
     // Distance
     var distClass=leg.distAutoCalc?'auto-calc':'manual-dist';
-    var distLabel=leg.isReturn?(leg.distAutoCalc?'Km (auto)':'Km (enter manually)'):(idx===0?(leg.distAutoCalc?'Km (auto)':'Km (enter manually)'):'Km (enter manually)');
-    var distHTML='<div class="lf"><label>'+distLabel+'</label><input type="number" id="legDist_'+idx+'" value="'+leg.dist+'" step="0.5" class="'+distClass+'" onchange="onLegDistChange('+idx+')"'+(leg.distAutoCalc?' readonly':'')+'></div>';
+    var distLabel=leg.distAutoCalc?'Km (auto \u2014 you can edit)':'Km (enter manually)';
+    var distHTML='<div class="lf"><label>'+distLabel+'</label><input type="number" id="legDist_'+idx+'" value="'+leg.dist+'" step="0.5" class="'+distClass+'" onchange="onLegDistChange('+idx+')" oninput="onLegDistInput('+idx+')"></div>';
     // Bus / Train / Other → mileage नहीं; असली किराया (fare) भरा जाएगा
     var fareMode=(leg.mode==='Bus'||leg.mode==='Train'||leg.mode==='Other');
     var fareHTML=fareMode?'<div class="lf"><label>Fare (₹) — actual</label><input type="number" id="legFare_'+idx+'" value="'+(leg.fare===undefined?'':leg.fare)+'" step="1" placeholder="असली किराया" onchange="onLegFareChange('+idx+')"></div>':'';
@@ -3078,13 +3078,14 @@ function onLegOfficeChange(idx){
   // Auto-fill distance: if first leg, use HQ-to-office
   if(idx===0){
     var d=getOfficeDist(sel.value);
-    if(d!==null){currentLegs[idx].dist=d;currentLegs[idx].distAutoCalc=true;}
+    if(d!==null&&d>0){currentLegs[idx].dist=d;currentLegs[idx].distAutoCalc=true;}
+    else{currentLegs[idx].dist='';currentLegs[idx].distAutoCalc=false;}
   } else {
     // For intermediate legs, distance is unknown
     currentLegs[idx].dist='';currentLegs[idx].distAutoCalc=false;
   }
   // If this is a return leg being changed, auto-fill distance from HQ data
-  if(currentLegs[idx].isReturn){var rd=getOfficeDist(currentLegs[idx].from);if(rd!==null){currentLegs[idx].dist=rd;currentLegs[idx].distAutoCalc=true;}}
+  if(currentLegs[idx].isReturn){var rd=getOfficeDist(currentLegs[idx].from);if(rd!==null&&rd>0){currentLegs[idx].dist=rd;currentLegs[idx].distAutoCalc=true;}else{currentLegs[idx].dist='';currentLegs[idx].distAutoCalc=false;}}
   // Update "from" of next leg
   if(idx+1<currentLegs.length&&!currentLegs[idx+1].isReturn){currentLegs[idx+1].from=sel.value;}
   renderLegs();
@@ -3196,7 +3197,7 @@ function addReturnOnlyLeg(){
   }
   if(!fromName)fromName=''; // leave blank for manual entry
   var retDist=fromName?getOfficeDist(fromName):null;
-  currentLegs.push({from:fromName,to:HQ_NAME,departure:'',arrival:'',mode:'Motorcycle',dist:retDist!==null?retDist:'',purposeType:'',customPurpose:'',isReturn:true,speed:randomSpeed(),knownTime:'arr',distAutoCalc:retDist!==null,isCustom:!fromName,returnDayOffset:0});
+  currentLegs.push({from:fromName,to:HQ_NAME,departure:'',arrival:'',mode:'Motorcycle',dist:(retDist!==null&&retDist>0)?retDist:'',purposeType:'',customPurpose:'',isReturn:true,speed:randomSpeed(),knownTime:'arr',distAutoCalc:(retDist!==null&&retDist>0),isCustom:!fromName,returnDayOffset:0});
   renderLegs();
   document.getElementById('addReturnBtn').disabled=true;
   var info=document.getElementById('jfInfo');
@@ -3217,44 +3218,65 @@ function onLegFareChange(idx){
   updateLegInfo();autoSave();
 }
 
+function onLegDistInput(idx){
+  var el=document.getElementById('legDist_'+idx);
+  if(!el)return;
+  currentLegs[idx].dist=parseFloat(el.value)||0;
+  if(currentLegs[idx].distAutoCalc)currentLegs[idx].distAutoCalc=false;
+}
 function onLegDistChange(idx){
   var distEl=document.getElementById('legDist_'+idx);
+  if(!distEl)return;
   currentLegs[idx].dist=parseFloat(distEl.value)||0;
   currentLegs[idx].distAutoCalc=false;
   autoCalcTimes(idx);
-  // If custom office on first outward leg or return leg, offer to save HQ distance
+  // Only HQ-relative legs carry a distance that belongs to an office record:
+  // the first outward leg (HQ -> office) or the return leg (office -> HQ).
   var leg=currentLegs[idx];
-  if(leg.isCustom&&leg.to&&leg.dist>0){
-    var isFirstOutward=(idx===0&&!leg.isReturn);
-    var isReturnLeg=leg.isReturn;
-    // Only save for first outward (HQ→office) or return (office→HQ)
-    // NOT for intermediate legs (office→office) — those distances are not HQ distances
-    if(isFirstOutward||isReturnLeg){
-      // Check if office already exists in allOffices
-      var existing=allOffices.find(function(o){return o.name.toLowerCase()===leg.to.toLowerCase();});
-      if(!existing){
-        // Offer to save after a brief delay so user can see the distance was entered
-        setTimeout(function(){
-          if(!confirm('Save "'+leg.to+'" with '+leg.dist+' km distance from HQ for future use?\n\nThis will appear in the office dropdown next time.\n\nClick OK to save, Cancel to skip.'))return;
-          // Add to master data
-          if(typeof ensureData==='function'){
-            var d=ensureData();
-            d.offices.push({name:leg.to,dist:leg.dist,type:'Other'});
-            var typeOrder={SO:0,BO:1,Office:2,Other:3};
-            d.offices.sort(function(a,b){return (typeOrder[a.type]||9)-(typeOrder[b.type]||9)||a.name.localeCompare(b.name);});
-            if(typeof saveData==='function')saveData(d);
-          }
-          // Also add to allOffices array directly for immediate use
-          allOffices.push({name:leg.to,dist:leg.dist,type:'Other',name_hi:''});
-          // Re-render legs to show the office in dropdown now
-          if(typeof renderLegs==='function')renderLegs();
-          // Show confirmation
-          if(typeof showToast==='function')showToast('"'+leg.to+'" saved! Will appear in dropdown next time.');
-          else alert('"'+leg.to+'" saved for future use!');
-        },100);
-      }
-    }
+  var isFirstOutward=(idx===0&&!leg.isReturn);
+  var isReturnLeg=!!leg.isReturn;
+  if(!(isFirstOutward||isReturnLeg))return;
+  if(!(leg.dist>0))return;
+  var name=isReturnLeg?leg.from:leg.to;
+  if(!name||name===HQ_NAME)return;
+  var existing=null;
+  for(var i=0;i<allOffices.length;i++){
+    if(String(allOffices[i].name).toLowerCase()===String(name).toLowerCase()){existing=allOffices[i];break;}
   }
+  if(existing){
+    // v7.36 - the saved distance is wrong (e.g. Ballia HO = 0): let the officer correct it once
+    if(parseFloat(existing.dist)===parseFloat(leg.dist))return;
+    setTimeout(function(){
+      if(!confirm('The saved distance for "'+name+'" is '+existing.dist+' km, but you entered '+leg.dist+' km.\n\nUpdate it everywhere to '+leg.dist+' km? It will then auto-fill in future journeys.\n\nOK = update, Cancel = keep it for this journey only.'))return;
+      existing.dist=parseFloat(leg.dist);
+      if(typeof ensureData==='function'){
+        var d=ensureData();
+        for(var q=0;q<d.offices.length;q++){
+          if(String(d.offices[q].name).toLowerCase()===String(name).toLowerCase()){d.offices[q].dist=parseFloat(leg.dist);break;}
+        }
+        if(typeof saveData==='function')saveData(d);
+      }
+      if(typeof showToast==='function')showToast('"'+name+'" updated to '+leg.dist+' km');
+      else alert('"'+name+'" updated to '+leg.dist+' km');
+      if(typeof renderLegs==='function')renderLegs();
+    },100);
+    return;
+  }
+  if(!leg.isCustom)return;
+  setTimeout(function(){
+    if(!confirm('Save "'+leg.to+'" with '+leg.dist+' km distance from HQ for future use?\n\nThis will appear in the office dropdown next time.\n\nClick OK to save, Cancel to skip.'))return;
+    if(typeof ensureData==='function'){
+      var d2=ensureData();
+      d2.offices.push({name:leg.to,dist:leg.dist,type:'Other'});
+      var typeOrder={SO:0,BO:1,Office:2,Other:3};
+      d2.offices.sort(function(a,b){return (typeOrder[a.type]||9)-(typeOrder[b.type]||9)||a.name.localeCompare(b.name);});
+      if(typeof saveData==='function')saveData(d2);
+    }
+    allOffices.push({name:leg.to,dist:leg.dist,type:'Other',name_hi:''});
+    if(typeof renderLegs==='function')renderLegs();
+    if(typeof showToast==='function')showToast('"'+leg.to+'" saved! Will appear in dropdown next time.');
+    else alert('"'+leg.to+'" saved for future use!');
+  },100);
 }
 
 function onCustomPurposeChange(idx){
