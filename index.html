@@ -1522,6 +1522,24 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
             <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
             <button class="btn-sm btn-del" onclick="resetData()">Reset to Original</button>
           </div>
+          <!-- फ़ाइल से data मिलाएँ (Import & Merge) — दूसरे फ़ोन के backup से
+               चुनिंदा data (एक inspection का मसौदा, BO/कर्मचारी, यात्रा आदि) इस
+               फ़ोन में जोड़ें — पहले से मौजूद data को मिटाए बिना। -->
+          <div class="data-card" style="margin-top:0;margin-bottom:16px;background:#f1f8e9;border:1px solid #aed581;">
+            <div style="padding:14px 18px;">
+              <div style="font-weight:700;font-size:0.95rem;color:var(--navy);margin-bottom:6px;">🔀 फ़ाइल से data मिलाएँ (Import &amp; Merge)</div>
+              <p class="info-text" style="margin-top:0;">
+                किसी दूसरे फ़ोन का backup JSON चुनें (पूरा backup, या सिर्फ़ एक inspection का मसौदा जैसी आंशिक फ़ाइल)। यह फ़ाइल का data
+                इस फ़ोन में <b>मिला</b> देगा — जो पहले से मौजूद है वह मिटेगा नहीं। apply करने से पहले पूर्वावलोकन (preview) दिखेगा।
+              </p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+                <button class="btn-sm btn-save" onclick="document.getElementById('mergeFile').click()">📂 फ़ाइल चुनें (Choose file)</button>
+                <button class="btn-sm btn-cancel" onclick="undoLastMerge()" id="mergeUndoBtn" style="display:none;">↩ पिछला merge undo करें</button>
+                <input type="file" id="mergeFile" accept=".json,application/json" style="display:none" onchange="mergePreview(event)">
+              </div>
+              <p class="info-text" id="mergeStatus" style="margin-top:8px;"></p>
+            </div>
+          </div>
           <div class="data-card" style="margin-top:0;margin-bottom:16px;background:#e3f2fd;border:1px solid #90caf9;">
             <div style="padding:14px 18px;">
               <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;font-weight:600;cursor:pointer;">
@@ -2374,6 +2392,329 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     reader.readAsText(file);
     event.target.value='';
   };
+  // ============================================================
+  // फ़ाइल से data मिलाएँ (Import & Merge) — v7.31
+  // किसी दूसरे फ़ोन के backup (exportData का JSON) या आंशिक फ़ाइल को
+  // इस फ़ोन के data में मिलाता है। कभी कुछ मिटाता नहीं; apply से पहले
+  // पूर्वावलोकन दिखाता है; और merge से ठीक पहले का पूरा snapshot सुरक्षित
+  // रखता है (एक-क्लिक undo के लिए)।
+  // ============================================================
+  var MERGE_UNDO_KEY='sdi_premerge_backup_v1';
+  var _mergePending=null;   // {writes, addedKeys, report}
+
+  function _esc(s){return String(s===undefined||s===null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function _isPlainObj(v){return v&&typeof v==='object'&&!Array.isArray(v);}
+  function _parseAny(raw){ if(raw===undefined||raw===null)return undefined; if(typeof raw!=='string')return raw; try{return JSON.parse(raw);}catch(e){return raw;} }
+  function _toRaw(v){ if(v===undefined)return ''; if(typeof v==='string')return v; return JSON.stringify(v); }
+  // स्थिर (stable) stringify — key क्रम बदलने पर भी वही पहचान
+  function _stableStr(v){
+    if(v===null||typeof v!=='object')return JSON.stringify(v);
+    if(Array.isArray(v))return '['+v.map(_stableStr).join(',')+']';
+    var ks=Object.keys(v).sort();var s='{';
+    for(var i=0;i<ks.length;i++){s+=(i?',':'')+JSON.stringify(ks[i])+':'+_stableStr(v[ks[i]]);}
+    return s+'}';
+  }
+  function _boLabel(boId){
+    try{var md=(typeof MASTER_DATA!=='undefined')?MASTER_DATA:(window.MASTER_DATA||null);var b=md&&md[boId];if(b)return (b.bo_name_hi||b.bo_name_en_raw||boId);}catch(e){}
+    return boId;
+  }
+  function _draftStamp(d){
+    if(!d||typeof d!=='object')return null;
+    var cand=['updatedAt','savedAt','modifiedAt','lastModified','_savedAt','ts','time'];
+    for(var i=0;i<cand.length;i++){
+      var v=d[cand[i]];
+      if(v!==undefined&&v!==null&&v!==''){
+        var t=Date.parse(v); if(!isNaN(t))return t;
+        var n=parseFloat(v); if(!isNaN(n)&&String(n)===String(v).trim())return (n<1e12?n*1000:n);
+      }
+    }
+    return null;
+  }
+  function _newReport(){
+    return {draftsNew:[],draftsChanged:[],inspDoneNew:[],progNew:[],masterOffices:[],masterBo:[],
+      acctNew:{},tourJourneys:[],tourLeaves:[],tourHolidays:[],otherKeys:[],overwritten:[]};
+  }
+  // सूची को कुंजी (key) से मिलाएँ — मौजूद कुंजी पर स्थानीय data जीतेगा, सिर्फ़ नई कुंजियाँ जुड़ेंगी
+  function _mergeArrayByKey(local, incoming, keyFn, onNew){
+    var out=(local||[]).slice();
+    var have={};
+    out.forEach(function(e,i){ have[keyFn(e,i)]=true; });
+    (incoming||[]).forEach(function(e,i){
+      var k=keyFn(e,i);
+      if(!have[k]){ have[k]=true; out.push(e); if(onNew)onNew(e,k); }
+    });
+    return out;
+  }
+  // सामान्य (generic) deep-merge — object कुंजी-वार; array में सिर्फ़ नए तत्व; scalar पर स्थानीय जीतेगा
+  function _mergeGeneric(local, incoming, onNew, path){
+    if(incoming===undefined)return local;
+    if(local===undefined){ if(onNew)onNew(path,incoming); return incoming; }
+    if(_isPlainObj(local)&&_isPlainObj(incoming)){
+      var out={};var k;
+      for(k in local)if(local.hasOwnProperty(k))out[k]=local[k];
+      for(k in incoming)if(incoming.hasOwnProperty(k)){
+        if(!(k in local)){ if(onNew)onNew(path+'.'+k,incoming[k]); out[k]=incoming[k]; }
+        else out[k]=_mergeGeneric(local[k],incoming[k],onNew,path+'.'+k);
+      }
+      return out;
+    }
+    if(Array.isArray(local)&&Array.isArray(incoming)){
+      var seen={};(local||[]).forEach(function(e){seen[_stableStr(e)]=true;});
+      var o2=(local||[]).slice();
+      (incoming||[]).forEach(function(e){if(!seen[_stableStr(e)]){seen[_stableStr(e)]=true;o2.push(e);if(onNew)onNew(path,e);}});
+      return o2;
+    }
+    return local; // scalar या प्रकार भिन्न → स्थानीय रखें
+  }
+  // TA / Tour Diary — journeys व leaves को date से, बाक़ी कुंजी-वार
+  function _mergeTa(lval, inc, rep){
+    if(!_isPlainObj(lval)||!_isPlainObj(inc))return _mergeGeneric(lval,inc,null,'ta_tour_data');
+    var out={};var k;for(k in lval)if(lval.hasOwnProperty(k))out[k]=lval[k];
+    ['officer','hotel','advance'].forEach(function(f){ if(inc[f]!==undefined)out[f]=_mergeGeneric(lval[f],inc[f],null,'ta_tour_data.'+f); });
+    if(inc.holidays!==undefined)out.holidays=_mergeGeneric(lval.holidays||{},inc.holidays,null,'ta_tour_data.holidays');
+    out.journeys=_mergeArrayByKey(lval.journeys||[],inc.journeys||[],function(j){return String((j&&j.date)||_stableStr(j));},function(j){rep.tourJourneys.push((j&&j.date)||'');});
+    out.leaves=_mergeArrayByKey(lval.leaves||[],inc.leaves||[],function(l){return String(((l&&l.date)||'')+'|'+((l&&l.type)||''));},function(l){rep.tourLeaves.push((l&&l.date)||'');});
+    if(inc.workLog!==undefined)out.workLog=_mergeArrayByKey(lval.workLog||[],inc.workLog||[],function(v,i){return 'i'+i;});
+    if(inc.holidays!==undefined){ // holiday तारीख़ें गिनें
+      Object.keys(inc.holidays||{}).forEach(function(d){ if(!(lval.holidays&&(d in lval.holidays)))rep.tourHolidays.push(d); });
+    }
+    return out;
+  }
+  // Programme 2026 — पंक्ति को नाम (या sn) से मिलाएँ
+  function _mergeProg(lval, inc, rep){
+    if(!Array.isArray(lval)||!Array.isArray(inc))return _mergeGeneric(lval,inc,null,'sdi_prog_2026_v1');
+    return _mergeArrayByKey(lval,inc,function(r){return String((r&&(r.name||r.sn))||_stableStr(r));},function(e){rep.progNew.push((e&&e.name)||'');});
+  }
+  // Master data — offices नाम से, boRecords BO-id से
+  function _mergeMaster(lval, inc, rep){
+    if(!_isPlainObj(lval)||!_isPlainObj(inc))return _mergeGeneric(lval,inc,null,'sdi_master_data');
+    var out={};var k;for(k in lval)if(lval.hasOwnProperty(k))out[k]=lval[k];
+    if(Array.isArray(inc.offices)){
+      out.offices=_mergeArrayByKey(lval.offices||[],inc.offices,function(o){return String((o&&o.name)||_stableStr(o));},function(o){rep.masterOffices.push((o&&o.name)||'');});
+    }
+    if(_isPlainObj(inc.boRecords)){
+      var lbo=lval.boRecords||{};var o2={};for(k in lbo)if(lbo.hasOwnProperty(k))o2[k]=lbo[k];
+      for(k in inc.boRecords)if(inc.boRecords.hasOwnProperty(k)){
+        if(!(k in lbo)){o2[k]=inc.boRecords[k];rep.masterBo.push(k);}
+        else o2[k]=_mergeGeneric(lbo[k],inc.boRecords[k],null,'sdi_master_data.boRecords.'+k);
+      }
+      out.boRecords=o2;
+    }
+    if(inc.version!==undefined){ var lv=parseInt(lval.version,10)||0,iv=parseInt(inc.version,10)||0; out.version=Math.max(lv,iv)||lval.version; }
+    return out;
+  }
+  // per-BO / per-date भंडार — insp_done, accounts, worklog-months
+  function _mergePerBo(lval, inc, rep, storeKey){
+    if(!_isPlainObj(lval)||!_isPlainObj(inc))return _mergeGeneric(lval,inc,null,storeKey);
+    var out={};var k;for(k in lval)if(lval.hasOwnProperty(k))out[k]=lval[k];
+    for(k in inc)if(inc.hasOwnProperty(k)){
+      if(!(k in lval)){
+        out[k]=inc[k];
+        if(storeKey==='sdi_insp_done_v1')rep.inspDoneNew.push(k);
+        else{ if(!rep.acctNew[storeKey])rep.acctNew[storeKey]=[]; rep.acctNew[storeKey].push(k); }
+      } else out[k]=_mergeGeneric(lval[k],inc[k],null,storeKey+'.'+k);
+    }
+    return out;
+  }
+  function _mergeForKey(key, lval, inc, rep){
+    if(key==='ta_tour_data')return _mergeTa(lval,inc,rep);
+    if(key==='sdi_prog_2026_v1')return _mergeProg(lval,inc,rep);
+    if(key==='sdi_master_data')return _mergeMaster(lval,inc,rep);
+    if(key==='sdi_insp_done_v1')return _mergePerBo(lval,inc,rep,key);
+    if(key==='sdi_acct_baseline_v1'||key==='sdi_acct_months_v1'||key==='sdi_acct_offices_v1'||key==='sdi_acct_fy_offices_v1'||key==='sdi_worklog_months_v1')
+      return _mergePerBo(lval,inc,rep,key);
+    return _mergeGeneric(lval,inc,function(path){rep.otherKeys.push(path);},key);
+  }
+  function _reportWholeNew(key, inc, rep){
+    if(key==='sdi_insp_done_v1'&&_isPlainObj(inc)){Object.keys(inc).forEach(function(b){rep.inspDoneNew.push(b);});return;}
+    if(key==='sdi_prog_2026_v1'&&Array.isArray(inc)){inc.forEach(function(r){rep.progNew.push((r&&r.name)||'');});return;}
+    if(key==='sdi_master_data'&&_isPlainObj(inc)){(inc.offices||[]).forEach(function(o){rep.masterOffices.push((o&&o.name)||'');});Object.keys(inc.boRecords||{}).forEach(function(b){rep.masterBo.push(b);});return;}
+    if(key==='ta_tour_data'&&_isPlainObj(inc)){
+      (inc.journeys||[]).forEach(function(j){rep.tourJourneys.push((j&&j.date)||'');});
+      (inc.leaves||[]).forEach(function(l){rep.tourLeaves.push((l&&l.date)||'');});
+      if(inc.holidays)Object.keys(inc.holidays).forEach(function(d){rep.tourHolidays.push(d);});return;
+    }
+    if(key==='sdi_acct_offices_v1'||key==='sdi_acct_fy_offices_v1'||key==='sdi_acct_baseline_v1'||key==='sdi_acct_months_v1'||key==='sdi_worklog_months_v1'){
+      rep.acctNew[key]=Object.keys(inc||{});return;
+    }
+    rep.otherKeys.push(key);
+  }
+  // फ़ाइल में से storage निकालें (पूरा backup, allStorage, या बिना लिफ़ाफ़े वाली आंशिक फ़ाइल)
+  function _extractStorage(parsed){
+    if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))return null;
+    if(parsed.allStorage&&typeof parsed.allStorage==='object')return parsed.allStorage;
+    if(parsed.backups&&typeof parsed.backups==='object'&&parsed.backups.allStorage)return parsed.backups.allStorage;
+    var keys=Object.keys(parsed);
+    if(keys.length){
+      var looksStorage=keys.every(function(k){return /^insp_draft_/.test(k)||/^sdi_/.test(k)||k==='ta_tour_data'||k==='bo_ir_signature_v1'||k==='auto_backup_settings'||k==='auto_backup_last';});
+      if(looksStorage)return parsed;
+    }
+    if(parsed.masterData||parsed.taData){
+      var m={}; if(parsed.masterData)m['sdi_master_data']=parsed.masterData; if(parsed.taData)m['ta_tour_data']=parsed.taData; return m;
+    }
+    return null;
+  }
+  // merge की गणना — कुछ नहीं लिखता, सिर्फ़ तय करता है कि क्या लिखा जाएगा
+  function _computeMerge(incomingStorage){
+    var rep=_newReport();
+    var writes={}, addedKeys=[];
+    for(var key in incomingStorage){
+      if(!incomingStorage.hasOwnProperty(key))continue;
+      var inc=incomingStorage[key];
+      var lraw=localStorage.getItem(key);
+      if(key.indexOf('insp_draft_')===0){
+        var boId=key.substring('insp_draft_'.length);
+        if(lraw===null){ writes[key]=_toRaw(inc); addedKeys.push(key); rep.draftsNew.push({boId:boId,date:(inc&&inc.inspectionDate)||''}); }
+        else{
+          var lval=_parseAny(lraw);
+          if(_stableStr(lval)!==_stableStr(inc)){
+            var ls=_draftStamp(lval), is=_draftStamp(inc), takeInc=true, reason='no-ts';
+            if(ls!==null&&is!==null){ takeInc=(is>ls); reason='newer'; }
+            if(takeInc){ writes[key]=_toRaw(inc); rep.draftsChanged.push({boId:boId,reason:reason}); rep.overwritten.push(key); }
+          }
+        }
+        continue;
+      }
+      if(lraw===null){ writes[key]=_toRaw(inc); addedKeys.push(key); _reportWholeNew(key,inc,rep); continue; }
+      var lval2=_parseAny(lraw);
+      var merged=_mergeForKey(key,lval2,inc,rep);
+      if(_stableStr(merged)!==_stableStr(lval2)){ writes[key]=_toRaw(merged); rep.overwritten.push(key); }
+    }
+    return {writes:writes,addedKeys:addedKeys,report:rep};
+  }
+  function _lst(arr,max){arr=(arr||[]).filter(function(x){return x!==undefined&&x!==null&&x!=='';});max=max||6;var s=arr.slice(0,max).join(', ');if(arr.length>max)s+=', …';return s;}
+  function _reportLines(rep){
+    var L=[];
+    if(rep.draftsNew.length||rep.draftsChanged.length){
+      var t='📋 <b>Inspection drafts:</b> ';
+      if(rep.draftsNew.length)t+=rep.draftsNew.length+' नए';
+      if(rep.draftsChanged.length)t+=(rep.draftsNew.length?' · ':'')+rep.draftsChanged.length+' बदलेंगे';
+      L.push(t);
+      if(rep.draftsNew.length)L.push('&nbsp;&nbsp;➕ नए: '+_esc(_lst(rep.draftsNew.map(function(x){return _boLabel(x.boId)+(x.date?(' ('+x.date+')'):'');}))));
+      if(rep.draftsChanged.length)L.push('&nbsp;&nbsp;✏️ बदलेंगे: '+_esc(_lst(rep.draftsChanged.map(function(x){return _boLabel(x.boId)+(x.reason==='no-ts'?' [समय-मुहर नहीं → आने वाला लिया जाएगा]':'');}))));
+    }
+    if(rep.inspDoneNew.length)L.push('✅ <b>जाँच पूर्ण (insp_done):</b> '+rep.inspDoneNew.length+' BO नए — '+_esc(_lst(rep.inspDoneNew.map(_boLabel))));
+    if(rep.progNew.length)L.push('📅 <b>कार्यक्रम (Programme):</b> '+rep.progNew.length+' पंक्ति नई — '+_esc(_lst(rep.progNew)));
+    if(rep.masterOffices.length||rep.masterBo.length)L.push('🏢 <b>Master data:</b> '+rep.masterOffices.length+' नए दफ़्तर, '+rep.masterBo.length+' नए BO रिकॉर्ड'+(rep.masterOffices.length?(' — '+_esc(_lst(rep.masterOffices))):''));
+    var acctTotal=0,ak=Object.keys(rep.acctNew);ak.forEach(function(k){acctTotal+=rep.acctNew[k].length;});
+    if(acctTotal)L.push('🏦 <b>Accounts:</b> कुल '+acctTotal+' नई प्रविष्टियाँ ('+ak.map(function(k){return k.replace('sdi_acct_','').replace('_v1','')+' '+rep.acctNew[k].length;}).join(', ')+')');
+    if(rep.tourJourneys.length||rep.tourLeaves.length||rep.tourHolidays.length)L.push('🚗 <b>Tour Diary:</b> '+rep.tourJourneys.length+' जर्नी, '+rep.tourLeaves.length+' अवकाश, '+rep.tourHolidays.length+' अवकाश-दिवस जुड़ेंगे'+(rep.tourJourneys.length?(' — '+_esc(_lst(rep.tourJourneys))):''));
+    if(rep.otherKeys.length)L.push('📦 <b>अन्य:</b> '+rep.otherKeys.length+' नई प्रविष्टियाँ — '+_esc(_lst(rep.otherKeys,8)));
+    return L;
+  }
+  function _mergeSummaryText(rep){
+    var parts=[];
+    var dn=rep.draftsNew.length,dc=rep.draftsChanged.length;
+    if(dn||dc)parts.push('drafts '+dn+' नए'+(dc?(', '+dc+' बदले'):''));
+    if(rep.inspDoneNew.length)parts.push(rep.inspDoneNew.length+' BO जाँच-पूर्ण');
+    if(rep.progNew.length)parts.push(rep.progNew.length+' कार्यक्रम पंक्ति');
+    if(rep.masterOffices.length||rep.masterBo.length)parts.push('master '+(rep.masterOffices.length+rep.masterBo.length));
+    var at=0;Object.keys(rep.acctNew).forEach(function(k){at+=rep.acctNew[k].length;});if(at)parts.push('accounts '+at);
+    if(rep.tourJourneys.length||rep.tourLeaves.length||rep.tourHolidays.length)parts.push('tour '+(rep.tourJourneys.length+rep.tourLeaves.length+rep.tourHolidays.length));
+    if(rep.otherKeys.length)parts.push('अन्य '+rep.otherKeys.length);
+    return parts.join(', ');
+  }
+  function _previewHtml(res,fname){
+    var lines=_reportLines(res.report);
+    var h='<p style="font-size:0.85rem;color:var(--muted);margin-top:0;">फ़ाइल: <b>'+_esc(fname||'')+'</b></p>';
+    if(!lines.length){ h+='<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px;">इस फ़ाइल में ऐसा कोई नया/बदलने योग्य data नहीं मिला — सब कुछ इस फ़ोन में पहले से मौजूद है। कुछ apply नहीं होगा।</div>'; return h; }
+    h+='<div style="background:#f1f8e9;border:1px solid #c5e1a5;border-radius:8px;padding:12px 14px;font-size:0.86rem;line-height:1.7;">';
+    lines.forEach(function(l){h+='<div>'+l+'</div>';});
+    h+='</div>';
+    h+='<p class="info-text">apply करने पर जो पहले से मौजूद है वह <b>नहीं मिटेगा</b>। merge से ठीक पहले का पूरा data सुरक्षित रखा जाएगा, और बाद में “↩ पिछला merge undo करें” से बहाल किया जा सकेगा।</p>';
+    return h;
+  }
+  function _mergeShowPanel(bodyHtml,canApply){
+    var m=document.getElementById('mergeModal');
+    if(!m){ m=document.createElement('div'); m.className='modal-overlay'; m.id='mergeModal'; document.getElementById('data-tab').appendChild(m); }
+    var foot=canApply
+      ? '<button class="btn-sm btn-cancel" onclick="__mergeClose()">रद्द करें</button><button class="btn-sm btn-save" onclick="__mergeApply()">✅ मिलाएँ (Merge)</button>'
+      : '<button class="btn-sm btn-save" onclick="__mergeClose()">ठीक है</button>';
+    m.innerHTML='<div class="modal"><div class="modal-head">फ़ाइल से data मिलाएँ (Import &amp; Merge)<span class="close-btn" onclick="__mergeClose()">&times;</span></div><div class="modal-body">'+bodyHtml+'</div><div class="modal-foot">'+foot+'</div></div>';
+    m.classList.add('show');
+  }
+  window.__mergeClose=function(){var m=document.getElementById('mergeModal');if(m)m.classList.remove('show');};
+  window.mergePreview=function(event){
+    var file=event.target&&event.target.files&&event.target.files[0];
+    if(event.target)event.target.value='';
+    if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var parsed;
+      try{ parsed=JSON.parse(e.target.result); }
+      catch(err){ _mergeShowPanel('<div style="color:#b00;">फ़ाइल JSON के रूप में पढ़ी नहीं जा सकी: '+_esc(err.message)+'</div>',false); return; }
+      var storage=_extractStorage(parsed);
+      if(!storage){ _mergeShowPanel('<div style="color:#b00;">इस फ़ाइल में पहचानने योग्य data नहीं मिला। कृपया ऐप का backup JSON (या उसका allStorage) चुनें।</div>',false); return; }
+      var res=_computeMerge(storage);
+      _mergePending=res;
+      var any=Object.keys(res.writes).length>0;
+      _mergeShowPanel(_previewHtml(res,file.name),any);
+      if(!any)_mergePending=null;
+    };
+    reader.onerror=function(){ _mergeShowPanel('<div style="color:#b00;">फ़ाइल पढ़ने में त्रुटि।</div>',false); };
+    reader.readAsText(file);
+  };
+  function _mergeRefresh(){
+    try{ syncAllOffices(); syncMasterData(); renderAll(); }catch(e){}
+    try{ if(typeof window.renderProgTable==='function')window.renderProgTable(); }catch(e){}
+    // Tour Diary — in-memory सूचियाँ फिर से लादें
+    try{
+      var raw=localStorage.getItem('ta_tour_data');
+      if(raw&&typeof window.renderJourneyList==='function'){
+        var d=JSON.parse(raw);
+        window.journeys=d.journeys||[]; if(d.holidays)window.holidays=d.holidays; window.leaves=d.leaves||[];
+        if(typeof window.renderLeaveList==='function')window.renderLeaveList();
+        if(typeof window.renderHolidayDisplay==='function')window.renderHolidayDisplay();
+        if(typeof window.renderCalendar==='function')window.renderCalendar();
+        window.renderJourneyList();
+        if(typeof window.generateWorkLog==='function')window.generateWorkLog();
+        if(typeof window.updateSummary==='function')window.updateSummary();
+      }
+    }catch(e){}
+    // Inspection form — मौजूदा BO का मसौदा फिर लादें (सुरक्षित: फ़ॉर्म से save नहीं करता)
+    try{ if(typeof window.__sdiRestoreInspDraft==='function')window.__sdiRestoreInspDraft(); }catch(e){}
+  }
+  window.__mergeApply=function(){
+    if(!_mergePending)return;
+    var p=_mergePending;
+    var snap={};
+    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);snap[k]=localStorage.getItem(k);}
+    try{ localStorage.setItem(MERGE_UNDO_KEY, JSON.stringify({takenAt:new Date().toISOString(),snapshot:snap,addedKeys:p.addedKeys,app:'SDI-Bairiya-Office-Toolkit'})); }catch(e){}
+    for(var key in p.writes){ if(p.writes.hasOwnProperty(key)) localStorage.setItem(key,p.writes[key]); }
+    var summary=_mergeSummaryText(p.report);
+    _mergeRefresh();
+    _mergePending=null;
+    _mergeShowPanel('<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:12px 14px;font-size:0.9rem;">✅ <b>merge पूरा।</b>'+(summary?('<br>जुड़ा/बदला: '+_esc(summary)):'')+'<br><br>अगर कुछ ग़लत लगे तो “↩ पिछला merge undo करें” दबाएँ — data merge से ठीक पहले जैसा हो जाएगा।</div>',false);
+    var u=document.getElementById('mergeUndoBtn');if(u)u.style.display='';
+    showToast('✅ फ़ाइल का data मिला दिया गया'+(summary?(' — '+summary):''));
+  };
+  window.undoLastMerge=function(){
+    var raw=localStorage.getItem(MERGE_UNDO_KEY);
+    if(!raw){ showToast('पिछला merge नहीं मिला — undo उपलब्ध नहीं।'); return; }
+    if(!confirm('पिछला merge undo करें?\n\nmerge के बाद जो जुड़ा/बदला था वह हट जाएगा और merge से ठीक पहले का data बहाल हो जाएगा।\n\nआगे बढ़ें?'))return;
+    try{
+      var meta=JSON.parse(raw);
+      var snap=meta.snapshot||{};
+      // merge से ठीक पहले की हालत बहाल करें: जो keys तब नहीं थीं वे हटाएँ,
+      // जो थीं उनकी पुरानी value लौटाएँ।
+      var _restoreExact=function(){
+        var cur=[],i;
+        for(i=0;i<localStorage.length;i++)cur.push(localStorage.key(i));
+        for(i=0;i<cur.length;i++){ if(cur[i]===MERGE_UNDO_KEY)continue; if(!(cur[i] in snap)){ try{localStorage.removeItem(cur[i]);}catch(e){} } }
+        for(var k in snap)if(snap.hasOwnProperty(k)){ try{localStorage.setItem(k,snap[k]);}catch(e){} }
+      };
+      _restoreExact();
+      _mergeRefresh();
+      // refresh ने जो debounced auto-save timer लगाया हो उसे रोकें, वरना वह
+      // restored ta_tour_data को फिर लिख देता है।
+      try{ if(window._autoSaveTimer){clearTimeout(window._autoSaveTimer);window._autoSaveTimer=null;} }catch(e){}
+      _restoreExact();   // refresh से फिर बनी निकली (derived) keys भी हटा दें → ठीक पहले जैसा
+      localStorage.removeItem(MERGE_UNDO_KEY);
+      showToast('↩ पिछला merge undo हो गया — data merge से पहले जैसा है।');
+      var u=document.getElementById('mergeUndoBtn');if(u)u.style.display='none';
+    }catch(e){ showToast('Undo में त्रुटि: '+e.message); }
+  };
+  function _mergeInitUndoBtn(){ try{ var u=document.getElementById('mergeUndoBtn'); if(u)u.style.display=localStorage.getItem(MERGE_UNDO_KEY)?'':'none'; }catch(e){} }
   window.resetData=function(){
     if(!confirm('Reset ALL master data to original built-in values?\n\nAll custom offices, staff, and village changes will be lost. This cannot be undone.'))return;
     localStorage.removeItem('sdi_master_data');
@@ -2524,6 +2865,7 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     syncMasterData();
     loadSettingsFromTA();
     renderAll();
+    _mergeInitUndoBtn();
     maybeAutoBackup();
   }
 
@@ -12875,6 +13217,7 @@ generateBtn.addEventListener("click", async () => {
     }
   }, 500);
 
+  window.__sdiRestoreInspDraft=function(){try{if(boSelect.value)restoreInspDraft(boSelect.value);}catch(e){}};
 })();
 
 </script>
