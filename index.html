@@ -5547,6 +5547,10 @@ const TOGGLE_QUESTIONS = [
 
 function applyToggleAnswers(doc, bodyEl, toggleAnswers) {
   // toggleAnswers: { [id]: "yes" | "no" | "" }
+  // v? — Q35(i) टेम्पलेट टाइपो: "अलग - अलगहस्ताक्षर" (स्पेस गायब) को ठीक करें।
+  // यह Q35(i) के उसी पैराग्राफ़ को छूता है जिसे replaceClauseByAnchor भी संभालता है,
+  // इसलिए यह पहले चलता है; एंकर ("हस्ताक्षर नमूना पुस्तिका") पर कोई असर नहीं पड़ता।
+  replaceClauseInParagraph(doc, bodyEl, "अलग - अलगहस्ताक्षर", "अलग-अलग हस्ताक्षर");
   for (const spec of TOGGLE_QUESTIONS) {
     const choice = toggleAnswers[spec.id];
     if (spec.anchor) {
@@ -5794,7 +5798,7 @@ function makePassbookNoteRow(doc, text, span) {
   return tr;
 }
 
-function fillPassbookTable(doc, bodyEl, passbookData) {
+function fillPassbookTable(doc, bodyEl, passbookData, showPrinterNote) {
   // passbookData: { sb: [{acct, dlt, deposit, withdrawal, balance}, ...], rd: [...], ssa: [...], td: [...] }
   const tables = getDocTables(bodyEl);
   const t5 = tables[PASSBOOK_TABLE_INDEX];
@@ -5844,7 +5848,104 @@ function fillPassbookTable(doc, bodyEl, passbookData) {
   }
 
   // v? — Q36: पासबुक सत्यापन तालिकाओं के बाद एक बार सत्यापन टिप्पणी जोड़ें।
-  addParagraphAfterElement(doc, bodyEl, t5, PASSBOOK_VERIFY_NOTE);
+  // टॉगल n_q36_printer "न जोड़ें" होने पर यह टिप्पणी छोड़ दी जाती है (डिफ़ॉल्ट: जोड़ें)।
+  if (showPrinterNote === undefined || showPrinterNote) {
+    addParagraphAfterElement(doc, bodyEl, t5, PASSBOOK_VERIFY_NOTE);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// v? — Q36(i): आरडी के विरुद्ध ऋण (RD Loan) खातों की तालिका।
+// फ़ोर्क के smartAfterPassbookTables से पोर्ट किया गया — पासबुक तालिकाओं के
+// बाद बनती है, केवल तभी जब कम से कम एक आरडी लोन खाता दर्ज हो ("smart empty")।
+// ---------------------------------------------------------------------------
+const RD_LOAN_MAX_ROWS = 5;
+const RD_LOAN_HEADER = ["खाता संख्या", "डीएलटी", "ऋण राशि (रु.)", "बैलेंस (रु.)"];
+const RD_LOAN_WIDTHS = [2600, 1900, 2300, 2300];
+
+function hasRDLoanEntryData(entry) {
+  return !!(entry && String(entry.acct || "").trim());
+}
+
+function makeRDLoanRow(doc, values, isHeader) {
+  const tr = doc.createElementNS(W_NS, "w:tr");
+  for (let i = 0; i < RD_LOAN_HEADER.length; i++) {
+    tr.appendChild(makeQ4911Cell(doc, values[i] || "", isHeader, RD_LOAN_WIDTHS[i]));
+  }
+  return tr;
+}
+
+function fillRDLoanTable(doc, bodyEl, passbookData) {
+  const entries = ((passbookData && passbookData.rdloan) || [])
+    .filter(hasRDLoanEntryData)
+    .slice(0, RD_LOAN_MAX_ROWS);
+  if (!entries.length) return; // कुछ भी दर्ज नहीं → तालिका नहीं बनेगी
+  const tables = getDocTables(bodyEl);
+  const t5 = tables[PASSBOOK_TABLE_INDEX];
+  if (!t5 || !t5.parentNode) return;
+
+  // पासबुक तालिका के बाद जो पहला पैराग्राफ़ हो (सत्यापन टिप्पणी), उसके बाद जोड़ें;
+  // न मिले तो सीधे तालिका के बाद।
+  let anchor = t5;
+  let node = t5.nextSibling;
+  while (node) {
+    if (node.nodeType === 1 && node.localName === "p" && node.namespaceURI === W_NS) { anchor = node; break; }
+    node = node.nextSibling;
+  }
+
+  // शीर्षक पैराग्राफ़
+  const head = doc.createElementNS(W_NS, "w:p");
+  const headPPr = doc.createElementNS(W_NS, "w:pPr");
+  const headSp = doc.createElementNS(W_NS, "w:spacing");
+  headSp.setAttribute("w:before", "120");
+  headSp.setAttribute("w:after", "60");
+  headPPr.appendChild(headSp);
+  head.appendChild(headPPr);
+  const headR = doc.createElementNS(W_NS, "w:r");
+  const headRPr = doc.createElementNS(W_NS, "w:rPr");
+  const headFont = doc.createElementNS(W_NS, "w:rFonts");
+  headFont.setAttribute("w:ascii", "Devanagari");
+  headFont.setAttribute("w:hAnsi", "Devanagari");
+  headRPr.appendChild(headFont);
+  const headSz = doc.createElementNS(W_NS, "w:sz");
+  headSz.setAttribute("w:val", "20");
+  headRPr.appendChild(headSz);
+  headR.appendChild(headRPr);
+  const headT = doc.createElementNS(W_NS, "w:t");
+  headT.setAttribute("xml:space", "preserve");
+  headT.textContent = "36(i) आरडी के विरुद्ध ऋण खातों का सत्यापन किया गया। जाँचे गए खातों का विवरण निम्नानुसार है:";
+  headR.appendChild(headT);
+  head.appendChild(headR);
+  anchor.parentNode.insertBefore(head, anchor.nextSibling);
+  anchor = head;
+
+  // तालिका (4 कॉलम)
+  const tbl = doc.createElementNS(W_NS, "w:tbl");
+  const tblPr = doc.createElementNS(W_NS, "w:tblPr");
+  const tblW = doc.createElementNS(W_NS, "w:tblW");
+  tblW.setAttribute("w:w", "0");
+  tblW.setAttribute("w:type", "auto");
+  tblPr.appendChild(tblW);
+  const tblBorders = doc.createElementNS(W_NS, "w:tblBorders");
+  ["top", "left", "bottom", "right", "insideH", "insideV"].forEach((side) => {
+    const b = doc.createElementNS(W_NS, "w:" + side);
+    b.setAttribute("w:val", "single");
+    b.setAttribute("w:sz", "4");
+    b.setAttribute("w:space", "0");
+    b.setAttribute("w:color", "auto");
+    tblBorders.appendChild(b);
+  });
+  tblPr.appendChild(tblBorders);
+  tbl.appendChild(tblPr);
+  tbl.appendChild(makeRDLoanRow(doc, RD_LOAN_HEADER, true));
+  entries.forEach((e) => {
+    tbl.appendChild(makeRDLoanRow(doc, [e.acct, e.dlt, e.deposit, e.balance], false));
+  });
+  anchor.parentNode.insertBefore(tbl, anchor.nextSibling);
+
+  // तालिका के बाद खाली पैराग्राफ़ (लगातार तालिकाएँ जुड़ने से बचाने हेतु)
+  const tail = doc.createElementNS(W_NS, "w:p");
+  tbl.parentNode.insertBefore(tail, tbl.nextSibling);
 }
 
 // Mark SB-46 accounts in passbook table — append "(SB-46)" after account number
@@ -5925,35 +6026,41 @@ function fillRDLoanRemark(doc, bodyEl, showRemark) {
 // v? — स्थिर पाठ बदलाव: Q49.10 का पूरा नया पाठ, तथा Q58.13 के बाद
 // आईपीपीबी/डीओपी एसओपी अनुपालन की टिप्पणी।
 // -----------------------------------------------------------------------
-function fillFixedWordingNotes(doc, bodyEl) {
+function fillFixedWordingNotes(doc, bodyEl, opts) {
   // Q49.10 — पूरा पैराग्राफ़ नए पाठ से बदलें (क्रमांक "49.10" वही रहेगा)।
-  var q4910Text = "49.10 जाँच की गई कि आईटी 2.0 के रोल आउट के उपरांत पीएलआई/आरपीएलआई की राशि लेखा कार्यालय से जनरेट होने वाली शाखा डाकघर की डीटीआर (DTR) में परिलक्षित हो रही है।";
-  var paragraphs = getAllParagraphsInDoc(bodyEl);
-  for (var i = 0; i < paragraphs.length; i++) {
-    if (getParagraphText(paragraphs[i]).indexOf("49.10") === 0) {
-      setParagraphTextPreserveFirstRun(doc, paragraphs[i], q4910Text);
-      break;
+  // टॉगल n_q4910_it2 "न जोड़ें" होने पर टेम्पलेट का मूल पाठ वैसा ही रहने दें।
+  if (!opts || opts.addQ4910 !== false) {
+    var q4910Text = "49.10 जाँच की गई कि आईटी 2.0 के रोल आउट के उपरांत पीएलआई/आरपीएलआई की राशि लेखा कार्यालय से जनरेट होने वाली शाखा डाकघर की डीटीआर (DTR) में परिलक्षित हो रही है।";
+    var paragraphs = getAllParagraphsInDoc(bodyEl);
+    for (var i = 0; i < paragraphs.length; i++) {
+      if (getParagraphText(paragraphs[i]).indexOf("49.10") === 0) {
+        setParagraphTextPreserveFirstRun(doc, paragraphs[i], q4910Text);
+        break;
+      }
     }
   }
 
   // Q58.13 — पैराग्राफ़ के बाद एसओपी अनुपालन की टिप्पणी जोड़ें।
-  var q58Note = "एसपीएम आईपीपीबी/डीओपी एसओपी का अनुपालन नहीं कर रहे हैं। इस विषय में मंडलीय कार्यालय सभी एसपीएम को नवीनतम एसओपी उपलब्ध कराएँ तथा एसपीएम शत-प्रतिशत अनुपालन करना सुनिश्चित करें।";
-  var all = getAllParagraphsInDoc(bodyEl);
-  for (var j = 0; j < all.length; j++) {
-    if (getParagraphText(all[j]).indexOf("58.13") === 0) {
-      var np = doc.createElementNS(W_NS, "w:p");
-      var nr = doc.createElementNS(W_NS, "w:r");
-      var nt = doc.createElementNS(W_NS, "w:t");
-      nt.setAttribute("xml:space", "preserve");
-      nt.textContent = q58Note;
-      nr.appendChild(nt);
-      np.appendChild(nr);
-      if (all[j].nextSibling) {
-        all[j].parentNode.insertBefore(np, all[j].nextSibling);
-      } else {
-        all[j].parentNode.appendChild(np);
+  // टॉगल n_q58_sop "न जोड़ें" होने पर यह टिप्पणी छोड़ दी जाती है (डिफ़ॉल्ट: जोड़ें)।
+  if (!opts || opts.addQ58 !== false) {
+    var q58Note = "एसपीएम आईपीपीबी/डीओपी एसओपी का अनुपालन नहीं कर रहे हैं। इस विषय में मंडलीय कार्यालय सभी एसपीएम को नवीनतम एसओपी उपलब्ध कराएँ तथा एसपीएम शत-प्रतिशत अनुपालन करना सुनिश्चित करें।";
+    var all = getAllParagraphsInDoc(bodyEl);
+    for (var j = 0; j < all.length; j++) {
+      if (getParagraphText(all[j]).indexOf("58.13") === 0) {
+        var np = doc.createElementNS(W_NS, "w:p");
+        var nr = doc.createElementNS(W_NS, "w:r");
+        var nt = doc.createElementNS(W_NS, "w:t");
+        nt.setAttribute("xml:space", "preserve");
+        nt.textContent = q58Note;
+        nr.appendChild(nt);
+        np.appendChild(nr);
+        if (all[j].nextSibling) {
+          all[j].parentNode.insertBefore(np, all[j].nextSibling);
+        } else {
+          all[j].parentNode.appendChild(np);
+        }
+        break;
       }
-      break;
     }
   }
 }
@@ -9408,6 +9515,10 @@ const MASTER_DATA = {
     { id: "q45_qr_register", question: "45", label: "क्यूआर कार्ड स्टॉक रजिस्टर उपलब्धता", yesLabel: "हाँ, उपलब्ध है", noLabel: "उपलब्ध नहीं है" },
     { id: "q47_merchant_ippb", question: "47", label: "मर्चेंट आईपीपीबी खाते खोले गए हैं", yesLabel: "हाँ, खोले गए हैं", noLabel: "नहीं खोले गए हैं" },
     { id: "q52c_rd_loan_remark", question: "36(I)", label: "RD लोन खातों की जाँच भौतिक रूप से नहीं हो सकी (पासबुक नहीं मिली)", yesLabel: "जाँच हुई", noLabel: "नहीं हो सकी — टिप्पणी जुड़ें" },
+    // v? — फ़ोर्क से पोर्ट: टिप्पणियों को जोड़ने/न जोड़ने के तीन टॉगल (डिफ़ॉल्ट: जोड़ें)
+    { id: "n_q36_printer", question: "36", label: "पासबुक प्रिंटर से ही प्रविष्टि सुनिश्चित करने का नोट (Q36 तालिकाओं के बाद)", yesLabel: "जोड़ें", noLabel: "न जोड़ें", autoOn: true },
+    { id: "n_q4910_it2", question: "49.10", label: "आईटी 2.0 के बाद पीएलआई/आरपीएलआई राशि डीटीआर में परिलक्षित — पंक्ति", yesLabel: "जोड़ें", noLabel: "न जोड़ें", autoOn: true },
+    { id: "n_q58_sop", question: "58", label: "एसपीएम द्वारा आईपीपीबी डीओपी एसओपी का अनुपालन न होने की टिप्पणी", yesLabel: "जोड़ें", noLabel: "न जोड़ें", autoOn: true },
   ];
 
   function buildToggleUI(container, specs) {
@@ -9417,7 +9528,7 @@ const MASTER_DATA = {
       div.innerHTML = `
         <label for="toggle_${spec.id}">प्रश्न ${spec.question} — ${spec.label}</label>
         <select id="toggle_${spec.id}">
-          <option value="">${spec.unsetLabel || "— चुनें (मानक पाठ रहने दें) —"}</option>
+          <option value="">${spec.autoOn ? "— डिफ़ॉल्ट: जोड़ा जाएगा —" : (spec.unsetLabel || "— चुनें (मानक पाठ रहने दें) —")}</option>
           <option value="yes">${spec.yesLabel}</option>
           <option value="no">${spec.noLabel}</option>
         </select>
@@ -9446,6 +9557,8 @@ const MASTER_DATA = {
     { key: "ssa", label: "एसएसए खाते (SSA)", count: 6, type: "full_no_wd" },
     { key: "td", label: "टीडी खाते (TD)", count: 6, type: "td" },
     { key: "pli", label: "पीएलआई / आरपीएलआई / पीआरबी (PLI/RPLI/PRB)", count: 6, type: "pli_policy" },
+    // v? — Q36(i): आरडी के विरुद्ध ऋण (RD Loan) खाते — फ़ोर्क से पोर्ट किया गया।
+    { key: "rdloan", label: "आरडी लोन खाते (RD Loan) — प्रश्न 36(i)", count: 5, type: "rdloan" },
   ];
 
   // PRB (Policy Verification) — optional, only if checked
@@ -9514,6 +9627,20 @@ const MASTER_DATA = {
         hiddenWd.type='hidden';
         hiddenWd.id = `pb_${section.key}_${i}_withdrawal`;
         entry.appendChild(hiddenWd);
+      } else if (section.type === "rdloan") {
+        // Q36(i): आरडी के विरुद्ध ऋण — खाता, DLT, ऋण राशि, बैलेंस (निकासी नहीं)
+        entry.innerHTML = `
+          <div class="entry-idx">ऋण खाता ${i + 1}</div>
+          <div class="row2">
+            <input type="number" id="pb_${section.key}_${i}_acct" placeholder="आरडी खाता नंबर (Account No.)" inputmode="numeric">
+            <input type="date" id="pb_${section.key}_${i}_dlt" title="अंतिम लेन-देन तिथि (DLT)">
+          </div>
+          <div class="row2" style="margin-top:6px;">
+            <input type="number" id="pb_${section.key}_${i}_deposit" placeholder="ऋण राशि (Loan Amount) ₹">
+            <input type="number" id="pb_${section.key}_${i}_balance" placeholder="बैलेंस (Balance) ₹">
+          </div>
+          <input type="hidden" id="pb_${section.key}_${i}_withdrawal" value="">
+        `;
       } else if (section.type === "full_no_wd") {
         // RD/SSA: full fields but NO withdrawal — these schemes are never
         // withdrawn at the BO level, so the field is dropped from the UI.
@@ -12286,6 +12413,8 @@ generateBtn.addEventListener("click", async () => {
         ...readToggleAnswers(STOCK_TOGGLES),
         ...readToggleAnswers(OTHER_TOGGLES),
       };
+      // v? — टिप्पणी टॉगल: "no" = न जोड़ें, अन्यथा (खाली/yes) = जोड़ें।
+      const _noteOn = (id) => toggleAnswers[id] !== "no";
 
       const passbookData = readPassbookData();
       const balanceAckData = readBalanceAckData();
@@ -12314,7 +12443,9 @@ generateBtn.addEventListener("click", async () => {
       var rdLoanToggle = document.getElementById("toggle_q52c_rd_loan_remark");
       var rdLoanRemarkNeeded = rdLoanToggle ? (rdLoanToggle.value === "no") : false;
       fillRDLoanRemark(doc, bodyEl, rdLoanRemarkNeeded);
-      fillPassbookTable(doc, bodyEl, passbookData);
+      fillPassbookTable(doc, bodyEl, passbookData, _noteOn("n_q36_printer"));
+      // v? — Q36(i): पासबुक तालिकाओं के बाद आरडी लोन खातों की तालिका (यदि दर्ज हों)
+      fillRDLoanTable(doc, bodyEl, passbookData);
       // Q36: Passbook table — mark SB-46 accounts with "(SB-46)" in account number cell
       if (manual.sb46Data && manual.sb46Data.length > 0) {
         markSB46InPassbookTable(doc, bodyEl, manual.sb46Data);
@@ -12326,7 +12457,7 @@ generateBtn.addEventListener("click", async () => {
       fillRdClosedTable(doc, bodyEl, rdClosedData);
       fillBusinessTable(doc, bodyEl, businessData);
       // v? — स्थिर पाठ बदलाव: Q49.10 नया पाठ, Q58.13 के बाद एसओपी टिप्पणी
-      fillFixedWordingNotes(doc, bodyEl);
+      fillFixedWordingNotes(doc, bodyEl, { addQ4910: _noteOn("n_q4910_it2"), addQ58: _noteOn("n_q58_sop") });
 
       if (signatureData) {
         const relsXmlText = await zip.file("word/_rels/document.xml.rels").async("string");
@@ -13479,7 +13610,9 @@ generateBtn.addEventListener("click", async () => {
     return Array.prototype.slice.call(document.querySelectorAll('#insp-root input[id$="_acct"]'));
   }
   function labelOf(el) {
-    var m = el.id.match(/^pb_([a-z0-9]+)_(\d+)_acct$/i);
+    var m = el.id.match(/^pb_rdloan_(\d+)_acct$/i);
+    if (m) return "RD-लोन #" + (parseInt(m[1], 10) + 1);
+    m = el.id.match(/^pb_([a-z0-9]+)_(\d+)_acct$/i);
     if (m) return "पासबुक " + m[1].toUpperCase() + " #" + (parseInt(m[2], 10) + 1);
     m = el.id.match(/^sb46_(\d+)_acct$/i);
     if (m) return "SB-46 #" + (parseInt(m[1], 10) + 1);
