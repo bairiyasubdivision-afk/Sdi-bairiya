@@ -5386,6 +5386,19 @@ function fillMasterData(doc, bodyEl, bo, inspectionDateStr) {
     setCellText(doc, cells[3], abpm2.employee_id || "-");
     setCellText(doc, cells[4], "10000+");
   }
+
+  // v? — जीडीएस स्थापना: fillMasterData केवल BPM/ABPM-1/ABPM-2 भरता है, शेष
+  // पंक्तियाँ खाली रह जाती हैं। नियम: हेडर पंक्ति (row 0) को कभी न छूएँ; अंत से
+  // जितनी लगातार डेटा-पंक्तियाँ पूरी तरह खाली हों (किसी भी कोष्ठक में कोई पाठ न
+  // हो), उन्हें हटा दें — जिस पंक्ति में असली डेटा है उसे रखें।
+  if (t2rows.length > 1) {
+    for (let ri = t2rows.length - 1; ri >= 1; ri--) {
+      const cells = getRowCells(t2rows[ri]);
+      const hasData = cells.some((c) => cellTextOf(c).length > 0);
+      if (hasData) break;
+      t2rows[ri].parentNode.removeChild(t2rows[ri]);
+    }
+  }
 }
 
 function fillManualData(doc, bodyEl, manual) {
@@ -5569,6 +5582,26 @@ function applyToggleAnswers(doc, bodyEl, toggleAnswers) {
 }
 
 // ---------------------------------------------------------------------------
+// v? — Q45: क्यूआर कार्ड की गिनती न छापें। टेम्पलेट का
+// "निरीक्षण के दिन …… क्यूआर कार्ड स्टॉक में पाए गए।" वाक्य हटाकर निश्चित
+// वाक्य लगाएँ। उपलब्धता वाला भाग toggle_q45_qr_register से ही तय होता है
+// (applyToggleAnswers) — वह वैसा ही रहेगा।
+// ---------------------------------------------------------------------------
+function fillQ45QrSentence(doc, bodyEl) {
+  var fixed = " पर्याप्त मात्रा में उपलब्ध है और आईपीपीबी बलिया नियत रूप से सप्लाई कर रहा है।";
+  var paragraphs = getAllParagraphsInDoc(bodyEl);
+  for (var i = 0; i < paragraphs.length; i++) {
+    var full = getParagraphText(paragraphs[i]);
+    if (full.indexOf("क्यूआर कार्ड स्टॉक में पाए गए") < 0) continue;
+    // "निरीक्षण के दिन … क्यूआर कार्ड स्टॉक में पाए गए।" वाक्य हटाकर निश्चित वाक्य जोड़ें।
+    var newText = full.replace(/निरीक्षण के दिन[^।]*क्यूआर कार्ड स्टॉक में पाए गए।/, fixed);
+    setParagraphTextPreserveFirstRun(doc, paragraphs[i], newText);
+    return true;
+  }
+  return false;
+}
+
+// ---------------------------------------------------------------------------
 // Question 23 — mail bag content counts (SP / PL / COD / VPP / ordinary)
 // ---------------------------------------------------------------------------
 
@@ -5654,6 +5687,68 @@ function fillLotTable(doc, bodyEl, entries) {
       }
     });
   });
+}
+
+// ---------------------------------------------------------------------------
+// v? — Q39 (त्रैमासिक लेनदेन की सूची / LOT) तालिका को थोड़ा संकरा करें और
+// पृष्ठ पर केन्द्रित रखें। तालिका को उसके हेडर से ढूँढें — स्थिर index पर
+// भरोसा न करें (Q41(ii) की खाली तालिका हटने से आगे के index खिसक जाते हैं)।
+// स्तंभ, हेडर, पंक्तियाँ या डेटा नहीं बदलते — केवल चौड़ाई/स्थिति।
+// ---------------------------------------------------------------------------
+var LOT_WIDTH_FACTOR = 0.87;   // वर्तमान चौड़ाई का ~87% (माँग: 85–90%)
+
+// Q39 की तालिका को उसके विशिष्ट स्तंभ-शीर्षक ("लेखा कार्यालय को प्रेषित") से
+// पहचानें — यह शीर्षक केवल इसी तालिका में है। न मिले तो स्थिर index पर लौटें।
+function findLotTable(bodyEl) {
+  const tables = getDocTables(bodyEl);
+  for (const t of tables) {
+    const rows = getTableRows(t);
+    if (!rows.length) continue;
+    const cells = getRowCells(rows[0]);
+    for (const c of cells) {
+      if (cellTextOf(c).indexOf("लेखा कार्यालय को प्रेषित") >= 0) return t;
+    }
+  }
+  return tables[LOT_TABLE_INDEX] || null;
+}
+
+function narrowLotTable(doc, bodyEl) {
+  const t = findLotTable(bodyEl);
+  if (!t) return;
+  const tblPr = t.getElementsByTagNameNS(W_NS, "tblPr")[0];
+  if (tblPr) {
+    // कुल चौड़ाई (tblW) समान अनुपात में घटाएँ
+    const tblW = tblPr.getElementsByTagNameNS(W_NS, "tblW")[0];
+    if (tblW) {
+      const cur = parseInt(tblW.getAttribute("w:w"), 10);
+      if (!isNaN(cur) && cur > 0) {
+        tblW.setAttribute("w:w", String(Math.round(cur * LOT_WIDTH_FACTOR)));
+        tblW.setAttribute("w:type", "dxa");
+      }
+    }
+    // तालिका को पृष्ठ पर केन्द्रित रखें
+    const jc = tblPr.getElementsByTagNameNS(W_NS, "jc")[0];
+    if (jc) jc.setAttribute("w:val", "center");
+  }
+  // tblGrid के प्रत्येक स्तंभ (gridCol) की चौड़ाई उसी अनुपात में घटाएँ
+  const grid = t.getElementsByTagNameNS(W_NS, "tblGrid")[0];
+  if (grid) {
+    const cols = getDirectChildren(grid, "gridCol");
+    for (const c of cols) {
+      const cur = parseInt(c.getAttribute("w:w"), 10);
+      if (!isNaN(cur) && cur > 0) c.setAttribute("w:w", String(Math.round(cur * LOT_WIDTH_FACTOR)));
+    }
+  }
+  // प्रत्येक कोष्ठक की tcW भी उसी अनुपात में घटाएँ, ताकि Word में चौड़ाई सुसंगत रहे
+  const tcs = t.getElementsByTagNameNS(W_NS, "tc");
+  for (const tc of Array.from(tcs)) {
+    const tcPr = getDirectChildren(tc, "tcPr")[0];
+    if (!tcPr) continue;
+    const tcW = getDirectChildren(tcPr, "tcW")[0];
+    if (!tcW) continue;
+    const cur = parseInt(tcW.getAttribute("w:w"), 10);
+    if (!isNaN(cur) && cur > 0) tcW.setAttribute("w:w", String(Math.round(cur * LOT_WIDTH_FACTOR)));
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -12439,6 +12534,8 @@ generateBtn.addEventListener("click", async () => {
       addSpecialRemark(doc, bodyEl, manual.special_remark);
       fillMailBagCounts(doc, bodyEl, mailBagCounts);
       applyToggleAnswers(doc, bodyEl, toggleAnswers);
+      // v? — Q45: क्यूआर कार्ड गिनती वाक्य हटाकर निश्चित वाक्य (उपलब्धता टॉगल से)
+      fillQ45QrSentence(doc, bodyEl);
       // Q52(c): RD loan remark
       var rdLoanToggle = document.getElementById("toggle_q52c_rd_loan_remark");
       var rdLoanRemarkNeeded = rdLoanToggle ? (rdLoanToggle.value === "no") : false;
@@ -12454,6 +12551,8 @@ generateBtn.addEventListener("click", async () => {
       if (manual.prb_enabled) { fillPrbTable(doc, bodyEl, passbookData); }
       fillBalanceAckTable(doc, bodyEl, balanceAckData);
       fillLotTable(doc, bodyEl, lotData);
+      // v? — Q39 तालिका को थोड़ा संकरा + पृष्ठ पर केन्द्रित करें
+      narrowLotTable(doc, bodyEl);
       fillRdClosedTable(doc, bodyEl, rdClosedData);
       fillBusinessTable(doc, bodyEl, businessData);
       // v? — स्थिर पाठ बदलाव: Q49.10 नया पाठ, Q58.13 के बाद एसओपी टिप्पणी
