@@ -9294,6 +9294,39 @@ const MASTER_DATA = {
     return null;
   }
 
+  // ---------------------------------------------------------------------
+  // अधिकारी का नियम: "पिछला निरीक्षण दिनांक" हमेशा पिछले साल की तारीख़ होनी
+  // चाहिए — 2026 के निरीक्षण के लिए 2025 की तारीख़; अगले साल (2027) के लिए
+  // इस साल (2026) की तारीख़। यानी जो तारीख़ दिखे, उसका साल निरीक्षण-वर्ष से
+  // छोटा होना चाहिए। master data में अगर मौजूदा (या आगे के) साल की तारीख़ है
+  // तो पिछले साल की कोई और तारीख़ न होने पर खाना खाली रखें — कोई अंदाज़ा नहीं।
+  // ---------------------------------------------------------------------
+  function inspectionYearFor() {
+    // निरीक्षण-वर्ष = #inspectionDate (डिफ़ॉल्ट: आज) का साल; वरना मौजूदा साल
+    var el = document.getElementById("inspectionDate");
+    var v = (el && el.value) || "";
+    var m = /^(\d{4})-/.exec(v); // ISO yyyy-mm-dd
+    if (m) return parseInt(m[1], 10);
+    return new Date().getFullYear();
+  }
+  function previousYearOnlyDate(ddmmyyyy) {
+    var s = (ddmmyyyy || "").trim();
+    var parts = s.split(".");
+    if (parts.length !== 3) return "";
+    var y = parseInt(parts[2], 10);
+    if (!y) return "";
+    return y < inspectionYearFor() ? s : "";
+  }
+  // BO के लिए डिफ़ॉल्ट "पिछला निरीक्षण दिनांक" — IR Final तारीख़ (प्रामाणिक) को
+  // master-data history पर वरीयता, बिलकुल dropdown label की तरह — पर पिछले-साल
+  // का नियम दोनों पर लागू।
+  function defaultLastInspectionDate(boId) {
+    var bo = (typeof MASTER_DATA !== "undefined" && MASTER_DATA[boId]) || {};
+    var hist = bo.inspection_history || {};
+    var canonical = getInspFinalDate(boId) || hist.last_inspection_date || "";
+    return previousYearOnlyDate(canonical);
+  }
+
   // Sort BOs: pending (not done) first starting from current month, done at bottom
   // Current month is computed at load time so the sort stays correct all year
   var CURRENT_MONTH = (new Date()).getMonth() + 1;
@@ -9545,7 +9578,8 @@ const MASTER_DATA = {
     const hist = bo.inspection_history || {};
     // Canonical "last inspection" date: IR Final date (authoritative) wins over
     // master-data history, so the form ALWAYS agrees with the BO dropdown label.
-    const lastInspCanonical = getInspFinalDate(bo["bo_id"] || "") || hist.last_inspection_date;
+    // v? — अधिकारी का नियम: यह तारीख़ हमेशा पिछले साल की हो (2026 → 2025)।
+    const lastInspCanonical = defaultLastInspectionDate(bo["bo_id"] || "");
     if (lastInspCanonical) {
       lastInspectionDateInput.value = lastInspCanonical;
       // Update LOT quarters based on last inspection date
@@ -10404,26 +10438,19 @@ const MASTER_DATA = {
 
   // Update LOT quarters when last inspection date changes
   lastInspectionDateInput.addEventListener("change", function() {
+    // सिर्फ़ तिमाही लेबल अपडेट करें। LOT पंक्तियों को दोबारा render न करें —
+    // पहले यहाँ renderLotEntries() चलता था और फिर readLotData() से बहाली होती थी,
+    // पर readLotData() तारीख़ को dd.mm.yyyy में लौटाता है जबकि <input type="date">
+    // को yyyy-mm-dd चाहिए — इसलिए तारीख़ चुपचाप मिट जाती थी और applyDateDefaults()
+    // उसे नए (गलत) डिफ़ॉल्ट से भर देता था। यानी अधिकारी द्वारा भरी या पहले से
+    // auto-default हुई Q39 तारीख़ें बिगड़ जाती थीं।
     lotQuarters = calculateLotQuarters(lastInspectionDateInput.value);
-    // Save current LOT data before re-rendering
-    var savedLotData = readLotData();
-    renderLotEntries();
-    // Restore saved LOT data
-    if (savedLotData) {
-      savedLotData.forEach(function(entry, i) {
-        if (entry) {
-          Object.keys(entry).forEach(function(f) {
-            var el = document.getElementById("lot_" + i + "_" + f);
-            if (el) el.value = entry[f] || "";
-          });
-        }
-      });
-    }
-    // Update quarter labels in DOM
     var summaries = lotEntriesEl.querySelectorAll("summary span:first-child");
     summaries.forEach(function(s, i) {
       s.textContent = "तिमाही " + (i + 1) + " — " + lotQuarters[i];
     });
+    // सिर्फ़ खाली खानों को डिफ़ॉल्ट तारीख़ से भरें — भरी हुई (auto-default या
+    // अधिकारी द्वारा टाइप) तारीख़ कभी न बदलें, न मिटाएँ।
     applyDateDefaults();
   });
 
@@ -12119,9 +12146,10 @@ const MASTER_DATA = {
 
     // reset last-inspection-date back to the selected BO's known history, if any
     // (IR Final date wins over master-data history — same as the dropdown label)
+    // v? — पर अधिकारी का नियम लागू: तारीख़ हमेशा पिछले साल की (2026 → 2025)।
     const bo = MASTER_DATA[boSelect.value];
     const hist = (bo && bo.inspection_history) || {};
-    lastInspectionDateInput.value = getInspFinalDate(boSelect.value) || hist.last_inspection_date || "";
+    lastInspectionDateInput.value = defaultLastInspectionDate(boSelect.value);
     document.getElementById("supVisitDate").value = hist.sup_visit_date || "";
     document.getElementById("boOpeningDate").value = hist.bo_opening_date || "";
     document.getElementById("sdiVisitDates").value = hist.sdi_visit_dates || "";
@@ -13144,12 +13172,13 @@ generateBtn.addEventListener("click", async () => {
     try { statusMsg.textContent = ""; statusMsg.className = "status"; } catch (e) {}
     try { var _bsc = document.getElementById("balSameChk"); if (_bsc) _bsc.checked = false; } catch (e) {}
 
-    // Blank every manually-entered field immediately so the new BO never
-    // shows data left over from whichever BO was selected before it.
-    resetInspFormFields();
-    // v7.30 — और एक ज़बरदस्ती-सफ़ाई (belt & braces): कोई भी BO-विशेष खाना पीछे
-    // न छूटे। इसके बाद auto-default तारीख़ें और baseline फिर लगा दिए जाते हैं।
+    // v7.30 — ज़बरदस्ती-सफ़ाई (belt & braces) पहले: कोई भी BO-विशेष खाना पीछे
+    // न छूटे। (यह reset से पहले चलनी चाहिए — वरना यह reset द्वारा master data से
+    // भरी गई "पिछला निरीक्षण दिनांक" जैसी तारीख़ें दोबारा मिटा देती है।)
     sweepInspFormFields();
+    // Blank every manually-entered field, then restore BO-specific history values
+    // (last inspection date, visit dates) from master data.
+    resetInspFormFields();
     applyDateDefaults();
 
     // Pre-fill Q53 baselines (previous-year + current-till-Excel) for the new BO
