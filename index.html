@@ -1405,7 +1405,7 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
             <button class="btn-sm btn-save" onclick="downloadInspectionListXlsx()">📥 निरीक्षण सूची डाउनलोड करें (.xlsx)</button>
           </div>
           <div class="data-table-wrap" id="progTableWrap"></div>
-          <p class="info-text" style="margin-top:8px;color:#666;">Inspection date (2026): auto-filled when IR Final is marked &mdash; can also be edited by hand. Auto-filled cells appear with a green background.</p>
+          <p class="info-text" style="margin-top:8px;color:#666;">Inspection date (2026): auto-filled when IR Final is marked &mdash; can also be edited by hand. Auto-filled cells appear with a green background. जहाँ कार्यक्रम में तिथि नहीं भरी पर टूर डायरी में वार्षिक निरीक्षण दर्ज है, वहाँ डायरी की तिथि इटैलिक/डैशड शैली में &lsquo;डायरी से&rsquo; अंकन सहित दिखती है (केवल प्रदर्शन; भंडारित कार्यक्रम डेटा अपरिवर्तित रहता है)।</p>
         </div>
       </div>
     </div>
@@ -1712,15 +1712,22 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     var wrap=document.getElementById('progTableWrap');
     if(!wrap)return;
     var rows=getProgRows();
+    // डायरी-आधारित तिथियाँ: टूर डायरी के वार्षिक निरीक्षणों से, केवल प्रदर्शन हेतु (कुछ भी सहेजा नहीं जाता)।
+    var diaryMap=progDiaryDates(rows);
     var q=((document.getElementById('progSearch')||{}).value||'').trim().toLowerCase();
     var inSt='style="width:100%;min-width:90px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:0.82rem;font-family:inherit;"';
+    // डायरी-व्युत्पन्न तिथि-सेल की अलग शैली (इटैलिक + डैशड बॉर्डर + हल्का नीला) — ताकि वह
+    // भंडारित/IR-भरी तिथि से अलग दिखे। (एक ही style एट्रिब्यूट रखें, वरना ब्राउज़र पहला ही लेता है।)
+    var inStDiary='style="width:100%;min-width:90px;border:1px dashed #9db4cc;border-radius:4px;padding:4px 6px;font-size:0.82rem;font-family:inherit;background:#eef4fb;font-weight:600;font-style:italic;color:#2b4a6f;"';
     var h='<table><thead><tr><th>#</th><th>Post Office Name</th><th>Accounts Office</th><th>Inspector</th><th>Last Inspection (2025)</th><th>Days</th><th>Proposed Month (2026)</th><th>Inspection Date (2026)</th><th>Remark</th></tr></thead><tbody>';
     var shown=0;
     rows.forEach(function(r,i){
       var nm=(r.name||'').toLowerCase();
       if(q&&nm.indexOf(q)===-1)return;
       shown++;
-      var done=!!(r.inspDate&&String(r.inspDate).trim());
+      var diaryDate=diaryMap[i]||'';
+      // पंक्ति 'पूर्ण' तब जब कार्यक्रम में तिथि हो या डायरी में निरीक्षण दर्ज हो (प्रदर्शन-स्तर पर)।
+      var done=!!(r.inspDate&&String(r.inspDate).trim())||!!diaryDate;
       h+='<tr'+(done?' style="background:#e8f6ec;"':'')+'>';
       h+='<td>'+escapeHtml(r.sn!==undefined?r.sn:(i+1))+'</td>';
       h+='<td style="white-space:nowrap;">'+escapeHtml(r.name||'')+'</td>';
@@ -1729,7 +1736,15 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       h+='<td><input type="text" '+inSt+' value="'+escapeAttr(r.lastDate||'')+'" onchange="progCellEdit('+i+',\'lastDate\',this.value)"></td>';
       h+='<td><input type="text" '+inSt+' style="min-width:44px;width:60px;" value="'+escapeAttr(r.days||'')+'" onchange="progCellEdit('+i+',\'days\',this.value)"></td>';
       h+='<td><input type="text" '+inSt+' value="'+escapeAttr(r.month||'')+'" onchange="progCellEdit('+i+',\'month\',this.value)"></td>';
-      h+='<td><input type="text" '+inSt+' style="background:'+(done?'#d9f2e0':'#fff')+';font-weight:600;" value="'+escapeAttr(r.inspDate||'')+'" onchange="progCellEdit('+i+',\'inspDate\',this.value)" placeholder="dd.mm.yyyy"></td>';
+      // निरीक्षण तिथि सेल: कार्यक्रम में तिथि न हो पर डायरी में निरीक्षण दर्ज हो, तो
+      // डायरी की तिथि दिखाएँ — स्पष्ट 'डायरी से' अंकन के साथ, केवल प्रदर्शन हेतु।
+      // भंडारित sdi_prog_2026_v1 बिलकुल अपरिवर्तित रहता है (progCellEdit केवल उपयोगकर्ता के
+      // स्वयं सम्पादन पर ही लिखता है, रेंडर कभी नहीं)।
+      if(diaryDate&&!(r.inspDate&&String(r.inspDate).trim())){
+        h+='<td style="vertical-align:top;"><input type="text" '+inStDiary+' data-diary="1" title="टूर डायरी से (केवल प्रदर्शन — सहेजा नहीं गया)" value="'+escapeAttr(diaryDate)+'" onchange="progCellEdit('+i+',\'inspDate\',this.value)" placeholder="dd.mm.yyyy"><div style="font-size:0.66rem;color:#6b7f95;margin-top:2px;white-space:nowrap;">डायरी से</div></td>';
+      }else{
+        h+='<td><input type="text" '+inSt+' style="background:'+(done?'#d9f2e0':'#fff')+';font-weight:600;" value="'+escapeAttr(r.inspDate||'')+'" onchange="progCellEdit('+i+',\'inspDate\',this.value)" placeholder="dd.mm.yyyy"></td>';
+      }
       h+='<td><input type="text" '+inSt+' value="'+escapeAttr(r.remark||'')+'" onchange="progCellEdit('+i+',\'remark\',this.value)"></td>';
       h+='</tr>';
     });
@@ -1942,6 +1957,31 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     });
     return out;
   };
+  // ============================================================
+  // डायरी → कार्यक्रम तालिका (प्रदर्शन-स्तर मिलान)।
+  // renderProgTable इसी से प्रत्येक पंक्ति की डायरी-तिथि निकालता है।
+  // मिलान बिलकुल वही helpers हैं जो निरीक्षण-सूची डाउनलोड (mergeInspectionListRows)
+  // उपयोग करता है: mergeDiaryHi / mergeFindRow (PROG_ALIAS + progFindRow + _nHi/_sim)।
+  // केवल 'carried out annual inspection' वाली यात्राएँ गिनी जाती हैं। कोई लेखन नहीं।
+  function progDiaryDates(rows){
+    var journeys=[];
+    try{var td=JSON.parse(localStorage.getItem('ta_tour_data')||'{}');journeys=td.journeys||[];}catch(e){}
+    var boRecords={};
+    try{var md=JSON.parse(localStorage.getItem('sdi_master_data')||'{}');boRecords=(md&&md.boRecords)||{};}catch(e){}
+    var byRow={};
+    journeys.forEach(function(j){
+      var legs=(j&&j.legs)||[];
+      legs.forEach(function(l){
+        if(!l||l.isReturn)return;
+        var pu=String(l.purpose||'').toLowerCase();
+        if(pu.indexOf('carried out annual inspection')===-1)return;
+        var hi=mergeDiaryHi(l.to||'',boRecords);
+        var r=mergeFindRow(hi,rows);
+        if(r)byRow[rows.indexOf(r)]=j.date;
+      });
+    });
+    return byRow;
+  }
   // ---- न्यूनतम .xlsx लेखक (JSZip) ----
   function mergeXmlEsc(s){
     return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
