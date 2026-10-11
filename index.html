@@ -1402,6 +1402,7 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
           <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn-sm btn-add" onclick="document.getElementById('progImportFile').click()">📥 Excel Import</button>
             <input type="file" id="progImportFile" accept=".xlsx" style="display:none" onchange="progImportParse(this)">
+            <button class="btn-sm btn-save" onclick="downloadInspectionListXlsx()">📥 निरीक्षण सूची डाउनलोड करें (.xlsx)</button>
           </div>
           <div class="data-table-wrap" id="progTableWrap"></div>
           <p class="info-text" style="margin-top:8px;color:#666;">Inspection date (2026): auto-filled when IR Final is marked &mdash; can also be edited by hand. Auto-filled cells appear with a green background.</p>
@@ -1840,6 +1841,230 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     if(document.getElementById('progTableWrap'))renderProgTable();
     return row.name;
   };
+  // ============================================================
+  // ITEM 3 — निरीक्षण "पूर्ण" होने पर कार्यक्रम-पंक्ति स्वतः अद्यतन।
+  // setProgInspectionDate जैसा ही मिलान (progFindRow) करता है, परन्तु साथ ही
+  // lastDate (पिछली विगत निरीक्षण तिथि) भी आगे बढ़ाता है ताकि "विगत निरीक्षण"
+  // का इतिहास सही रहे। भरोसेमंद मिलान न मिले तो कुछ नहीं बदलता (null)।
+  // ============================================================
+  window.setProgInspectionRoll=function(boNameHi,inspDate,prevLastDate){
+    if(!boNameHi||!inspDate)return null;
+    var rows=getProgRows();
+    var row=progFindRow(boNameHi,rows);
+    if(!row)return null;
+    row.inspDate=inspDate;
+    if(prevLastDate)row.lastDate=prevLastDate;
+    saveProgRows(rows);
+    if(document.getElementById('progTableWrap'))renderProgTable();
+    return row.name;
+  };
+  // ============================================================
+  // ITEM 2 — डेटा टैब (Inspection Programme) से अद्यतन निरीक्षण सूची .xlsx डाउनलोड।
+  // स्रोत: sdi_prog_2026_v1 + Tour Diary (ta_tour_data) + sdi_master_data.
+  // नाम-मिलान: boRecords (bo_name_en ↔ bo_name_hi) → allOffices → PROG_ALIAS.
+  // xlsx JSZip से बनता है (ऐप में पहले से लोडेड) — कोई नई निर्भरता नहीं जोड़ी गई।
+  // ============================================================
+  var MERGE_ALIAS={
+    "जवाही डियार":"शाखा डाकघर जवाहि दियर",   // BO30403113004 → क्रम सं. 46
+    "मझौआ":"उप डाकघर मझौवा"                    // Majhaua SO → क्रम सं. 61
+  };
+  function mergeNormDate(s){
+    s=String(s==null?'':s).trim();
+    if(!s)return '';
+    var p=s.replace(/\//g,'.').split('.');
+    if(p.length===3&&p[2].length===2)p[2]='20'+p[2];
+    return p.join('.');
+  }
+  // कार्यक्रम-पंक्ति खोजें: पहले MERGE_ALIAS, फिर progFindRow (PROG_ALIAS+exact+contains+dice),
+  // फिर वर्तनी-सहिष्णु _nHi/_sim fallback। भरोसेमंद न मिले तो null।
+  function mergeFindRow(hi,rows){
+    if(!hi)return null;
+    var al=MERGE_ALIAS[hi];
+    if(al){for(var i=0;i<rows.length;i++){if(progNorm(rows[i].name)===progNorm(al))return rows[i];}}
+    var r=progFindRow(hi,rows);
+    if(r)return r;
+    var bn=_nHi(hi),best=null,bd=0;
+    for(var j=0;j<rows.length;j++){
+      var d=_sim(bn,_nHi(progRowKey(rows[j])));
+      if(d>bd){bd=d;best=rows[j];}
+    }
+    return (best&&bd>=0.78)?best:null;
+  }
+  // डायरी गंतव्य (अंग्रेज़ी) → हिन्दी नाम: पहले boRecords, फिर allOffices.
+  function mergeDiaryHi(to,boRecords){
+    var best=null,bs=0;
+    if(boRecords){
+      Object.keys(boRecords).forEach(function(bid){
+        var bo=boRecords[bid];if(!bo)return;
+        var sc=_sim(_nEn(to),_nEn(bo.bo_name_en||''));
+        if(sc>bs){bs=sc;best=bo;}
+      });
+    }
+    if(best&&bs>=0.78)return best.bo_name_hi||'';
+    var o=(typeof resolveOfficeByName==='function')?resolveOfficeByName(to):null;
+    return o?(o.name_hi||''):'';
+  }
+  // पूरी अद्यतन सूची की पंक्तियाँ बनाएँ (75 डाकघर)।
+  window.mergeInspectionListRows=function(){
+    var rows=getProgRows();
+    var journeys=[];
+    try{var td=JSON.parse(localStorage.getItem('ta_tour_data')||'{}');journeys=td.journeys||[];}catch(e){}
+    var boRecords={};
+    try{var md=JSON.parse(localStorage.getItem('sdi_master_data')||'{}');boRecords=(md&&md.boRecords)||{};}catch(e){}
+    var diaryByRow={};
+    journeys.forEach(function(j){
+      var legs=(j&&j.legs)||[];
+      legs.forEach(function(l){
+        if(!l||l.isReturn)return;
+        var pu=String(l.purpose||'').toLowerCase();
+        // केवल वार्षिक निरीक्षण गिनें — साधारण भ्रमण/बैठक/पूछताछ नहीं।
+        if(pu.indexOf('carried out annual inspection')===-1)return;
+        var hi=mergeDiaryHi(l.to||'',boRecords);
+        var r=mergeFindRow(hi,rows);
+        if(r)diaryByRow[rows.indexOf(r)]=j.date;
+      });
+    });
+    var out=[];
+    rows.forEach(function(row,i){
+      var dd=diaryByRow[i]||'';
+      var appD=mergeNormDate(row.inspDate);
+      var date,src;
+      if(dd){date=dd;src='डायरी';}          // डायरी (वास्तविक निरीक्षण यात्रा) को प्राथमिकता
+      else if(appD){date=appD;src='App';}
+      else {date=null;src=null;}
+      out.push({
+        sn:(row.sn!==undefined?row.sn:(i+1)),
+        name:row.name||'', ao:row.ao||'', month:row.month||'',
+        last:(row.lastDate||''),
+        date:date, src:src,
+        status: date?'पूर्ण':'बाक़ी'
+      });
+    });
+    return out;
+  };
+  // ---- न्यूनतम .xlsx लेखक (JSZip) ----
+  function mergeXmlEsc(s){
+    return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function mergeColName(n){
+    var s='';while(n>0){var m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26);}return s;
+  }
+  function mergeSheetXml(hdr,data,widths,statusColIdx){
+    var cols='<cols>';
+    widths.forEach(function(w,i){cols+='<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>';});
+    cols+='</cols>';
+    function cell(ref,val,style){
+      if(val===null||val===undefined||val==='')return '<c r="'+ref+'" s="'+style+'"/>';
+      if(typeof val==='number'&&isFinite(val))return '<c r="'+ref+'" s="'+style+'"><v>'+val+'</v></c>';
+      return '<c r="'+ref+'" s="'+style+'" t="inlineStr"><is><t xml:space="preserve">'+mergeXmlEsc(val)+'</t></is></c>';
+    }
+    var rowsXml='<row r="1">';
+    hdr.forEach(function(v,i){rowsXml+=cell(mergeColName(i+1)+'1',v,1);});
+    rowsXml+='</row>';
+    data.forEach(function(rr,ri){
+      var r=ri+2;var pend=(statusColIdx&&rr[statusColIdx-1]==='बाक़ी');
+      rowsXml+='<row r="'+r+'">';
+      rr.forEach(function(v,i){
+        var left=(i===1||i===2);
+        var st=pend?(left?5:4):(left?3:2);
+        rowsXml+=cell(mergeColName(i+1)+r,v,st);
+      });
+      rowsXml+='</row>';
+    });
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+      '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft"/></sheetView></sheetViews>'+
+      '<sheetFormatPr defaultRowHeight="15"/>'+cols+
+      '<sheetData>'+rowsXml+'</sheetData></worksheet>';
+  }
+  var MERGE_CT='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+    '<Default Extension="xml" ContentType="application/xml"/>'+
+    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+
+    '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'+
+    '<Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'+
+    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+
+    '</Types>';
+  var MERGE_RELS='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'+
+    '</Relationships>';
+  var MERGE_WB='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
+    '<sheets><sheet name="Updated List" sheetId="1" r:id="rId1"/><sheet name="Summary" sheetId="2" r:id="rId2"/></sheets></workbook>';
+  var MERGE_WBRELS='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'+
+    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/>'+
+    '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
+    '</Relationships>';
+  var MERGE_STYLES='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+    '<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font></fonts>'+
+    '<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>'+
+    '<fill><patternFill patternType="solid"><fgColor rgb="FF1F4E78"/><bgColor indexed="64"/></patternFill></fill>'+
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFFFF2CC"/><bgColor indexed="64"/></patternFill></fill></fills>'+
+    '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>'+
+    '<border><left style="thin"><color rgb="FFBFBFBF"/></left><right style="thin"><color rgb="FFBFBFBF"/></right><top style="thin"><color rgb="FFBFBFBF"/></top><bottom style="thin"><color rgb="FFBFBFBF"/></bottom><diagonal/></border></borders>'+
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
+    '<cellXfs count="6">'+
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'+
+    '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'+
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center"/></xf>'+
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf>'+
+    '<xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center"/></xf>'+
+    '<xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf>'+
+    '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+  window.downloadInspectionListXlsx=function(){
+    try{
+      if(typeof JSZip==='undefined'){alert('JSZip उपलब्ध नहीं — डाउनलोड असम्भव।');return;}
+      var rows=window.mergeInspectionListRows();
+      var hdr=['क्रम सं.','डाकघर का नाम व प्रकार','लेखा कार्यालय','प्रस्तावित माह (2026)','विगत निरीक्षण तिथि','निरीक्षण तिथि (अद्यतन)','स्रोत (Excel / App / डायरी)','स्थिति (पूर्ण / बाक़ी)'];
+      var data=rows.map(function(r){
+        var sn=Number(r.sn); if(!isFinite(sn))sn=r.sn;
+        return [sn,r.name,r.ao,r.month,r.last||'',r.date||'',r.src||'',r.status];
+      });
+      var total=rows.length,done=0,bySrc={};
+      rows.forEach(function(r){if(r.status==='पूर्ण'){done++;bySrc[r.src||'?']=(bySrc[r.src||'?']||0)+1;}});
+      var summary=[['अद्यतन निरीक्षण सूची — सारांश (Updated Inspection List — Summary)',''],
+        ['निरीक्षक डाकघर, पूर्वी उपमण्डल बैरिया, बलिया (उत्तर प्रदेश)',''],
+        ['स्रोत: SDI ऐप (कार्यक्रम + टूर डायरी + मास्टर डेटा)',''],
+        ['',''],
+        ['कुल डाकघर (Total offices)',total],
+        ['पूर्ण (Done)',done],
+        ['बाक़ी (Pending)',total-done],
+        ['',''],
+        ['स्रोत अनुसार (by source — date actually used)',''],
+        ['   डायरी (Tour Diary — inspection journey)',bySrc['डायरी']||0],
+        ['   App (sdi_prog_2026_v1.inspDate)',bySrc['App']||0]];
+      var sheet1=mergeSheetXml(hdr,data,[8,34,22,18,18,20,22,16],8);
+      var sheet2=mergeSheetXml(['मद (Item)','मान (Value)'],summary,[46,18],0);
+      var zip=new JSZip();
+      zip.file('[Content_Types].xml',MERGE_CT);
+      zip.folder('_rels').file('.rels',MERGE_RELS);
+      var xl=zip.folder('xl');
+      xl.file('workbook.xml',MERGE_WB);
+      xl.file('styles.xml',MERGE_STYLES);
+      xl.folder('_rels').file('workbook.xml.rels',MERGE_WBRELS);
+      xl.folder('worksheets').file('sheet1.xml',sheet1);
+      xl.folder('worksheets').file('sheet2.xml',sheet2);
+      var d=new Date();
+      var ds=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+      var fname='Inspection_List_Updated_'+ds+'.xlsx';
+      zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}).then(function(blob){
+        var a=document.createElement('a');
+        a.href=URL.createObjectURL(blob);a.download=fname;
+        document.body.appendChild(a);a.click();
+        setTimeout(function(){URL.revokeObjectURL(a.href);if(a.parentNode)a.parentNode.removeChild(a);},1500);
+        if(typeof window.showToast==='function')window.showToast('📥 '+fname+' डाउनलोड हो रहा है');
+      });
+    }catch(err){
+      console.error('Inspection list download failed:',err);
+      alert('सूची डाउनलोड नहीं हो सकी: '+(err&&err.message?err.message:err));
+    }
+  };
+
   function colToIdx(letters){
     var n=0;
     for(var i=0;i<letters.length;i++)n=n*26+(letters.charCodeAt(i)-64);
@@ -12180,6 +12405,8 @@ const MASTER_DATA = {
   // ------------------------------------------------------------------
   function markBOInspFinal(boId, finalDate, inspDateISO, boTAName, boDist, boName) {
     var bo = MASTER_DATA[boId];
+    // ITEM 3: इस निरीक्षण से पहले की "विगत निरीक्षण तिथि" अभी (अधिलेखन से पहले) पकड़ लें।
+    var prevLast = (bo && ((bo.last_inspection) || (bo.inspection_history && bo.inspection_history.last_inspection_date))) || "";
     setBOInspected(boId, true, finalDate);
     try {
       if (bo) {
@@ -12196,7 +12423,8 @@ const MASTER_DATA = {
       }
     } catch (e) { console.warn("Master data update failed:", e); }
     try {
-      if (window.setProgInspectionDate && bo && bo.bo_name_hi) window.setProgInspectionDate(bo.bo_name_hi, finalDate);
+      // ITEM 3: inspDate के साथ lastDate भी आगे बढ़ाएँ (roll forward)।
+      if (window.setProgInspectionRoll && bo && bo.bo_name_hi) window.setProgInspectionRoll(bo.bo_name_hi, finalDate, prevLast);
     } catch (e) { console.warn("Programme date update failed:", e); }
     try {
       if (typeof lastInspectionDateInput !== "undefined" && lastInspectionDateInput) lastInspectionDateInput.value = finalDate;
