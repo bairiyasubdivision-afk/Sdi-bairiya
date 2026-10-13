@@ -12771,21 +12771,17 @@ const MASTER_DATA = {
       else el.value = "";
     });
   }
-  // ITEM 2 (v?) — "आख़िरी निरीक्षण किसके द्वारा" चयन को सेट करें। मूल रूप से केवल तीन
-  // विकल्प (तत्कालीन निरीक्षक / तत्कालीन अधीक्षक / अधोहस्ताक्षरी)। पुराने मसौदों में यदि
-  // कोई स्वतंत्र (free-text) मान सहेजा हो, तो उसे खोने न दें — अस्थायी रूप से एक अतिरिक्त
-  // विकल्प जोड़कर चुन लें (data-legacy), जिसे अगली बार सेट करते समय हटा दिया जाता है।
+  // ITEM 2 (v?) — "आख़िरी निरीक्षण किसके द्वारा" चयन को सेट करें। खाना हमेशा केवल तीन
+  // विकल्प (तत्कालीन निरीक्षक / तत्कालीन अधीक्षक / अधोहस्ताक्षरी) + खाली "— चुनें —" ही दिखाए।
+  // किसी पुराने मसौदे में स्वतंत्र (free-text) मान सहेजा हो तो वह इन तीन में से नहीं है —
+  // इसलिए खाना खाली रहता है; कोई अतिरिक्त (पुराना) विकल्प नहीं जोड़ा जाता।
   var LAST_INSPECTOR_OPTIONS = ["तत्कालीन निरीक्षक", "तत्कालीन अधीक्षक", "अधोहस्ताक्षरी"];
   function setLastInspectorSelect(v) {
     var sel = document.getElementById("lastInspector");
     if (!sel) return;
     Array.prototype.slice.call(sel.querySelectorAll("option[data-legacy='1']")).forEach(function (o) { o.parentNode.removeChild(o); });
     v = (v == null ? "" : String(v)).trim();
-    if (v && LAST_INSPECTOR_OPTIONS.indexOf(v) === -1) {
-      var o = document.createElement("option");
-      o.value = v; o.textContent = v + " (पुराना मान)"; o.setAttribute("data-legacy", "1");
-      sel.appendChild(o);
-    }
+    if (LAST_INSPECTOR_OPTIONS.indexOf(v) === -1) v = "";
     sel.value = v;
   }
   try { window.setLastInspectorSelect = setLastInspectorSelect; } catch (e) {}
