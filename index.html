@@ -1759,7 +1759,10 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       h+='<td style="white-space:nowrap;">'+escapeHtml(r.name||'')+'</td>';
       h+='<td><input type="text" '+inSt+' value="'+escapeAttr(r.ao||'')+'" onchange="progCellEdit('+i+',\'ao\',this.value)"></td>';
       h+='<td><input type="text" '+inSt+' value="'+escapeAttr(r.inspector||'')+'" onchange="progCellEdit('+i+',\'inspector\',this.value)"></td>';
-      h+='<td><input type="text" '+inSt+' value="'+escapeAttr(r.lastDate||'')+'" onchange="progCellEdit('+i+',\'lastDate\',this.value)"></td>';
+      // ITEM 2 (v7.4): "Last Inspection" कॉलम में केवल पिछले साल की तारीख़ दिखाएँ
+      // (चालू साल की हो तो खाली) — भंडारित मान जैसा है वैसा ही रहता है।
+      var _dispLast=(window.sdiPrevYearOnly?window.sdiPrevYearOnly(r.lastDate):(r.lastDate||''));
+      h+='<td><input type="text" '+inSt+' value="'+escapeAttr(_dispLast)+'" onchange="progCellEdit('+i+',\'lastDate\',this.value)"></td>';
       h+='<td><input type="text" '+inSt+' style="min-width:44px;width:60px;" value="'+escapeAttr(r.days||'')+'" onchange="progCellEdit('+i+',\'days\',this.value)"></td>';
       h+='<td><input type="text" '+inSt+' value="'+escapeAttr(r.month||'')+'" onchange="progCellEdit('+i+',\'month\',this.value)"></td>';
       // निरीक्षण तिथि सेल: कार्यक्रम में तिथि न हो पर डायरी में निरीक्षण दर्ज हो, तो
@@ -1895,7 +1898,9 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     var row=progFindRow(boNameHi,rows);
     if(!row)return null;
     row.inspDate=inspDate;
-    if(prevLastDate)row.lastDate=prevLastDate;
+    // ITEM 2 (v7.4): lastDate में कभी चालू साल की तारीख़ न जाए — केवल पिछले साल की।
+    var _pv=(window.sdiPrevYearOnly?window.sdiPrevYearOnly(prevLastDate):'');
+    if(_pv)row.lastDate=_pv;
     saveProgRows(rows);
     if(document.getElementById('progTableWrap'))renderProgTable();
     return row.name;
@@ -1977,7 +1982,7 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       out.push({
         sn:(row.sn!==undefined?row.sn:(i+1)),
         name:row.name||'', ao:row.ao||'', month:row.month||'',
-        last:(row.lastDate||''),
+        last:(window.sdiPrevYearOnly?window.sdiPrevYearOnly(row.lastDate):(row.lastDate||'')),
         date:date, src:src,
         status: date?'पूर्ण':'बाक़ी'
       });
@@ -2807,6 +2812,40 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     if(typeof refreshAutoBackupInfo==='function') refreshAutoBackupInfo();
   };
   function pad2(n){return n<10?'0'+n:''+n;};
+  // ------------------------------------------------------------------
+  // ITEM 2 (v7.4) — "पिछला/विगत निरीक्षण तिथि" हमेशा पिछले साल की।
+  // ये साझा helper पूरे ऐप (Data tab + Inspection tool दोनों) में एक ही
+  // कार्यान्वयन देते हैं। निरीक्षण-चक्र का साल = #inspectionDate का साल
+  // (डिफ़ॉल्ट: आज), वरना मौजूदा साल — इससे अगले साल (2027) भी सही चलेगा।
+  // ------------------------------------------------------------------
+  window.sdiInspCycleYear=function(){
+    var el=document.getElementById('inspectionDate');
+    var v=(el&&el.value)||'';
+    var m=/^(\d{4})-/.exec(v); // ISO yyyy-mm-dd
+    return m?parseInt(m[1],10):new Date().getFullYear();
+  };
+  window.sdiDateYear=function(s){
+    var p=String(s==null?'':s).trim().replace(/\//g,'.').split('.');
+    if(p.length!==3)return 0;
+    var y=parseInt(p[2],10);
+    if(!y)return 0;
+    if(String(p[2]).length===2)y=2000+y; // 2-अंकीय साल भी संभालें
+    return y;
+  };
+  window.sdiDateSortKey=function(s){
+    var p=String(s==null?'':s).trim().replace(/\//g,'.').split('.');
+    if(p.length!==3)return '';
+    var y=String(p[2]).length===2?('20'+p[2]):String(p[2]);
+    return y+('0'+p[1]).slice(-2)+('0'+p[0]).slice(-2);
+  };
+  // किसी तारीख़ को तभी लौटाएँ जब उसका साल निरीक्षण-चक्र के साल से छोटा हो — वरना खाली।
+  // कोई अंदाज़ा नहीं: अर्ह तारीख़ न हो तो खाली लौटता है।
+  window.sdiPrevYearOnly=function(ddmmyyyy){
+    var s=String(ddmmyyyy==null?'':ddmmyyyy).trim();
+    if(!s)return '';
+    var y=window.sdiDateYear(s);
+    return (y&&y<window.sdiInspCycleYear())?s:'';
+  };
   window.importData=function(event){
     var file=event.target.files[0];
     if(!file)return;
@@ -3258,8 +3297,10 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       ? ('Last backup: '+new Date(last).toLocaleString())
       : 'No backup taken yet.';
   }
+  var _autoBackupPending=false;
   function maybeAutoBackup(){
     try{
+      if(_autoBackupPending)return; // एक ही समय में दो डाउनलोड न हों
       var cfg=getAutoBackupSettings();
       if(!cfg.enabled)return;
       var last=localStorage.getItem('auto_backup_last');
@@ -3269,8 +3310,20 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
         // Small delay so it never fires before the page has finished
         // painting, and so it doesn't fire twice from init() + a manual
         // toggle-on happening in the same tick.
-        setTimeout(function(){ window.exportData(true); }, 2500);
+        _autoBackupPending=true;
+        setTimeout(function(){ _autoBackupPending=false; window.exportData(true); }, 2500);
       }
+    }catch(e){ _autoBackupPending=false; }
+  }
+  // ITEM 1 (v7.4) — auto-backup को भरोसेमंद बनाएँ: ऐप खुला रहते दिन बदलने पर,
+  // और ऐप फिर सामने आते ही, तथा हर 30 मिनट पर नियमित रूप से पुनः जाँचें — ताकि
+  // "दैनिक" बैकअप चुपचाप छूट न जाए। (डाउनलोड होते ही auto_backup_last अपडेट हो
+  // जाता है, इसलिए दोहराव नहीं होता।)
+  function scheduleAutoBackupChecks(){
+    try{
+      window.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible')maybeAutoBackup(); });
+      window.addEventListener('focus',function(){ maybeAutoBackup(); });
+      setInterval(maybeAutoBackup,30*60*1000);
     }catch(e){}
   }
 
@@ -3309,9 +3362,17 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
           MASTER_DATA[bid].device.imei=b.device_imei;
           MASTER_DATA[bid].device.mobile_number=b.device_mobile;
           if(!MASTER_DATA[bid].inspection_history)MASTER_DATA[bid].inspection_history={};
-          MASTER_DATA[bid].inspection_history.last_inspection_date=b.last_inspection;
-          MASTER_DATA[bid].inspection_history.proposed_inspection_month=b.proposed_inspection_month;
-          MASTER_DATA[bid].inspection_history.compliance_received_date=b.compliance_date;
+          var _ih=MASTER_DATA[bid].inspection_history;
+          // ITEM 2 (v7.4): नई (चालू साल की) तारीख़ लिखने से पहले मौजूदा तारीख़ को
+          // prev_inspection_date में सुरक्षित रखें, ताकि पिछली-साल की तारीख़ नष्ट न हो।
+          var _seedPrev=_ih.last_inspection_date||'';
+          if(b.last_inspection && _seedPrev && _seedPrev!==b.last_inspection && !_ih.prev_inspection_date){
+            _ih.prev_inspection_date=_seedPrev;
+          }
+          // खाली मान से सुरक्षित तारीख़ को मिटाएँ नहीं।
+          if(b.last_inspection)_ih.last_inspection_date=b.last_inspection;
+          _ih.proposed_inspection_month=b.proposed_inspection_month;
+          _ih.compliance_received_date=b.compliance_date;
         }
       });
     }
@@ -3343,6 +3404,7 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     renderAll();
     _mergeInitUndoBtn();
     maybeAutoBackup();
+    scheduleAutoBackupChecks();
   }
 
   if(document.readyState==='loading'){
@@ -5819,8 +5881,10 @@ function fillMasterData(doc, bodyEl, bo, inspectionDateStr) {
   // Table 0: header/admin block
   const t0 = tables[0];
   const t0rows = getTableRows(t0);
-  if (history.last_inspection_date && t0rows.length > 8) {
-    setCellText(doc, getRowCells(t0rows[8])[2], history.last_inspection_date);
+  // ITEM 2 (v7.4) — रिपोर्ट का "पिछला निरीक्षण दिनांक" भी हमेशा पिछले साल की तारीख़।
+  var _prevInsp = (typeof window.sdiPreviousInspectionDate === "function") ? window.sdiPreviousInspectionDate(bo.bo_id) : "";
+  if (_prevInsp && t0rows.length > 8) {
+    setCellText(doc, getRowCells(t0rows[8])[2], _prevInsp);
   }
 
   // Table 1: villages served
@@ -9779,29 +9843,39 @@ const MASTER_DATA = {
   // ---------------------------------------------------------------------
   function inspectionYearFor() {
     // निरीक्षण-वर्ष = #inspectionDate (डिफ़ॉल्ट: आज) का साल; वरना मौजूदा साल
-    var el = document.getElementById("inspectionDate");
-    var v = (el && el.value) || "";
-    var m = /^(\d{4})-/.exec(v); // ISO yyyy-mm-dd
-    if (m) return parseInt(m[1], 10);
-    return new Date().getFullYear();
+    // (एक ही कार्यान्वयन — window.sdiInspCycleYear — पूरे ऐप में साझा)
+    return (typeof window.sdiInspCycleYear === "function") ? window.sdiInspCycleYear() : new Date().getFullYear();
   }
   function previousYearOnlyDate(ddmmyyyy) {
-    var s = (ddmmyyyy || "").trim();
-    var parts = s.split(".");
-    if (parts.length !== 3) return "";
-    var y = parseInt(parts[2], 10);
-    if (!y) return "";
-    return y < inspectionYearFor() ? s : "";
+    return (typeof window.sdiPrevYearOnly === "function") ? window.sdiPrevYearOnly(ddmmyyyy) : "";
   }
-  // BO के लिए डिफ़ॉल्ट "पिछला निरीक्षण दिनांक" — IR Final तारीख़ (प्रामाणिक) को
-  // master-data history पर वरीयता, बिलकुल dropdown label की तरह — पर पिछले-साल
-  // का नियम दोनों पर लागू।
-  function defaultLastInspectionDate(boId) {
+  // ITEM 2 (v7.4) — "पिछला/विगत निरीक्षण तिथि" के सारे उम्मीदवार जुटाकर उनमें से
+  // सबसे नई वह तारीख़ लौटाएँ जिसका साल निरीक्षण-चक्र के साल से छोटा हो।
+  // (IR Final / master-data latest / सुरक्षित prev — सब पर पिछले-साल का नियम।)
+  // कोई उम्मीदवार अर्ह न हो तो खाली लौटाएँ — कोई अंदाज़ा नहीं।
+  function previousInspectionDate(boId) {
     var bo = (typeof MASTER_DATA !== "undefined" && MASTER_DATA[boId]) || {};
     var hist = bo.inspection_history || {};
-    var canonical = getInspFinalDate(boId) || hist.last_inspection_date || "";
-    return previousYearOnlyDate(canonical);
+    var cand = [];
+    var fin = getInspFinalDate(boId); if (fin) cand.push(fin);
+    if (hist.last_inspection_date) cand.push(hist.last_inspection_date);
+    if (hist.prev_inspection_date) cand.push(hist.prev_inspection_date);
+    if (bo.prev_inspection) cand.push(bo.prev_inspection);
+    var cycleY = inspectionYearFor(), best = "", bestKey = "";
+    cand.forEach(function (s) {
+      var y = window.sdiDateYear(s);
+      if (y && y < cycleY) {
+        var k = window.sdiDateSortKey(s);
+        if (k > bestKey) { bestKey = k; best = s; }
+      }
+    });
+    return best;
   }
+  // BO के लिए डिफ़ॉल्ट "पिछला निरीक्षण दिनांक" — ऊपर वाला पिछले-साल का नियम ही लागू।
+  function defaultLastInspectionDate(boId) {
+    return previousInspectionDate(boId);
+  }
+  try { window.sdiPreviousInspectionDate = previousInspectionDate; } catch (e) {}
 
   // Sort BOs: pending (not done) first starting from current month, done at bottom
   // Current month is computed at load time so the sort stays correct all year
@@ -9896,10 +9970,8 @@ const MASTER_DATA = {
     const boName = boEnName(bo).disp;
     const soName = SO_NAME_EN[bo.so_name_hi] || bo.so_name_hi;
     var label = boName + " BO — " + soName + " SO — PIN " + pin;
-    var inspHist = bo.inspection_history || {};
-    var lastDate = inspHist.last_inspection_date || "";
-    var finalDate = getInspFinalDate(bo["bo_id"] || "");
-    if (finalDate) lastDate = finalDate;
+    // ITEM 2 (v7.4) — dropdown में "Last:" हमेशा पिछले साल की तारीख़ (2026 → 2025)।
+    var lastDate = previousInspectionDate(bo["bo_id"] || "");
     if (lastDate) label += " — Last: " + lastDate;
     return label;
   }
@@ -9958,7 +10030,7 @@ const MASTER_DATA = {
       var bo = MASTER_DATA[boId];
       var boName = bo ? bo.bo_name_hi : boId;
       var hist = (bo && bo.inspection_history) || {};
-      var lastDate = hist.last_inspection_date || "—";
+      var lastDate = previousInspectionDate(boId) || "—";
       var propMonth = hist.proposed_inspection_month || "—";
       if (isBOInspected(boId)) {
         inspStatusText.textContent = boName + " — निरीक्षण पूर्ण ✅ (पिछला: " + lastDate + " | प्रस्तावित: " + propMonth + ")";
@@ -12662,13 +12734,21 @@ const MASTER_DATA = {
     try {
       if (bo) {
         if (!bo.inspection_history) bo.inspection_history = {};
+        // ITEM 2 (v7.4): नई तारीख़ को latest रखें, पर पुरानी को prev_inspection_date में
+        // सुरक्षित रखें — इतिहास कभी न खोएँ (अगले साल यही prev, पिछली-साल की तारीख़ बनेगी)।
+        var _oldHistLast = bo.inspection_history.last_inspection_date || "";
+        if (_oldHistLast && _oldHistLast !== finalDate) bo.inspection_history.prev_inspection_date = _oldHistLast;
         bo.inspection_history.last_inspection_date = finalDate;
       }
       var rawMd = localStorage.getItem("sdi_master_data");
       if (rawMd) {
         var mdObj = JSON.parse(rawMd);
         if (mdObj && mdObj.boRecords && mdObj.boRecords[boId]) {
-          mdObj.boRecords[boId].last_inspection = finalDate;
+          var _rec = mdObj.boRecords[boId];
+          // ITEM 2 (v7.4): भंडारण में भी पिछली तारीख़ सुरक्षित रखें (latest = नई तारीख़)।
+          var _oldRecLast = _rec.last_inspection || "";
+          if (_oldRecLast && _oldRecLast !== finalDate) _rec.prev_inspection = _oldRecLast;
+          _rec.last_inspection = finalDate;
           localStorage.setItem("sdi_master_data", JSON.stringify(mdObj));
         }
       }
@@ -12678,12 +12758,15 @@ const MASTER_DATA = {
       if (window.setProgInspectionRoll && bo && bo.bo_name_hi) window.setProgInspectionRoll(bo.bo_name_hi, finalDate, prevLast);
     } catch (e) { console.warn("Programme date update failed:", e); }
     try {
-      if (typeof lastInspectionDateInput !== "undefined" && lastInspectionDateInput) lastInspectionDateInput.value = finalDate;
+      // ITEM 2 (v7.4): फ़ॉर्म का "पिछला निरीक्षण दिनांक" चालू साल की नई तारीख़ नहीं,
+      // बल्कि पिछले साल की तारीख़ दिखाए (2026 → 2025) — अधिकारी का नियम।
+      var _prevForForm = defaultLastInspectionDate(boId);
+      if (typeof lastInspectionDateInput !== "undefined" && lastInspectionDateInput) lastInspectionDateInput.value = _prevForForm;
       var rawDraft = localStorage.getItem(INSP_DRAFT_KEY_PREFIX + boId);
       if (rawDraft) {
         var draftObj = JSON.parse(rawDraft);
-        if (draftObj && draftObj.lastInspectionDate !== finalDate) {
-          draftObj.lastInspectionDate = finalDate;
+        if (draftObj && draftObj.lastInspectionDate !== _prevForForm) {
+          draftObj.lastInspectionDate = _prevForForm;
           localStorage.setItem(INSP_DRAFT_KEY_PREFIX + boId, JSON.stringify(draftObj));
         }
       }
@@ -13364,7 +13447,7 @@ generateBtn.addEventListener("click", async () => {
     var _hdrBo = MASTER_DATA[boSelect.value] || {};
     var _hdrHist = _hdrBo.inspection_history || {};
     var _hdrDefaults = {
-      lastInspectionDate: getInspFinalDate(boSelect.value) || _hdrHist.last_inspection_date || "",
+      lastInspectionDate: previousInspectionDate(boSelect.value) || "",
       supVisitDate: _hdrHist.sup_visit_date || "",
       boOpeningDate: _hdrHist.bo_opening_date || "",
       sdiVisitDates: _hdrHist.sdi_visit_dates || "",
@@ -13446,10 +13529,12 @@ generateBtn.addEventListener("click", async () => {
       // FIX: ignore a draft stamped with a different BO id (cross-contamination)
       if (d && d.boId && d.boId !== boId) { console.warn("Draft/BO mismatch ignored:", boId, d.boId); return false; }
 
-      // The IR Final date (recorded completed inspection) is authoritative —
-      // a stale draft must never override it for "last inspection date".
+      // ITEM 2 (v7.4) — "पिछला निरीक्षण दिनांक" हमेशा पिछले साल की होनी चाहिए,
+      // इसलिए चालू साल की IR Final तारीख़ कभी न दिखाएँ। पहले canonical पिछली-साल
+      // की तारीख़; न मिले तो मसौदे की तारीख़ को भी पिछले-साल के नियम से छानें।
       var irFinalDt = getInspFinalDate(boId);
-      if (irFinalDt) d.lastInspectionDate = irFinalDt;
+      var _prevDt = defaultLastInspectionDate(boId);
+      d.lastInspectionDate = _prevDt || previousYearOnlyDate(d.lastInspectionDate) || "";
 
       // Restore simple fields
       const fieldMap = {
