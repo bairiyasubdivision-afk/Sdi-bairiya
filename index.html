@@ -1002,7 +1002,12 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
   <div class="card">
     <h2><span class="step-badge">2</span> निरीक्षण तिथि</h2>
     <label for="inspectionDate">निरीक्षण तिथि (Inspection date)</label>
-    <input type="date" id="inspectionDate">
+    <!-- ITEM 3 (v?) — टूर डायरी वाला ही कैलेंडर (जर्नी/छुट्टी/अवकाश के निशान) दिखाकर तिथि चुनें।
+         नीचे दिए इनपुट में हाथ से तारीख़ लिखने की सुविधा भी बरकरार है। -->
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <input type="date" id="inspectionDate" style="flex:1;min-width:160px;">
+      <button type="button" class="btn btn-outline btn-sm" onclick="inspOpenCal()">📅 कैलेंडर से चुनें</button>
+    </div>
 
     <div class="row2">
       <div>
@@ -1011,7 +1016,13 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       </div>
       <div>
         <label for="lastInspector">आख़िरी निरीक्षण किसके द्वारा <span class="qref">(सारणी 1, क्रम 9)</span></label>
-        <input type="text" id="lastInspector" placeholder="नाम">
+        <!-- ITEM 2 (v?) — केवल तीन विकल्प: तत्कालीन निरीक्षक / तत्कालीन अधीक्षक / अधोहस्ताक्षरी -->
+        <select id="lastInspector">
+          <option value="">— चुनें —</option>
+          <option value="तत्कालीन निरीक्षक">तत्कालीन निरीक्षक</option>
+          <option value="तत्कालीन अधीक्षक">तत्कालीन अधीक्षक</option>
+          <option value="अधोहस्ताक्षरी">अधोहस्ताक्षरी</option>
+        </select>
       </div>
     </div>
 
@@ -1735,6 +1746,10 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     var rows=getProgRows();
     // डायरी-आधारित तिथियाँ: टूर डायरी के वार्षिक निरीक्षणों से, केवल प्रदर्शन हेतु (कुछ भी सहेजा नहीं जाता)।
     var diaryMap=progDiaryDates(rows);
+    // ITEM 1 (v?) — पंक्ति "अंतिम रूप से निरीक्षित" तभी जब ऐप का अपना 'निरीक्षण पूर्ण'
+    // चिह्न (sdi_insp_done_v1) या टूर डायरी की वार्षिक-निरीक्षण यात्रा मौजूद हो। अकेली
+    // कार्यक्रम inspDate (जैसे चंद दियर / 22.09) से कोई पंक्ति अपने-आप पूर्ण नहीं दिखेगी।
+    var finalMap=progFinalMap(rows);
     var q=((document.getElementById('progSearch')||{}).value||'').trim().toLowerCase();
     var inSt='style="width:100%;min-width:90px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:0.82rem;font-family:inherit;"';
     // डायरी-व्युत्पन्न तिथि-सेल की अलग शैली (इटैलिक + डैशड बॉर्डर + हल्का नीला) — ताकि वह
@@ -1748,8 +1763,10 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       var nm=(r.name||'').toLowerCase();
       if(q&&nm.indexOf(q)===-1)return;
       var diaryDate=diaryMap[i]||'';
-      // पंक्ति 'पूर्ण' तब जब कार्यक्रम में तिथि हो या डायरी में निरीक्षण दर्ज हो (प्रदर्शन-स्तर पर)।
-      var done=!!(r.inspDate&&String(r.inspDate).trim())||!!diaryDate;
+      // ITEM 1 (v?) — पंक्ति 'पूर्ण' तभी जब ऐप का अंतिम चिह्न (sdi_insp_done_v1) या डायरी-यात्रा हो।
+      // अकेली कार्यक्रम inspDate से 'पूर्ण' नहीं — तारीख़ भंडारित रहती है, केवल अंतिम नहीं मानी जाती।
+      var fin=finalMap[i]||null;
+      var done=!!(fin&&fin.final);
       if(doneOnly&&!done)return;
       shown++;
       h+='<tr'+(done?' style="background:#e8f6ec;"':'')+'>';
@@ -1772,7 +1789,9 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       if(diaryDate&&!(r.inspDate&&String(r.inspDate).trim())){
         h+='<td style="vertical-align:top;"><input type="text" '+inStDiary+' data-diary="1" title="टूर डायरी से (केवल प्रदर्शन — सहेजा नहीं गया)" value="'+escapeAttr(diaryDate)+'" onchange="progCellEdit('+i+',\'inspDate\',this.value)" placeholder="dd.mm.yyyy"><div style="font-size:0.66rem;color:#6b7f95;margin-top:2px;white-space:nowrap;">डायरी से</div></td>';
       }else{
-        h+='<td><input type="text" '+inSt+' style="background:'+(done?'#d9f2e0':'#fff')+';font-weight:600;" value="'+escapeAttr(r.inspDate||'')+'" onchange="progCellEdit('+i+',\'inspDate\',this.value)" placeholder="dd.mm.yyyy"></td>';
+        // ITEM 1 (v?) — भंडारित inspDate दिखता रहेगा, पर जब तक अंतिम चिह्न/डायरी न हो,
+        // पंक्ति "अंतिम नहीं" के रूप में ही रहेगी (हरा नहीं)। तारीख़ मिटाई नहीं जाती।
+        h+='<td style="vertical-align:top;"><input type="text" '+inSt+' style="background:'+(done?'#d9f2e0':'#fff')+';font-weight:600;" value="'+escapeAttr(r.inspDate||'')+'" onchange="progCellEdit('+i+',\'inspDate\',this.value)" placeholder="dd.mm.yyyy">'+((r.inspDate&&String(r.inspDate).trim()&&!done)?'<div style="font-size:0.66rem;color:#c62828;margin-top:2px;white-space:nowrap;">अंतिम नहीं</div>':'')+'</td>';
       }
       h+='<td><input type="text" '+inSt+' value="'+escapeAttr(r.remark||'')+'" onchange="progCellEdit('+i+',\'remark\',this.value)"></td>';
       h+='</tr>';
@@ -1972,19 +1991,23 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       });
     });
     var out=[];
+    var finMap=progFinalMap(rows);
     rows.forEach(function(row,i){
       var dd=diaryByRow[i]||'';
       var appD=mergeNormDate(row.inspDate);
+      var fin=finMap[i]||null;
       var date,src;
       if(dd){date=dd;src='डायरी';}          // डायरी (वास्तविक निरीक्षण यात्रा) को प्राथमिकता
       else if(appD){date=appD;src='App';}
       else {date=null;src=null;}
+      // ITEM 1 (v?) — "अंतिम रूप से पूर्ण" तभी जब ऐप का चिह्न या डायरी-यात्रा हो; अकेली inspDate नहीं।
+      if(!date && fin && fin.final && fin.date){ date=mergeNormDate(fin.date); src='App'; }
       out.push({
         sn:(row.sn!==undefined?row.sn:(i+1)),
         name:row.name||'', ao:row.ao||'', month:row.month||'',
         last:(window.sdiPrevYearOnly?window.sdiPrevYearOnly(row.lastDate):(row.lastDate||'')),
         date:date, src:src,
-        status: date?'पूर्ण':'बाक़ी'
+        status: (fin&&fin.final)?'पूर्ण':'बाक़ी'
       });
     });
     return out;
@@ -2011,6 +2034,34 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
         var r=mergeFindRow(hi,rows);
         if(r)byRow[rows.indexOf(r)]=j.date;
       });
+    });
+    return byRow;
+  }
+  // ============================================================
+  // ITEM 1 (v?) — किसी कार्यक्रम-पंक्ति का BO "अंतिम रूप से निरीक्षित" तब माना जाएगा जब
+  // ऐप का अपना 'निरीक्षण पूर्ण' चिह्न (sdi_insp_done_v1) उस BO के लिए मौजूद हो, या उस BO
+  // के लिए टूर डायरी में वार्षिक-निरीक्षण की यात्रा दर्ज हो। अकेली कार्यक्रम inspDate
+  // (जैसे चंद दियर / 22.09) से कोई BO अपने-आप "पूर्ण" नहीं दिखेगा।
+  // मिलान के लिए वही helpers: progDiaryDates (डायरी) + progFindRow (BO नाम → पंक्ति)।
+  // ============================================================
+  function progFinalMap(rows){
+    var byRow={};
+    var diary=progDiaryDates(rows);
+    Object.keys(diary).forEach(function(k){ byRow[k]={final:true,src:'diary',date:diary[k]}; });
+    var done={};
+    try{ done=JSON.parse(localStorage.getItem('sdi_insp_done_v1')||'{}')||{}; }catch(e){ done={}; }
+    var boRecords={};
+    try{ var md=JSON.parse(localStorage.getItem('sdi_master_data')||'{}'); boRecords=(md&&md.boRecords)||{}; }catch(e){}
+    Object.keys(boRecords).forEach(function(bid){
+      if(!done[bid])return;
+      var bo=boRecords[bid]; if(!bo||!bo.bo_name_hi)return;
+      var r=progFindRow(bo.bo_name_hi,rows);
+      if(!r)return;
+      var idx=rows.indexOf(r);
+      if(idx<0)return;
+      var dv=(typeof done[bid]==='string'&&done[bid])?done[bid]:'';
+      if(byRow[idx]){ byRow[idx].src='done'; if(dv)byRow[idx].date=dv; }
+      else byRow[idx]={final:true,src:'done',date:dv};
     });
     return byRow;
   }
@@ -2156,9 +2207,9 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
   window.expSelectAll=function(on){
     var rows=getProgRows();
     var doneOnly=!!(document.getElementById('progDoneOnly')||{}).checked;
-    var diary=progDiaryDates(rows);
+    var finMap=progFinalMap(rows);
     rows.forEach(function(r,i){
-      var done=!!(r.inspDate&&String(r.inspDate).trim())||!!diary[i];
+      var done=!!(finMap[i]&&finMap[i].final);
       if(on){ if(!doneOnly||done)expSel[r.name]=true; }
       else delete expSel[r.name];
     });
@@ -2237,10 +2288,10 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
   };
   window.exportAllDoneInspections=function(){
     var rows=getProgRows();
-    var diary=progDiaryDates(rows);
+    var finMap=progFinalMap(rows);
     var names=[];
     rows.forEach(function(r,i){
-      var done=!!(r.inspDate&&String(r.inspDate).trim())||!!diary[i];
+      var done=!!(finMap[i]&&finMap[i].final);
       if(done)names.push(r.name);
     });
     if(!names.length){ if(typeof showToast==='function')showToast('कोई पूर्ण निरीक्षण नहीं मिला।'); return; }
@@ -10177,6 +10228,105 @@ const MASTER_DATA = {
   }
 
   // ---------------------------------------------------------------------
+  // ITEM 3 (v?) — निरीक्षण तिथि के लिए टूर डायरी का ही कैलेंडर।
+  // renderCalendar की तरह ही निशान (has-journey / journey-away / is-holiday /
+  // अवकाश) दिखाते हैं — वही ग्लोबल डेटा (journeys / holidays / leaves /
+  // computeJourneySpan / getLeaveForDate) और वही CSS क्लास दोबारा उपयोग करते हैं।
+  // टूर डायरी के अपने कैलेंडर/selectDate को छुआ नहीं जाता — यह एक अलग (केवल-पढ़ने
+  // वाला) रेंडर है; किसी दिन टैप करने पर केवल निरीक्षण तिथि सेट होती है।
+  // ---------------------------------------------------------------------
+  var _inspCalMonth = null, _inspCalYear = null;
+  function inspPad2(n) { return n < 10 ? "0" + n : "" + n; }
+  function inspCalInit() {
+    var v = (inspectionDateInput && inspectionDateInput.value) || "";
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+    var d = m ? new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10)) : new Date();
+    _inspCalYear = d.getFullYear(); _inspCalMonth = d.getMonth();
+  }
+  function inspRenderCal() {
+    var mi = _inspCalMonth, y = _inspCalYear;
+    var dim = new Date(y, mi + 1, 0).getDate();
+    var firstDay = new Date(y, mi, 1).getDay();
+    var span = (typeof computeJourneySpan === "function") ? computeJourneySpan() : {};
+    var h = '<thead><tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr></thead><tbody>';
+    var curISO = (inspectionDateInput && inspectionDateInput.value) || "";
+    var day = 1;
+    for (var w = 0; w < 6; w++) {
+      h += '<tr>';
+      for (var d = 0; d < 7; d++) {
+        if (w === 0 && d < firstDay) { h += '<td class="other-month"></td>'; continue; }
+        if (day > dim) { h += '<td class="other-month"></td>'; continue; }
+        var ds = inspPad2(day) + '.' + inspPad2(mi + 1) + '.' + y;
+        var dt = new Date(y, mi, day), dn = dt.getDay();
+        var hasJ = (typeof journeys !== "undefined") && journeys.some(function (j) { return j.date === ds; });
+        var awayDay = span[ds] || '';
+        var isHol = (typeof holidays !== "undefined") && !!holidays[ds];
+        var lv = (typeof getLeaveForDate === "function") ? getLeaveForDate(ds) : null;
+        var cls = '';
+        if (hasJ) cls += 'has-journey '; else if (awayDay) cls += 'journey-away ';
+        if (isHol) cls += 'is-holiday ';
+        if (lv) { if (lv.type === 'RH') cls += 'is-leave-rh '; else if (lv.type === 'CL') cls += 'is-leave-cl '; else if (lv.type === 'EL') cls += 'is-leave-el '; }
+        var selISO = inspPad2(y) + '-' + inspPad2(mi + 1) + '-' + inspPad2(day);
+        if (curISO === selISO) cls += 'selected';
+        var sunCls = dn === 0 ? ' cal-day-sun' : '';
+        h += '<td class="' + cls + '" onclick="inspCalPick(\'' + ds + '\')"><span class="cal-day-num' + sunCls + '">' + day + '</span>';
+        if (hasJ) h += '<div class="cal-badge">journey' + (isHol ? ' (छुट्टी)' : '') + '</div>';
+        else if (awayDay) h += '<div class="cal-badge">journey (away)</div>';
+        else if (lv) { h += '<div class="cal-leave-badge ' + lv.type.toLowerCase() + '">' + lv.type + '</div>'; h += '<div class="cal-leave-label">' + (lv.type === 'RH' ? 'Restricted Holiday' : lv.type === 'CL' ? 'Casual Leave' : 'Earned Leave') + '</div>'; }
+        else if (isHol) { var hn = holidays[ds] || ''; if (hn.length > 10) hn = hn.substring(0, 9) + '..'; h += '<div class="cal-hol-badge">' + hn + '</div>'; }
+        h += '</td>'; day++;
+      }
+      h += '</tr>';
+      if (day > dim && w >= 4) break;
+    }
+    h += '</tbody>';
+    var tb = document.getElementById('inspCalTable');
+    if (tb) tb.innerHTML = h;
+    var lbl = document.getElementById('inspCalMonthLabel');
+    if (lbl) lbl.textContent = ['January','February','March','April','May','June','July','August','September','October','November','December'][mi] + ' ' + y;
+  }
+  window.inspCalPrev = function () { _inspCalMonth--; if (_inspCalMonth < 0) { _inspCalMonth = 11; _inspCalYear--; } inspRenderCal(); };
+  window.inspCalNext = function () { _inspCalMonth++; if (_inspCalMonth > 11) { _inspCalMonth = 0; _inspCalYear++; } inspRenderCal(); };
+  window.inspCalPick = function (ds) {
+    var p = String(ds).split('.'); if (p.length !== 3) return;
+    var iso = p[2] + '-' + p[1] + '-' + p[0];
+    if (inspectionDateInput) inspectionDateInput.value = iso;
+    window.inspCloseCal();
+    inspRefreshCycleDependent();
+  };
+  window.inspCloseCal = function () { var b = document.getElementById('inspCalModal'); if (b) b.style.display = 'none'; };
+  // ITEM 4 (v?) — निरीक्षण तिथि बदलते ही निरीक्षण-चक्र वर्ष बदल सकता है; इसलिए
+  // "पिछला/अंतिम निरीक्षण दिनांक" (पिछले-साल का नियम) और BO-ड्रॉपडाउन के लेबल ताज़ा करें —
+  // 2027 की तिथि चुनने पर 2026 की तारीख़ दिखने लगेगी।
+  function inspRefreshCycleDependent() {
+    try { if (typeof rebuildBOSelect === 'function') rebuildBOSelect(); } catch (e) {}
+    try { if (typeof lastInspectionDateInput !== 'undefined' && lastInspectionDateInput) lastInspectionDateInput.value = defaultLastInspectionDate(boSelect.value); } catch (e) {}
+  }
+  try { if (inspectionDateInput) inspectionDateInput.addEventListener('change', inspRefreshCycleDependent); } catch (e) {}
+  window.inspOpenCal = function () {
+    var b = document.getElementById('inspCalModal');
+    if (!b) {
+      b = document.createElement('div'); b.id = 'inspCalModal';
+      b.style.cssText = 'display:none;position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:10000;align-items:center;justify-content:center;padding:14px;';
+      b.innerHTML = '<div style="background:#fff;border-radius:12px;padding:14px;max-width:420px;width:100%;box-shadow:0 8px 30px rgba(0,0,0,.3);max-height:90vh;overflow:auto;">'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+        + '<button type="button" class="btn btn-outline btn-sm" onclick="inspCalPrev()">‹</button>'
+        + '<div id="inspCalMonthLabel" style="font-weight:700;color:#16213E;"></div>'
+        + '<button type="button" class="btn btn-outline btn-sm" onclick="inspCalNext()">›</button>'
+        + '</div>'
+        + '<div style="font-size:.72rem;color:#6b7f95;margin-bottom:6px;">टूर डायरी का कैलेंडर — हरा = जर्नी, लाल = छुट्टी, रंगीन = अवकाश। किसी दिन टैप करें।</div>'
+        + '<table class="calendar" id="inspCalTable"></table>'
+        + '<div style="text-align:right;margin-top:10px;"><button type="button" class="btn btn-outline btn-sm" onclick="inspCloseCal()">बंद करें</button></div>'
+        + '</div>';
+      document.body.appendChild(b);
+      b.onclick = function (e) { if (e.target === b) window.inspCloseCal(); };
+    }
+    inspCalInit();
+    inspRenderCal();
+    b.style.display = 'flex';
+  };
+
+  // ---------------------------------------------------------------------
   // Stock verification toggles (Q8 and its 4 sub-items)
   // ---------------------------------------------------------------------
   const STOCK_TOGGLES = [
@@ -12621,6 +12771,25 @@ const MASTER_DATA = {
       else el.value = "";
     });
   }
+  // ITEM 2 (v?) — "आख़िरी निरीक्षण किसके द्वारा" चयन को सेट करें। मूल रूप से केवल तीन
+  // विकल्प (तत्कालीन निरीक्षक / तत्कालीन अधीक्षक / अधोहस्ताक्षरी)। पुराने मसौदों में यदि
+  // कोई स्वतंत्र (free-text) मान सहेजा हो, तो उसे खोने न दें — अस्थायी रूप से एक अतिरिक्त
+  // विकल्प जोड़कर चुन लें (data-legacy), जिसे अगली बार सेट करते समय हटा दिया जाता है।
+  var LAST_INSPECTOR_OPTIONS = ["तत्कालीन निरीक्षक", "तत्कालीन अधीक्षक", "अधोहस्ताक्षरी"];
+  function setLastInspectorSelect(v) {
+    var sel = document.getElementById("lastInspector");
+    if (!sel) return;
+    Array.prototype.slice.call(sel.querySelectorAll("option[data-legacy='1']")).forEach(function (o) { o.parentNode.removeChild(o); });
+    v = (v == null ? "" : String(v)).trim();
+    if (v && LAST_INSPECTOR_OPTIONS.indexOf(v) === -1) {
+      var o = document.createElement("option");
+      o.value = v; o.textContent = v + " (पुराना मान)"; o.setAttribute("data-legacy", "1");
+      sel.appendChild(o);
+    }
+    sel.value = v;
+  }
+  try { window.setLastInspectorSelect = setLastInspectorSelect; } catch (e) {}
+
   function resetInspFormFields() {
     const ids = [
       "lastInspector", "supVisitDate", "boOpeningDate", "sdiVisitDates", "moVisitDates", "specialRemark",
@@ -12634,6 +12803,7 @@ const MASTER_DATA = {
       if (el.type === "checkbox") { el.checked = false; }
       else { el.value = ""; }
     });
+    setLastInspectorSelect("");
     // Reset BO balance readonly state
     if (boBalInput) { boBalInput.readOnly = false; boBalInput.style.background = ""; }
 
@@ -13555,6 +13725,7 @@ generateBtn.addEventListener("click", async () => {
         const el = document.getElementById(id);
         if (el) el.value = fieldMap[id] || "";
       });
+      setLastInspectorSelect(fieldMap.lastInspector);
       // Restore sameBalance checkbox
       if (d.same_balance && sameBalChk) {
         sameBalChk.checked = true;
