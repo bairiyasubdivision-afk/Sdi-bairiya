@@ -62,9 +62,10 @@
     .cal-right{flex:1 1 100%;min-width:0;}
     .calendar{font-size:0.72rem;}
     .calendar th{padding:4px 1px;font-size:0.62rem;}
-    .calendar td{height:42px;}
+    .calendar td{height:62px;}
     .cal-day-num{font-size:0.68rem;}
     .cal-badge{font-size:0.5rem;margin-top:10px;}
+    .cal-place{font-size:10.5px;}
     .cal-hol-badge{font-size:0.45rem;margin-top:10px;}
     .cal-leave-badge{font-size:0.45rem;margin-top:10px;}
     .holiday-legend{font-size:0.65rem;gap:8px;}
@@ -72,9 +73,10 @@
   @media(max-width:480px){
     .calendar{font-size:0.65rem;}
     .calendar th{padding:3px 1px;font-size:0.55rem;}
-    .calendar td{height:36px;}
+    .calendar td{height:58px;}
     .cal-day-num{font-size:0.6rem;}
     .cal-badge{font-size:0.45rem;margin-top:8px;}
+    .cal-place{font-size:10px;}
     .cal-hol-badge{font-size:0.4rem;margin-top:8px;}
     .cal-leave-badge{font-size:0.4rem;margin-top:8px;}
     .cal-leave-label{display:none;}
@@ -82,7 +84,7 @@
   }
   .calendar{width:100%;border-collapse:collapse;font-size:0.82rem;table-layout:fixed;}
   .calendar th{background:var(--navy);color:white;padding:7px 2px;text-align:center;font-weight:600;font-size:0.72rem;letter-spacing:0.5px;}
-  .calendar td{border:1px solid #e8e5e0;padding:0;text-align:center;height:52px;vertical-align:top;cursor:pointer;position:relative;transition:background 0.15s,box-shadow 0.15s;overflow:hidden;}
+  .calendar td{border:1px solid #e8e5e0;padding:0;text-align:center;height:60px;vertical-align:top;cursor:pointer;position:relative;transition:background 0.15s,box-shadow 0.15s;overflow:hidden;}
   .calendar td:hover{background:#fff8e7;box-shadow:inset 0 0 0 2px var(--gold);}
   .calendar td.has-journey{background:#d4edda;}
 .journey-away{background:#eef7ef;}
@@ -98,6 +100,9 @@
   .cal-day-num{font-size:0.75rem;color:#555;position:absolute;top:2px;left:3px;}
   .cal-day-sun{color:#dc3545;}
   .cal-badge{font-size:0.55rem;color:var(--green);margin-top:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px;}
+  /* v7.42 — जर्नी-दिन पर स्थान (place) — छोटा पर सुपाठ्य; लंबा नाम 2 पंक्तियों तक फिर ellipsis;
+     पूरा पाठ title/aria-label में (कभी खोता नहीं)। */
+  .cal-place{font-size:11px;line-height:1.15;color:#0f5132;font-weight:700;margin-top:1px;padding:0 2px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere;word-break:break-word;}
   .cal-hol-badge{font-size:0.5rem;color:#dc3545;margin-top:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px;}
   .cal-leave-badge{font-size:0.5rem;font-weight:700;margin-top:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 4px;border-radius:3px;display:inline-block;}
   .cal-leave-badge.rh{background:#bbdefb;color:#0d47a1;}
@@ -145,10 +150,18 @@
   .jl-edit{background:#1a73e8;color:white;border:none;border-radius:3px;width:22px;height:22px;cursor:pointer;font-size:0.8rem;display:inline-flex;align-items:center;justify-content:center;margin-right:2px;}
   .jl-edit:hover{background:#1557b0;}
 
-  .wl-table{width:100%;border-collapse:collapse;font-size:0.85rem;}
-  .wl-table th{background:var(--navy);color:white;padding:8px;text-align:left;}
-  .wl-table td{padding:6px 8px;border-bottom:1px solid #eee;}.wl-table td:first-child{font-weight:600;white-space:nowrap;width:110px;}
-  .wl-table input{width:100%;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:0.85rem;}
+  /* v7.42 — Daily Work Log "Details of Work" अब पूरी तरह पठनीय (phone-friendly):
+     पहले single-line input ~68px चौड़ा था और लंबा विवरण कट जाता था। अब textarea
+     जो wrap होता है, स्तंभ चौड़ाई ठीक की गई (# = छोटा, Date = निश्चित, बाक़ी विवरण),
+     और बड़ा फ़ॉन्ट/उच्च कंट्रास्ट। */
+  .wl-table{width:100%;border-collapse:collapse;font-size:0.9rem;table-layout:fixed;}
+  .wl-table th{background:var(--navy);color:white;padding:8px;text-align:left;font-size:0.85rem;}
+  .wl-table td{padding:6px 8px;border-bottom:1px solid #eee;vertical-align:top;}
+  .wl-table th:first-child,.wl-table td:first-child{font-weight:600;width:34px;text-align:center;padding-left:3px;padding-right:3px;}
+  .wl-table th:nth-child(2){width:82px;}
+  .wl-table td:nth-child(2){width:82px;white-space:nowrap;color:#3f4652;}
+  .wl-table textarea.wl-work{display:block;width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #c9ced6;border-radius:6px;font-size:0.95rem;line-height:1.5;color:#1f2430;background:#fff;resize:vertical;overflow-wrap:anywhere;word-break:break-word;white-space:pre-wrap;min-height:0;font-family:inherit;field-sizing:content;}
+  .wl-table textarea.wl-work:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(178,34,34,0.1);outline:none;}
   .wl-table .wl-holiday{background:#fff5f5;}
   .wl-table .wl-leave{background:#f0f7ff;}
 
@@ -3514,7 +3527,7 @@ function switchTab(name){
 // ============================================================
 function toggleCard(el){
   var body=el.nextElementSibling;
-  if(body.style.display==='none'){body.style.display='block';el.classList.remove('collapsed');}
+  if(body.style.display==='none'){body.style.display='block';el.classList.remove('collapsed');if(typeof wlGrowAll==='function')setTimeout(wlGrowAll,0);}
   else{body.style.display='none';el.classList.add('collapsed');}
 }
 
@@ -3806,6 +3819,29 @@ function computeJourneySpan(){
   });
   return span;
 }
+// v7.42 — कैलेंडर पर हर जर्नी-दिन का स्थान (place) — केवल प्रदर्शन हेतु।
+// span/DA/जर्नी गणना में कोई बदलाव नहीं; केवल उस दिन जहाँ अधिकारी था वह स्थान लौटाता है।
+// नियम: उस दिन तक जो आख़िरी लेग शुरू हुई उसका गंतव्य (to); यदि वही आख़िरी (return-to-HQ)
+// लेग हो तो उसका from (जहाँ से लौटा)। BO/गाँव के नाम जैसे भंडारित हैं वैसे ही रहते हैं।
+function _isoDk(iso){var p=String(iso||'').split('T')[0].split('-');return p.length===3?(p[0]+p[1]+p[2]):'';}
+function journeyPlaceForDay(j,ds){
+  if(!j||!j.legs||!j.legs.length)return '';
+  // जर्नी का पहला दिन — प्रमुख (पहला) outward गंतव्य, जो ऐप के j.office के समान है
+  if(String(ds)===String(j.date)){
+    for(var q=0;q<j.legs.length;q++){var lq=j.legs[q];if(!lq.isReturn&&lq.to&&String(lq.to)!==String(HQ_NAME))return String(lq.to);}
+    if(j.office&&String(j.office)!==String(HQ_NAME))return String(j.office);
+  }
+  var target=_dk(ds),best=null,bestD='';
+  for(var i=0;i<j.legs.length;i++){
+    var lg=j.legs[i];
+    var d=_isoDk(lg.departure)||_isoDk(lg.arrival);
+    if(d&&d<=target&&d>=bestD){best=lg;bestD=d;}
+  }
+  if(!best)best=j.legs[0];
+  var last=j.legs[j.legs.length-1];
+  var place=(best===last&&String(best.to)===String(HQ_NAME))?best.from:best.to;
+  return place?String(place):'';
+}
 function openJourneyDay(ds){
   var idx=-1;
   for(var i=0;i<journeys.length;i++){if(journeys[i].date===ds){idx=i;break;}}
@@ -3816,6 +3852,7 @@ function renderCalendar(){
   var mi=getMonthIdx(),y=getYear(),dim=getDaysInMonth(),firstDay=new Date(y,mi,1).getDay();
   var h='<thead><tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr></thead><tbody>';
   var span=computeJourneySpan();
+  var jByDate={};journeys.forEach(function(j){jByDate[j.date]=j;});
   var day=1;
   for(var w=0;w<6;w++){h+='<tr>';
     for(var d=0;d<7;d++){
@@ -3838,6 +3875,10 @@ function renderCalendar(){
       h+='<td class="'+cls+'" '+clickAttr+(cellStyle?' style="'+cellStyle+'"':'')+'><span class="cal-day-num'+sunCls+'">'+day+'</span>';
       if(hasJ)h+='<div class="cal-badge">journey'+(isHol?' (छुट्टी)':'')+'</div>';
       else if(awayDay)h+='<div class="cal-badge">journey (away)</div>';
+      // v7.42 — जर्नी-दिन पर उस दिन का स्थान (place) भी दिखाएँ — केवल प्रदर्शन, गणना अपरिवर्तित
+      var _plJ=hasJ?jByDate[ds]:(awayDay?jByDate[awayDay]:null);
+      var _place=_plJ?journeyPlaceForDay(_plJ,ds):'';
+      if(_place)h+='<div class="cal-place" title="'+esc(_place)+'" aria-label="'+esc(_place)+'">'+esc(_place)+'</div>';
       else if(lv){h+='<div class="cal-leave-badge '+lv.type.toLowerCase()+'">'+lv.type+'</div>';
         h+='<div class="cal-leave-label">'+(lv.type==='RH'?'Restricted Holiday':lv.type==='CL'?'Casual Leave':'Earned Leave')+'</div>';}
       else if(isHol){var hn=holidays[ds]||'';if(hn.length>10)hn=hn.substring(0,9)+'..';h+='<div class="cal-hol-badge">'+hn+'</div>';}
@@ -4694,6 +4735,21 @@ function computeAwayDays(){
   });
   return away;
 }
+// v7.42 — "Details of Work" अब textarea है ताकि लंबा विवरण wrap होकर पूरा दिखे
+// (पहले single-line input में कट जाता था)। यह function बॉक्स को सामग्री-अनुसार ऊँचा
+// करता है (field-sizing:content का fallback — छिपे हुए बॉक्स के लिए scrollHeight 0 रहता है)।
+function wlAutoGrow(el){
+  if(!el||el.tagName!=='TEXTAREA')return;
+  el.style.height='auto';
+  var h=el.scrollHeight;
+  if(!h)return;
+  var b=el.offsetHeight-el.clientHeight;   // border-box − padding-box = border (ऊपर+नीचे)
+  el.style.height=(h+b)+'px';
+}
+function wlGrowAll(){
+  var nodes=document.querySelectorAll('#workLogBody textarea.wl-work');
+  for(var i=0;i<nodes.length;i++)wlAutoGrow(nodes[i]);
+}
 function generateWorkLog(){
   var mi=getMonthIdx(),y=getYear(),dim=getDaysInMonth();
   var body=document.getElementById('workLogBody');
@@ -4726,9 +4782,10 @@ function generateWorkLog(){
     var pv=(cur[ds]!==undefined)?cur[ds]:'';
     if((!String(pv).trim()||pv===DEF_HQ)&&away[ds])pv=away[ds];
     if(!String(pv).trim()&&jp[ds])pv=jp[ds];
-    tr.innerHTML='<td>'+d+'</td><td>'+ds+'</td><td><input type="text" class="wl-work" value="'+esc(pv)+'"></td>';
+    tr.innerHTML='<td>'+d+'</td><td>'+ds+'</td><td><textarea class="wl-work" rows="1" oninput="wlAutoGrow(this)" onkeydown="if(event.key===\'Enter\')event.preventDefault()">'+esc(pv)+'</textarea></td>';
     body.appendChild(tr);
   }
+  wlGrowAll();
 }
 
 function generateWorkLogFromJourneys(){
@@ -4751,9 +4808,10 @@ function generateWorkLogFromJourneys(){
     var tr=document.createElement('tr');
     if(isHol&&!dp[ds]&&!lv)tr.className='wl-holiday';
     if(lv)tr.className='wl-leave';
-    tr.innerHTML='<td>'+d+'</td><td>'+ds+'</td><td><input type="text" class="wl-work" value="'+esc(w)+'"></td>';
+    tr.innerHTML='<td>'+d+'</td><td>'+ds+'</td><td><textarea class="wl-work" rows="1" oninput="wlAutoGrow(this)" onkeydown="if(event.key===\'Enter\')event.preventDefault()">'+esc(w)+'</textarea></td>';
     body.appendChild(tr);
   }
+  wlGrowAll();
 }
 
 function onMonthChange(){renderCalendar();renderJourneyList();generateWorkLog();updateSummary();renderLeaveList();autoSave();}
@@ -5131,7 +5189,7 @@ function loadState(){
   leaves=d.leaves||[];
   renderLeaveList();
   renderCalendar();renderJourneyList();generateWorkLog();
-  if(d.workLog){var ins=document.querySelectorAll('.wl-work');d.workLog.forEach(function(v,i){if(ins[i])ins[i].value=v;});}
+  if(d.workLog){var ins=document.querySelectorAll('.wl-work');d.workLog.forEach(function(v,i){if(ins[i])ins[i].value=v;});wlGrowAll();}
   if(d.hotel){document.getElementById('hasHotel').checked=d.hotel.hasHotel;document.getElementById('hotelFrom').value=d.hotel.from||'';document.getElementById('hotelTo').value=d.hotel.to||'';document.getElementById('hotelName').value=d.hotel.name||'';document.getElementById('hotelAmount').value=d.hotel.amount||0;toggleHotel();}
   if(d.advance){document.getElementById('hasAdvance').checked=d.advance.hasAdvance;document.getElementById('advanceAmount').value=d.advance.amount||0;toggleAdvance();}
   updateSummary();alert('Data loaded!');
@@ -5172,6 +5230,7 @@ function autoLoad(){
       generateWorkLog();
       var ins=document.querySelectorAll('.wl-work');
       d.workLog.forEach(function(v,i){if(ins[i])ins[i].value=v;});
+      wlGrowAll();
     }
     if(d.hotel){document.getElementById('hasHotel').checked=d.hotel.hasHotel;document.getElementById('hotelFrom').value=d.hotel.from||'';document.getElementById('hotelTo').value=d.hotel.to||'';document.getElementById('hotelName').value=d.hotel.name||'';document.getElementById('hotelAmount').value=d.hotel.amount||0;toggleHotel();}
     if(d.advance){document.getElementById('hasAdvance').checked=d.advance.hasAdvance;document.getElementById('advanceAmount').value=d.advance.amount||0;toggleAdvance();}
