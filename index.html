@@ -3842,6 +3842,13 @@ function journeyPlaceForDay(j,ds){
   var place=(best===last&&String(best.to)===String(HQ_NAME))?best.from:best.to;
   return place?String(place):'';
 }
+// v7.42 — दोनों कैलेंडर (टूर डायरी + निरीक्षण) के लिए साझा lookup: date→journey मैप और
+// किसी दिन-सेल का स्थान। केवल प्रदर्शन हेतु — कोई गणना/चयन नहीं बदलता।
+function _calJourneyByDate(){var m={};journeys.forEach(function(j){m[j.date]=j;});return m;}
+function _calPlaceForCell(hasJ,awayDay,jByDate,ds){
+  var j=hasJ?jByDate[ds]:(awayDay?jByDate[awayDay]:null);
+  return j?journeyPlaceForDay(j,ds):'';
+}
 function openJourneyDay(ds){
   var idx=-1;
   for(var i=0;i<journeys.length;i++){if(journeys[i].date===ds){idx=i;break;}}
@@ -3852,7 +3859,7 @@ function renderCalendar(){
   var mi=getMonthIdx(),y=getYear(),dim=getDaysInMonth(),firstDay=new Date(y,mi,1).getDay();
   var h='<thead><tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr></thead><tbody>';
   var span=computeJourneySpan();
-  var jByDate={};journeys.forEach(function(j){jByDate[j.date]=j;});
+  var jByDate=_calJourneyByDate();
   var day=1;
   for(var w=0;w<6;w++){h+='<tr>';
     for(var d=0;d<7;d++){
@@ -3876,8 +3883,7 @@ function renderCalendar(){
       if(hasJ)h+='<div class="cal-badge">journey'+(isHol?' (छुट्टी)':'')+'</div>';
       else if(awayDay)h+='<div class="cal-badge">journey (away)</div>';
       // v7.42 — जर्नी-दिन पर उस दिन का स्थान (place) भी दिखाएँ — केवल प्रदर्शन, गणना अपरिवर्तित
-      var _plJ=hasJ?jByDate[ds]:(awayDay?jByDate[awayDay]:null);
-      var _place=_plJ?journeyPlaceForDay(_plJ,ds):'';
+      var _place=_calPlaceForCell(hasJ,awayDay,jByDate,ds);
       if(_place)h+='<div class="cal-place" title="'+esc(_place)+'" aria-label="'+esc(_place)+'">'+esc(_place)+'</div>';
       else if(lv){h+='<div class="cal-leave-badge '+lv.type.toLowerCase()+'">'+lv.type+'</div>';
         h+='<div class="cal-leave-label">'+(lv.type==='RH'?'Restricted Holiday':lv.type==='CL'?'Casual Leave':'Earned Leave')+'</div>';}
@@ -10307,6 +10313,7 @@ const MASTER_DATA = {
     var dim = new Date(y, mi + 1, 0).getDate();
     var firstDay = new Date(y, mi, 1).getDay();
     var span = (typeof computeJourneySpan === "function") ? computeJourneySpan() : {};
+    var jByDate = _calJourneyByDate();
     var h = '<thead><tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr></thead><tbody>';
     var curISO = (inspectionDateInput && inspectionDateInput.value) || "";
     var day = 1;
@@ -10331,6 +10338,10 @@ const MASTER_DATA = {
         h += '<td class="' + cls + '" onclick="inspCalPick(\'' + ds + '\')"><span class="cal-day-num' + sunCls + '">' + day + '</span>';
         if (hasJ) h += '<div class="cal-badge">journey' + (isHol ? ' (छुट्टी)' : '') + '</div>';
         else if (awayDay) h += '<div class="cal-badge">journey (away)</div>';
+        // v7.42 — टूर डायरी की तरह जर्नी-दिन पर उस दिन का स्थान (place) भी दिखाएँ —
+        // वही journeyPlaceForDay() व वही .cal-place CSS; केवल प्रदर्शन, कोई गणना/चयन नहीं बदलता।
+        var _place = _calPlaceForCell(hasJ, awayDay, jByDate, ds);
+        if (_place) h += '<div class="cal-place" title="' + esc(_place) + '" aria-label="' + esc(_place) + '">' + esc(_place) + '</div>';
         else if (lv) { h += '<div class="cal-leave-badge ' + lv.type.toLowerCase() + '">' + lv.type + '</div>'; h += '<div class="cal-leave-label">' + (lv.type === 'RH' ? 'Restricted Holiday' : lv.type === 'CL' ? 'Casual Leave' : 'Earned Leave') + '</div>'; }
         else if (isHol) { var hn = holidays[ds] || ''; if (hn.length > 10) hn = hn.substring(0, 9) + '..'; h += '<div class="cal-hol-badge">' + hn + '</div>'; }
         h += '</td>'; day++;
