@@ -1370,7 +1370,9 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
 <main>
 <div class="card"><h2><span class="step-badge">1</span> उप डाकघर चुनें</h2><select id="so" onchange="SO_IR.pick(this.value)"></select>
 <label>✍ हस्ताक्षर (PNG/JPG — इसी डिवाइस में सहेजा जाता है)<input type="file" id="sg" accept="image/png,image/jpeg"></label><div class="note" id="sgi"></div><div class="note" id="info"></div></div>
-<div id="dupWarn" class="dup-warn wz-hide"></div><div id="bkRem" class="wz-hide" style="margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#fff4e5;border:1px solid #ffcc80;font-size:.85rem;line-height:1.6"></div>
+<div id="dupWarn" class="dup-warn wz-hide"></div>
+<div id="soSampleBar" class="wz-hide" style="margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#fff8e1;border:1px solid #ffe082;font-size:.85rem;line-height:1.6">🧪 <b>यह नमूना डेटा है — अपने अनुसार बदलें।</b> यह केवल एक उदाहरण भरा हुआ रिपोर्ट है, वास्तविक आँकड़े नहीं। <button type="button" onclick="SO_IR.clearSample()" style="margin-left:6px;padding:4px 10px;font-size:.8rem;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:8px;font-weight:700;cursor:pointer">🧹 नमूना हटाएँ / खाली करें</button></div>
+<div id="bkRem" class="wz-hide" style="margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#fff4e5;border:1px solid #ffcc80;font-size:.85rem;line-height:1.6"></div>
 <div id="ver"><div class="c"><b>Mandatory opening verification</b><div class="note">Verify first, before anything else: cash, stamps, IPOs, ATM kits, cheque books and passbooks. You can fill the other tabs meanwhile, but the report cannot be generated until the physical balance of all six is entered.</div></div><div id="vt"></div></div><div id="form" style="display:none"></div><div id="data" style="display:none"><div class="c"><label>📥 Import Excel workbook (.xlsx) — fills Pass Book, AOF, Finacle, VPP-COD, BO Balance, IPO, RD Loan tables<input type="file" id="xl" accept=".xlsx"></label><div class="note" id="xli"></div><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button data-rec="save">💾 Save office record</button><button data-rec="load">📂 Load record</button><button data-rec="sync">🔄 Re-sync BO list</button></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button onclick="SO_IR.bkExport()">💾 बैकअप डाउनलोड (JSON)</button></div><label>📂 बैकअप से पुनर्स्थापित करें (.json)<input type="file" id="bk" accept=".json,application/json"></label></div><div id="dt"></div></div><div id="pv" class="c" style="display:none"></div>
 </main>
 <div class="footer-bar"><div class="inner"><button class="btn btn-primary" style="flex-shrink:0;font-size:0.85rem;padding:8px 16px;" onclick="SO_IR.gen()">📄 रिपोर्ट बनाएं (Generate)</button><button class="btn btn-secondary" type="button" style="flex-shrink:0;padding:6px 10px;font-size:0.82rem;" onclick="SO_IR.clr()">🗑️ Clear</button><span id="sv" class="note" style="margin:0"></span><div class="status" id="soStatusMsg"></div></div><div id="soDlLinks"></div></div>
@@ -14799,6 +14801,37 @@ function ex(t){t=t.replace(TG,(m,a)=>{const p=a.split('|'),v=S[p[0]]||0;return v
  return t.replace(/\{SO\}/g,so?so.n+' SO':'____').replace(/\{NBO\}/g,so?so.b.length:'__')}
 function init(){S={};T={};U={};C={};R={};ELS.forEach(e=>{if(e.t=='p')[...e.x.matchAll(FD)].forEach(m=>{const p=m[1].split('|');if(p[2]&&S[p[0]]===undefined)S[p[0]]=p[2]});
  else T[e.id]=e.init=='bo'?so.b.map(n=>[n,'','','']):JSON.parse(JSON.stringify(e.init))})}
+// ---- नमूना IR डेटा: नया SO IR खोलने पर फ़ॉर्म पहले से भरा दिखे (default sample) ----
+// अधिकारी के अपने सहेजे हुए ड्राफ्ट (soir_<SO>) होने पर नमूना लागू नहीं होता — ड्राफ्ट ही जीतता है।
+var SAMPLE_SUPPRESS=false,SAMPLE_ON=false;
+var SAMPLE_S={doi:'2026-09-22',rdate:'2026-09-25',yr:'2026',nlb:'3',lbby:'GDS Pkr/MC',lbt:'14:30',spm:'SPM',nst:'2',frq:'एक स्टील अलमारी तथा एक मेज़',chq:'12',cob:'25000',ccc:'0'};
+function updateSampleBar(){var b=$('soSampleBar');if(b)b.classList.toggle('wz-hide',!SAMPLE_ON)}
+function applySample(){SAMPLE_ON=true;
+ Object.keys(SAMPLE_S).forEach(function(k){if(!(S[k]&&String(S[k]).trim()))S[k]=SAMPLE_S[k]});
+ ELS.forEach(function(e){if(e.t!='p')return;(e.x.match(/\{\{(.*?)\}\}/g)||[]).forEach(function(m){var id=m.slice(2,-2).split('|')[0];if(U[id]===undefined){S[id]=0;U[id]=1}})});
+ var blank=function(id){var t=T[id]||[];return !t.some(function(r){return r.some(function(c){return c&&String(c).trim()})})};
+ var setT=function(id,rows){if(blank(id))T[id]=JSON.parse(JSON.stringify(rows))};
+ var fillCol=function(id,vals){var t=T[id]||[];vals.forEach(function(v,i){if(t[i])for(var j=1;j<t[i].length;j++){if(v[j-1]!==undefined&&v[j-1]!=='')t[i][j]=v[j-1]}})};
+ fillCol('verif',[['25000.00','25000.00','तल मिलान'],['1850.00','1850.00',''],['0','0',''],['12','12',''],['24','24',''],['150','150','']]);
+ fillCol('bags',[['0'],['2'],['0'],['1'],['5']]);
+ setT('sanc',[['SPM','1']]);
+ setT('staff',[['SPM','','',''],['Counter PA','','',''],['Postman','','',''],['GDS Pkr/MC','','','']]);
+ setT('vpp',[['SP123456789IN','2026-09-05','2026-09-06','500']]);
+ setT('cod',[['CD123456789IN','2026-09-04','2026-09-05','1200']]);
+ setT('aof',[['SB','2026-09-10','1234567890','खाताधारक','नामांकित','500'],['RD','2026-09-11','2234567890','खाताधारक','नामांकित','1000']]);
+ setT('dly',[['2026-09-15','5000','2000','1000','0','0','0','0','0','0','0','0','0']]);
+ setT('sb28',[['SB-28/01','2026-09-12','1234567890','5000','']]);
+ setT('pb',[['SB','1234567890','2026-09-10','5000','2000','3000']]);
+ setT('prem',[['2026-09-15','5000','4000']]);
+ setT('epay',[['2026-09-15','10000']]);
+ setT('ipo',[['₹10','1','10','10']]);
+ setT('cash',[['2026-09-15','25000','5000']]);
+ var bo=T['bobal']||[];if(blank('bobal')&&bo.length)bo.forEach(function(r){r[1]='25000';r[2]='25000'});
+ updateSampleBar();
+}
+function clearSample(){SAMPLE_SUPPRESS=true;SAMPLE_ON=false;if(so)pick(so.n);else updateSampleBar();st('ok','🧹 नमूना हटा दिया गया — अब खाली फ़ॉर्म; आपका सहेजा ड्राफ्ट सुरक्षित है।')}
+soRoot.addEventListener('input',function(){if(SAMPLE_ON){SAMPLE_ON=false;updateSampleBar()}},true);
+soRoot.addEventListener('change',function(){if(SAMPLE_ON){SAMPLE_ON=false;updateSampleBar()}},true);
 const BKX=k=>k.startsWith('soir_')&&k!='soir_last'&&k!='soir_lastbk';
 function bkRem(){let n=0,last=0;try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(BKX(k)&&k!='soir_sig')n++}last=+localStorage.getItem('soir_lastbk')||0}catch(e){}
  const d=last?Math.floor((Date.now()-last)/864e5):-1,w=$('bkRem');if(!w)return;
@@ -14811,8 +14844,8 @@ function bkImport(f){const r=new FileReader;r.onload=()=>{try{const j=JSON.parse
  if(!confirm('बैकअप से डेटा बहाल करें? ('+Object.keys(j.data).length+' प्रविष्टियाँ — इसी नाम का मौजूदा ड्राफ्ट बदल जाएगा)'))return;
  Object.keys(j.data).forEach(k=>{if(BKX(k))localStorage.setItem(k,j.data[k])});if(so)pick(so.n);st('ok','📂 बैकअप बहाल हो गया')}catch(e){st('err','❌ बैकअप नहीं पढ़ सका: '+e.message)}};r.readAsText(f)}
 function sv(ok){const e=$('sv');if(e){e.textContent=ok?'💾 सहेजा '+new Date().toTimeString().slice(0,5):'⚠️ सहेज नहीं सका — बैकअप डाउनलोड करें';e.style.color=ok?'#0f7b39':'#b3241c'}}
-function save(){chk();try{localStorage.setItem('soir_'+so.n,JSON.stringify({S,T,U,C,R}));localStorage.setItem('soir_last',so.n);sv(1)}catch(e){sv(0)}}
-function pick(n){so=SOS.find(s=>s.n==n);WZ=0;rs=0;init();try{const d=JSON.parse(localStorage.getItem('soir_'+n));if(d){S=d.S;T=d.T;U=d.U;C=d.C||{};R=d.R||{};rs=1}else loadRec()}catch(e){}ELS.forEach(e=>{if(e.t=='tb'&&!T[e.id])T[e.id]=e.init=='bo'?so.b.map(n=>[n,'','','']):JSON.parse(JSON.stringify(e.init))});render();tab(0);if(rs){st('ok','↩️ '+so.n+' SO का सहेजा हुआ ड्राफ्ट बहाल किया गया');sv(1)}try{localStorage.setItem('soir_last',n)}catch(e){}bkRem()}
+function save(){if(SAMPLE_ON)return;chk();try{localStorage.setItem('soir_'+so.n,JSON.stringify({S,T,U,C,R}));localStorage.setItem('soir_last',so.n);sv(1)}catch(e){sv(0)}}
+function pick(n){so=SOS.find(s=>s.n==n);WZ=0;rs=0;init();try{const d=JSON.parse(localStorage.getItem('soir_'+n));if(d){S=d.S;T=d.T;U=d.U;C=d.C||{};R=d.R||{};rs=1}else loadRec()}catch(e){}if(!rs&&!SAMPLE_SUPPRESS)applySample();else SAMPLE_ON=false;ELS.forEach(e=>{if(e.t=='tb'&&!T[e.id])T[e.id]=e.init=='bo'?so.b.map(n=>[n,'','','']):JSON.parse(JSON.stringify(e.init))});render();tab(0);if(rs){st('ok','↩️ '+so.n+' SO का सहेजा हुआ ड्राफ्ट बहाल किया गया');sv(1)}else if(SAMPLE_ON){st('ok','🧪 यह नमूना डेटा है — अपने अनुसार बदलें या 🧹 नमूना हटाएँ')}updateSampleBar();try{localStorage.setItem('soir_last',n)}catch(e){}bkRem()}
 function tbHtml(e){const cs=e.c.filter(c=>c[0]!='#');let h=`<div class=c><div class=hd>📋 <b>${esc(e.ti)}</b></div>`;
  T[e.id].forEach((r,ri)=>{h+='<div class=rw>'+cs.map((c,ci)=>`<input ${isD(c)?'type=date':isN(c)?'inputmode=decimal':''} data-h="${esc(c)}" class="${vr(c,r[ci])?'bad':''}" title="${esc(vr(c,r[ci])||c)}" placeholder="${esc(c)}" data-t=${e.id} data-r=${ri} data-c=${ci} value="${esc(r[ci]||'')}" ${e.fix&&!ci?'readonly':''}>`).join('')+(e.fix?'':`<button data-del=${e.id} data-r=${ri}>✕</button>`)+'</div>'});
  return h+(e.fix?'':`<button data-add=${e.id}>+ Add row</button><details><summary class=note>Bulk paste (rows copied from Excel, or one name per line)</summary><textarea rows=3 data-bk=${e.id}></textarea><button data-bgo=${e.id}>Add pasted rows</button></details>`)+'</div>'}
@@ -14905,7 +14938,7 @@ function openCal(id){
   if(typeof window.inspOpenCal==='function'){ window.inspOpenCal(el); }
   else{ alert('कैलेंडर उपलब्ध नहीं'); }
 }
-  window.SO_IR={tab:tab,gen:gen,clr:clr,bkExport:bkExport,pick:pick,openCal:openCal};
+  window.SO_IR={tab:tab,gen:gen,clr:clr,bkExport:bkExport,pick:pick,openCal:openCal,clearSample:clearSample};
 })();
 </script>
 </body>
