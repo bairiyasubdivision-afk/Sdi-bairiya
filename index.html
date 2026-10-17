@@ -6197,7 +6197,12 @@ function fillManualData(doc, bodyEl, manual) {
 
   // Paragraph-level DTR / wallet / cash lines
   if (manual.dtr_balance) appendAfterLabel(doc, bodyEl, "के अनुसार बैलेंस :", manual.dtr_balance);
-  if (manual.bo_account_balance) appendAfterLabel(doc, bodyEl, "डीटीआर के दिनांक पर बीओ अकाउंट के अनुसार बैलेंस", manual.bo_account_balance);
+  // v? — Q24: "बीओ अकाउंट के अनुसार बैलेंस" को भी भाई-खानों (dtr/wallet) की तरह
+  // appendAfterLabel से जोड़ें। टेम्पलेट में यह पंक्ति "डीटीआर  के दिनांक पर बीओ
+  // अकाउंट के अनुसार बैलेंस :" है — इसमें बीच की खाली जगहें अनियमित (दोहरी) हैं,
+  // इसलिए पूरा वाक्य अक्षरशः नहीं मिलता था और मान चुपचाप छूट जाता था। एक स्थिर
+  // उप-वाक्यांश ("अकाउंट के अनुसार बैलेंस") से यह पंक्ति भरोसे से मिल जाती है।
+  if (manual.bo_account_balance) appendAfterLabel(doc, bodyEl, "अकाउंट के अनुसार बैलेंस", manual.bo_account_balance);
   if (manual.wallet_balance) appendAfterLabel(doc, bodyEl, "वॉलेट बैलेंस", manual.wallet_balance);
 
   // Build discrepancy remark: compare physical cash with DTR and BO balances
@@ -6427,8 +6432,12 @@ const LOT_FIELD_ORDER = [
 ];
 
 function fillLotTable(doc, bodyEl, entries) {
-  const tables = getDocTables(bodyEl);
-  const t7 = tables[LOT_TABLE_INDEX];
+  // v? — Q39 तालिका को उसके हेडर से ढूँढें, स्थिर index से नहीं। fillRDLoanTable
+  // (या कोई अन्य बदलाव) पहले एक नई तालिका जोड़/हटा देता है, जिससे LOT_TABLE_INDEX
+  // (7) खिसक जाता था और LOT के आँकड़े गलत तालिका में चले जाते थे (या पूरी तालिका
+  // ही Q41(ii) की खाली RD-बंद तालिका समझकर हटा दी जाती थी)। हेडर से ढूँढने पर
+  // किसी अन्य तालिका के जुड़ने/हटने का कोई असर नहीं पड़ता।
+  const t7 = findLotTable(bodyEl);
   if (!t7) return;
   const rows = getTableRows(t7);
 
@@ -6517,9 +6526,25 @@ function narrowLotTable(doc, bodyEl) {
 const RD_CLOSED_TABLE_INDEX = 8;
 const RD_CLOSED_MAX_ROWS = 4;
 
-function fillRdClosedTable(doc, bodyEl, entries) {
+// Q41(ii) की तालिका को उसके विशिष्ट स्तंभ-शीर्षक ("अमाउंट") से पहचानें — स्थिर
+// index पर भरोसा न करें। fillRDLoanTable द्वारा जोड़ी गई तालिका index को खिसका
+// देती है, जिससे पहले यह फ़ंक्शन गलत तालिका (Q39 की LOT तालिका) को खाली मानकर
+// हटा देता था और LOT के आँकड़े नष्ट हो जाते थे। न मिले तो स्थिर index पर लौटें।
+function findRdClosedTable(bodyEl) {
   const tables = getDocTables(bodyEl);
-  const t8 = tables[RD_CLOSED_TABLE_INDEX];
+  for (const t of tables) {
+    const rows = getTableRows(t);
+    if (!rows.length) continue;
+    const cells = getRowCells(rows[0]);
+    for (const c of cells) {
+      if (cellTextOf(c).indexOf("अमाउंट") >= 0) return t;
+    }
+  }
+  return tables[RD_CLOSED_TABLE_INDEX] || null;
+}
+
+function fillRdClosedTable(doc, bodyEl, entries) {
+  const t8 = findRdClosedTable(bodyEl);
   if (!t8) return;
   const rows = getTableRows(t8);
 
@@ -13426,6 +13451,10 @@ generateBtn.addEventListener("click", async () => {
         bo_account_balance: document.getElementById("boAccountBalance").value,
         wallet_balance: document.getElementById("walletBalance").value,
         physical_cash: document.getElementById("physicalCash").value,
+        // v? — PRB (पॉलिसी सत्यापन) चेकबॉक्स टिका होने पर ही रिपोर्ट में PRB खंड
+        // जाए। पहले यह झंडा manual में कभी सेट ही नहीं होता था, इसलिए
+        // fillPrbTable कभी नहीं चलता था और PRB सामग्री रिपोर्ट में पहुँचती ही नहीं थी।
+        prb_enabled: PRB_ENABLED,
         scoring: scoringRows.map((_, i) => ({
           marks: document.getElementById(`marks_${i}`).value,
           remark: document.getElementById(`remark_${i}`).value,
