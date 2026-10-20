@@ -10,6 +10,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="dark">
 <meta name="apple-mobile-web-app-title" content="SDI Bairiya">
+<!-- PWA: real same-origin manifest + icons, so Chrome can install this app and
+     show it in the phone's app list / app search (like the officer's other app). -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <style>
   :root{--red:#B22222;--red-d:#8B0000;--navy:#1a2540;--gold:#D4A017;--green:#28a745;--leave-rh:#e3f2fd;--leave-cl:#fff3e0;--leave-el:#f3e5f5;--leave-rh-bd:#1976d2;--leave-cl-bd:#e65100;--leave-el-bd:#7b1fa2;--brand:#c8102e;--brand-dark:#8f0b20;--bg:#f5f6f8;--card:#ffffff;--text:#1f2430;--muted:#6b7280;--border:#e2e5ea;--accent:#fff3c4;--radius:12px;}
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -14445,12 +14451,21 @@ generateBtn.addEventListener("click", async () => {
       { "src": ICON_DATA_URI, "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" }
     ]
   };
-  var manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
-  var manifestURL = URL.createObjectURL(manifestBlob);
-  var manifestLink = document.createElement("link");
-  manifestLink.rel = "manifest";
-  manifestLink.href = manifestURL;
-  document.head.appendChild(manifestLink);
+  // PWA patch: on http(s) the real same-origin manifest.json (linked in <head>)
+  // is the one Chrome must use for install — a blob: manifest is ignored for
+  // install and a second manifest link only adds noise. So the blob manifest is
+  // injected ONLY when no real one is in play (i.e. opened as a local file),
+  // which keeps the old file:// behaviour exactly as it was.
+  var useRealManifest = /^https?:$/.test(location.protocol) &&
+                        !!document.querySelector('link[rel="manifest"][href="manifest.json"]');
+  if (!useRealManifest) {
+    var manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
+    var manifestURL = URL.createObjectURL(manifestBlob);
+    var manifestLink = document.createElement("link");
+    manifestLink.rel = "manifest";
+    manifestLink.href = manifestURL;
+    document.head.appendChild(manifestLink);
+  }
 
   // Apple touch icon
   var appleIcon = document.createElement("link");
@@ -14507,6 +14522,23 @@ generateBtn.addEventListener("click", async () => {
     var btn = document.getElementById("pwaInstallBtn");
     if (btn) { btn.style.display = "none"; }
   }
+})();
+</script>
+
+<script>
+// PWA patch: register the real service worker — but ONLY when the page is
+// served over http(s). Android Chrome needs a service worker (with a fetch
+// handler) before it will offer to install the app. On file:// (the officer
+// opening this single file straight from his phone) there is no server and no
+// sw.js, so it is never attempted and any failure is swallowed silently.
+(function () {
+  try {
+    if (!("serviceWorker" in navigator)) return;
+    if (!/^https?:$/.test(location.protocol)) return; // never on file:// etc.
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () { /* silent */ });
+    });
+  } catch (e) { /* silent */ }
 })();
 </script>
 
