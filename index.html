@@ -1048,6 +1048,8 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     <button class="btn btn-secondary" onclick="saveState()">Save Data</button>
     <button class="btn btn-outline" onclick="loadState()">Load Saved Data</button>
   </div>
+  <!-- 🆕 बनी हुई Tour Diary / TA Bill यहाँ दिखती हैं — डाउनलोड + "Drive पर भेजें" -->
+  <div id="tourTaDlLinks" style="display:none;margin-top:10px;"></div>
 </div>
 
 
@@ -1738,6 +1740,12 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
                 <input type="checkbox" id="driveBackupAuto" onchange="driveBackupToggleAuto()">
                 अपने-आप भेजें (auto-send)
               </label>
+              <!-- 🆕 बनाई गई रिपोर्ट भी चुपचाप Drive पर भेजें (डिफ़ॉल्ट बंद) -->
+              <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;font-weight:600;cursor:pointer;margin-top:8px;">
+                <input type="checkbox" id="driveReportAuto" onchange="driveReportToggleAuto()">
+                बनाई गई रिपोर्ट भी Drive पर भेजें
+              </label>
+              <p class="info-text" id="driveReportLastSent" style="margin-top:4px;">अभी तक कोई रिपोर्ट Drive पर नहीं भेजी गई।</p>
               <p class="info-text" id="driveBackupStatus" style="margin-top:8px;">⚙️ अभी सेट नहीं किया गया।</p>
               <p class="info-text" id="driveBackupLastSent" style="margin-top:4px;">अभी तक Drive पर कुछ नहीं भेजा गया।</p>
               <p class="info-text" style="margin-top:6px;color:#666;">
@@ -5251,7 +5259,10 @@ async function generateTourDiary(){
     ch.push(mkPara('Departure / Arrival',{bold:true,size:22,after:80}));ch.push(bJT(f2));
     ch.push(mkPara('Details of Work',{bold:true,size:22,before:200,after:80}));ch.push(bWT(2));
     var doc=new D.Document({sections:[{properties:{page:{size:{width:12240,height:15840,orientation:'landscape'},margin:{top:720,bottom:720,left:720,right:720}}},children:ch}]});
-    downloadBlob(await D.Packer.toBlob(doc),'Tour_Diary_'+month+'_'+y+'.docx');
+    var _blobTD=await D.Packer.toBlob(doc);
+    downloadBlob(_blobTD,'Tour_Diary_'+month+'_'+y+'.docx');
+    // 🆕 डाउनलोड के बाद: लिंक + "Drive पर भेजें" बटन (ऑटो-भेजें चालू हो तो चुपचाप भी भेजें)
+    try{ if(window.reportDriveAfterGenerate) window.reportDriveAfterGenerate('tour','Tour_Diary_'+month+'_'+y+'.docx',_blobTD,'tourTaDlLinks'); }catch(_e){}
   }catch(e){console.error(e);alert('Error: '+e.message);}
 }
 
@@ -5318,7 +5329,10 @@ async function generateTABill(){
     var pB=['1. The net entitlement on account of travelling allowance works out to Rs. __________________ as detailed below :-','(a) Railways/Air/Bus/Steamer fare : Rs. _______________________________________','(b) Road mileage for '+td+' Kms. @ Rs. '+(mr*100).toFixed(0)+' P/Km.','(c) Daily Allowance :-','     (i)  '+tDA.toFixed(1)+' day @ Rs. '+dr+' per day','     (ii) ______________ day @ Rs. ______________ per day','     (iii) _____________ day @ Rs. ______________ per day','     (iv) _____________ day @ Rs. ______________ per day','(d) Actual Expenses : Rs. _______________________________________','Gross Amount : Rs. _______________________________________','(e) Less Amount of T.A. Advance, if any, drawn vide Voucher No. ___________ date __________  Rs. _______________________________________','Net Amount : Rs. _______________________________________','2. The Expenditure is debitable to _______________________________________________________________','_______________________________________________________________________________________________','','Initial of Bill Clerk                                              Signature of D.D.O','','Countersigned','Signature of Controlling Officer'];
     for(var i=0;i<pB.length;i++)s1.push(mkPara(pB[i],{size:20}));
     var doc=new D.Document({sections:[{properties:{page:{size:{width:12240,height:15840,orientation:'landscape'},margin:{top:720,bottom:720,left:720,right:720}}},children:s0},{properties:{page:{size:{width:12240,height:15840,orientation:'portrait'},margin:{top:1080,bottom:1080,left:1080,right:1080}}},children:s1}]});
-    downloadBlob(await D.Packer.toBlob(doc),'TA_Bill_'+month+'_'+y+'.docx');
+    var _blobTA=await D.Packer.toBlob(doc);
+    downloadBlob(_blobTA,'TA_Bill_'+month+'_'+y+'.docx');
+    // 🆕 डाउनलोड के बाद: लिंक + "Drive पर भेजें" बटन (ऑटो-भेजें चालू हो तो चुपचाप भी भेजें)
+    try{ if(window.reportDriveAfterGenerate) window.reportDriveAfterGenerate('ta','TA_Bill_'+month+'_'+y+'.docx',_blobTA,'tourTaDlLinks'); }catch(_e){}
   }catch(e){console.error(e);alert('Error: '+e.message);}
 }
 
@@ -13632,6 +13646,9 @@ generateBtn.addEventListener("click", async () => {
       // auto-trigger download too
       a.click();
 
+      // 🆕 डाउनलोड-लिंक के ठीक बगल में "Drive पर भेजें" बटन (मौजूदा लिंक बना रहता है)
+      try { if (window.reportDriveAfterGenerate) window.reportDriveAfterGenerate('bo', fileName, outBlob, { container: 'dlLinks', append: true }); } catch (_e) {}
+
       statusMsg.className = "status ok";
       statusMsg.textContent = "✅ रिपोर्ट तैयार हो गई! डाउनलोड शुरू हो गया है।";
 
@@ -15021,8 +15038,9 @@ async function gen0(){if(!so)return alert('पहले उप डाकघर �
  z.file('word/_rels/document.xml.rels',X+`<Relationships ${PR}><Relationship Id="rId1" Type="${R}/styles" Target="styles.xml"/><Relationship Id="rIdFtr" Type="${R}/footer" Target="footer1.xml"/>${SIG?`<Relationship Id="rIdSig" Type="${R}/image" Target="media/signature.${SIG.ext}"/>`:''}</Relationships>`);
  z.file('word/styles.xml',X+`<w:styles ${NS}><w:docDefaults><w:rPrDefault><w:rPr>${F}<w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="60" w:line="264" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>`);
  z.file('word/document.xml',docXml(blocks()));z.file('word/footer1.xml',ftr('Annual Inspection Report — '+so.n+' SO'));if(SIG)z.file('word/media/signature.'+SIG.ext,SIG.b,{base64:true});
- const a=document.createElement('a');a.href=URL.createObjectURL(await z.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',compression:'DEFLATE'}));
- a.download=`SO_IR_${so.n.replace(/ /g,'_')}_${(S.doi||'').replace(/[.\/]/g,'-')}.docx`;a.textContent='⬇️ '+a.download+' डाउनलोड करें';const dl=$('soDlLinks');dl.innerHTML='';dl.appendChild(a);dl.style.display='block';a.click();st('ok','✅ रिपोर्ट तैयार हो गई! डाउनलोड शुरू हो गया है।')}
+ const _soBlob=await z.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',compression:'DEFLATE'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(_soBlob);
+ a.download=`SO_IR_${so.n.replace(/ /g,'_')}_${(S.doi||'').replace(/[.\/]/g,'-')}.docx`;a.textContent='⬇️ '+a.download+' डाउनलोड करें';const dl=$('soDlLinks');dl.innerHTML='';dl.appendChild(a);dl.style.display='block';a.click();try{if(window.reportDriveAfterGenerate)window.reportDriveAfterGenerate('so',a.download,_soBlob,{container:'soDlLinks',append:true});}catch(_e){}st('ok','✅ रिपोर्ट तैयार हो गई! डाउनलोड शुरू हो गया है।')}
 try{SIG=JSON.parse(localStorage.getItem('soir_sig'));if(SIG)$('sgi').textContent='✔ signature saved'}catch(e){}
 $('sg').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader;r.onload=()=>{const im=new Image;im.onload=()=>{const u=r.result;SIG={b:u.split(',')[1],ext:/png/.test(u.slice(0,24))?'png':'jpg',w:im.width,h:im.height};try{localStorage.setItem('soir_sig',JSON.stringify(SIG))}catch(x){}$('sgi').textContent='✔ signature saved'};im.src=r.result};r.readAsDataURL(f)};
 $('xl').onchange=async e=>{if(!so){alert('Select the Sub Office first');return}try{const g=applyWb(await readXlsx(await e.target.files[0].arrayBuffer())),k=Object.keys(g);if(k.length){render();save()}$('xli').textContent=k.length?'✅ Imported: '+k.map(x=>x+' '+g[x]).join(' · ')+' — review and edit below':'⚠️ No recognisable sheets (Pass Book, AOF, Finacle Transactions, VPP-COD, BO Balance, IPO Stock)'}catch(x){$('xli').textContent='❌ Could not read file: '+x.message}e.target.value=''};
@@ -15052,6 +15070,9 @@ function openCal(id){
      बैकअप फ़ाइल में भी नहीं जाते।
    • हर सफल भेजने का समय: drive_backup_last
      हर प्रयास का समय (दोहराव रोकने हेतु): drive_backup_last_attempt
+   • 🆕 बनाई गई रिपोर्ट भी इसी URL/टोकन से Drive पर भेजी जा सकती हैं —
+     सेटिंग reportAutoSend (इसी drive_backup_settings कुंजी के अंदर,
+     डिफ़ॉल्ट बंद)। अंतिम भेजी गई रिपोर्ट: report_drive_last
    • कोई भी विफलता चुपचाप दबा दी जाती है — कभी error-dialog नहीं, कभी
      ऐप धीमा नहीं।
    ============================================================ */
@@ -15074,17 +15095,18 @@ function openCal(id){
       var raw = localStorage.getItem(SKEY);
       if(raw){
         var c = JSON.parse(raw) || {};
-        return { url: String(c.url || '').trim(), token: String(c.token || ''), autoSend: !!c.autoSend };
+        return { url: String(c.url || '').trim(), token: String(c.token || ''), autoSend: !!c.autoSend, reportAutoSend: !!c.reportAutoSend };
       }
     }catch(e){}
-    return { url: '', token: '', autoSend: false };
+    return { url: '', token: '', autoSend: false, reportAutoSend: false };
   }
   function saveCfg(c){
     try{
       localStorage.setItem(SKEY, JSON.stringify({
         url: String(c.url || '').trim(),
         token: String(c.token || ''),
-        autoSend: !!c.autoSend
+        autoSend: !!c.autoSend,
+        reportAutoSend: !!c.reportAutoSend   // 🆕 रिपोर्ट भी भेजें (डिफ़ॉल्ट बंद)
       }));
     }catch(e){}
   }
@@ -15305,6 +15327,9 @@ function openCal(id){
     if(urlEl && document.activeElement !== urlEl) urlEl.value = c.url;
     if(tokEl && document.activeElement !== tokEl) tokEl.value = c.token;
     if(autoEl) autoEl.checked = c.autoSend;
+    var rAutoEl = byId('driveReportAuto');            // 🆕 रिपोर्ट ऑटो-भेजें टॉगल
+    if(rAutoEl) rAutoEl.checked = !!c.reportAutoSend;
+    if(window.reportDriveRefreshLast) window.reportDriveRefreshLast();
     var st = byId('driveBackupStatus');
     if(st){
       if(!c.url) st.textContent = '⚙️ अभी सेट नहीं किया गया। ऊपर Web App URL और टोकन भरें (विधि: Drive_Backup_Setup.html)।';
@@ -15414,6 +15439,235 @@ function openCal(id){
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initDriveBackup);
   else initDriveBackup();
+})();
+</script>
+
+<script>
+/* ============================================================
+   🆕 रिपोर्ट → Google Drive (Apps Script) — वैकल्पिक ऐड-ऑन
+   ------------------------------------------------------------
+   • ऊपर वाले बैकअप-कार्ड का ही URL/टोकन इस्तेमाल होता है (कुंजी:
+     drive_backup_settings)। URL खाली हो तो यह हिस्सा कुछ नहीं करता —
+     कोई नेटवर्क-कोशिश नहीं, ऐप पहले की तरह पूरी तरह ऑफ़लाइन चलता है।
+   • हर बनाई गई रिपोर्ट (BO IR, SO IR, Tour Diary, TA Bill) के नाम के
+     ठीक बगल में छोटा बटन "☁️ Drive पर भेजें" जुड़ता है। रिपोर्ट पहले
+     की तरह फ़ोन में डाउनलोड भी होती रहती है — भेजना उसके बाद, अलग से।
+   • नई सेटिंग: reportAutoSend (drive_backup_settings के अंदर) — चालू हो
+     तो हर रिपोर्ट चुपचाप Drive पर भी चली जाती है (डाउनलोड नहीं रुकता)।
+   • अंतिम भेजी गई रिपोर्ट (हर किस्म की): कुंजी report_drive_last
+   • हर विफलता चुपचाप दबा दी जाती है — कभी error-dialog नहीं, कभी
+     डाउनलोड बाधित नहीं, कभी डेटा नष्ट नहीं।
+   ============================================================ */
+(function(){
+  "use strict";
+
+  var SKEY = 'drive_backup_settings';   // वही कुंजी जो बैकअप-कार्ड इस्तेमाल करता है
+  var RAKEY = 'report_drive_last';      // {bo:{name,at}, so:{...}, tour:{...}, ta:{...}}
+  var DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  var TIMEOUT_MS = 12000;               // छोटा समय — ज़्यादा इंतज़ार नहीं
+  var KIND_LABEL = { bo:'BO निरीक्षण रिपोर्ट', so:'SO निरीक्षण रिपोर्ट', tour:'Tour Diary', ta:'TA Bill' };
+  // ऐप की किस्म (bo/so/tour/ta) → Apps Script का kind, जिससे Drive में सही सब-फ़ोल्डर चुने:
+  // BO IR + SO IR → "Inspection Reports" · tour → "Tour Diary" · ta → "TA Bill"
+  var SCRIPT_KIND = { bo:'inspection', so:'inspection', tour:'tour', ta:'ta' };
+
+  function byId(id){ return document.getElementById(id); }
+
+  // सेटिंग सिर्फ़ पढ़ते हैं (लिखने का काम ऊपर का बैकअप-कार्ड करता है)
+  function getCfg(){
+    try{
+      var raw = localStorage.getItem(SKEY);
+      if(raw){
+        var c = JSON.parse(raw) || {};
+        return { url:String(c.url||'').trim(), token:String(c.token||''), reportAutoSend: !!c.reportAutoSend };
+      }
+    }catch(e){}
+    return { url:'', token:'', reportAutoSend:false };
+  }
+
+  function blobToBase64(blob){
+    return new Promise(function(resolve){
+      try{
+        var fr = new FileReader();
+        fr.onload = function(){ var s=String(fr.result||''); var i=s.indexOf(','); resolve(i>=0?s.slice(i+1):''); };
+        fr.onerror = function(){ resolve(''); };
+        fr.readAsDataURL(blob);
+      }catch(e){ resolve(''); }
+    });
+  }
+
+  // एक POST (CORS) — जवाब पढ़ने की कोशिश
+  function postJson(url, bodyStr){
+    return new Promise(function(resolve){
+      var settled=false, ctrl=null;
+      if(typeof AbortController!=='undefined'){ try{ ctrl=new AbortController(); }catch(e){} }
+      var to=setTimeout(function(){ if(settled)return; settled=true; if(ctrl){try{ctrl.abort();}catch(e){}} resolve({state:'timeout'}); }, TIMEOUT_MS);
+      var finish=function(r){ if(settled)return; settled=true; clearTimeout(to); resolve(r); };
+      try{
+        fetch(url,{method:'POST',mode:'cors',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:bodyStr,signal:ctrl?ctrl.signal:undefined})
+          .then(function(resp){ return resp.text(); })
+          .then(function(txt){
+            var j=null; try{ j=JSON.parse(txt); }catch(e){}
+            if(j && j.ok===true) finish({state:'ok',json:j});
+            else if(j && j.ok===false) finish({state:'fail',error:(j.error||'स्क्रिप्ट ने मना कर दिया')});
+            else finish({state:'unconfirmed'});
+          })
+          .catch(function(err){ finish({state:'error',error:String((err&&err.message)||err)}); });
+      }catch(e){ finish({state:'error',error:String((e&&e.message)||e)}); }
+    });
+  }
+  // आख़िरी उपाय — no-cors POST (जवाब नहीं पढ़ा जा सकता)। सिर्फ़ एक बार, बार-बार नहीं।
+  function postNoCors(url, bodyStr){
+    return new Promise(function(resolve){
+      var settled=false, ctrl=null;
+      if(typeof AbortController!=='undefined'){ try{ ctrl=new AbortController(); }catch(e){} }
+      var to=setTimeout(function(){ if(settled)return; settled=true; if(ctrl){try{ctrl.abort();}catch(e){}} resolve({state:'timeout'}); }, TIMEOUT_MS);
+      var finish=function(r){ if(settled)return; settled=true; clearTimeout(to); resolve(r); };
+      try{
+        fetch(url,{method:'POST',mode:'no-cors',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:bodyStr,signal:ctrl?ctrl.signal:undefined})
+          .then(function(){ finish({state:'sent-opaque'}); })
+          .catch(function(err){ finish({state:'error',error:String((err&&err.message)||err)}); });
+      }catch(e){ finish({state:'error',error:String((e&&e.message)||e)}); }
+    });
+  }
+
+  function markSent(kind, filename){
+    try{
+      var all={}; try{ all=JSON.parse(localStorage.getItem(RAKEY))||{}; }catch(e){ all={}; }
+      all[kind]={ name:String(filename||''), at:new Date().toISOString() };
+      localStorage.setItem(RAKEY, JSON.stringify(all));
+    }catch(e){}
+    window.reportDriveRefreshLast();
+  }
+
+  window.reportDriveRefreshLast = function(){
+    var el=byId('driveReportLastSent'); if(!el) return;
+    var all={}; try{ all=JSON.parse(localStorage.getItem(RAKEY))||{}; }catch(e){ all={}; }
+    var parts=[];
+    ['bo','so','tour','ta'].forEach(function(k){
+      if(all[k] && all[k].name) parts.push((KIND_LABEL[k]||k)+': '+all[k].name+' ('+new Date(all[k].at).toLocaleString()+')');
+    });
+    el.textContent = parts.length
+      ? ('अंतिम भेजी गई रिपोर्ट — '+parts.join(' · '))
+      : 'अभी तक कोई रिपोर्ट Drive पर नहीं भेजी गई।';
+  };
+
+  // असली भेजना — कभी reject नहीं करता
+  function sendFile(kind, filename, blob){
+    var c=getCfg();
+    if(!c.url) return Promise.resolve({state:'no-url'});
+    var mime=(blob&&blob.type)||DOCX_MIME;
+    return blobToBase64(blob).then(function(b64){
+      if(!b64) return {state:'fail',error:'encode'};
+      var body;
+      try{
+        body=JSON.stringify({ type:'file', token:c.token, app:'SDI Bairiya Office Toolkit', kind:(SCRIPT_KIND[kind]||kind), name:String(filename||''), mime:mime, base64:b64, sentAt:new Date().toISOString() });
+      }catch(e){ return {state:'fail',error:'encode'}; }
+      return postJson(c.url, body).then(function(r){
+        if(r.state==='ok'){ markSent(kind,filename); return {state:'ok', file:(r.json&&r.json.file)||filename}; }
+        if(r.state==='fail'){ return {state:'fail', error:r.error}; }
+        if(r.state==='unconfirmed'){ markSent(kind,filename); return {state:'sent-unconfirmed'}; }
+        // timeout / network — सिर्फ़ एक बार no-cors कोशिश
+        return postNoCors(c.url, body).then(function(r2){
+          if(r2.state==='sent-opaque'){ markSent(kind,filename); return {state:'sent-unconfirmed'}; }
+          return {state:'fail', error:(r2.error||r.error||'नेटवर्क त्रुटि')};
+        });
+      });
+    });
+  }
+
+  // ऑटो-भेजना: चुपचाप, न ब्लॉक, न error, न बार-बार (एक ही रिपोर्ट 60 सेकंड में दोबारा नहीं)
+  function autoSend(kind, filename, blob){
+    try{
+      var c=getCfg();
+      if(!c.url || !c.reportAutoSend) return;
+      var all={}; try{ all=JSON.parse(localStorage.getItem(RAKEY))||{}; }catch(e){ all={}; }
+      var prev=all[kind];
+      if(prev && prev.name===String(filename||'') && prev.at && (Date.now()-new Date(prev.at).getTime())<60000) return;
+      sendFile(kind, filename, blob);   // fire-and-forget — डाउनलोड कभी नहीं रुकता
+    }catch(e){}
+  }
+
+  // बटन पर छोटा नतीजा दिखाएँ (कुछ सेकंड), फिर वापस डिफ़ॉल्ट
+  function flash(btn, msg){
+    try{
+      if(btn.__flash) clearTimeout(btn.__flash);
+      btn.textContent=msg;
+      btn.__flash=setTimeout(function(){ try{ btn.textContent='☁️ Drive पर भेजें'; }catch(e){} }, 4000);
+    }catch(e){}
+  }
+
+  window.reportDriveMakeButton = function(kind, filename, blob){
+    var b=document.createElement('button');
+    b.type='button';
+    b.className='btn-sm btn-export';
+    b.style.cssText='margin:2px 6px 0 0;font-size:0.78rem;padding:4px 12px;';
+    b.textContent='☁️ Drive पर भेजें';
+    b.title='इस रिपोर्ट की एक कॉपी अपने Google Drive में भेजें';
+    b.addEventListener('click', function(ev){
+      ev.preventDefault(); ev.stopPropagation();
+      var c=getCfg();
+      if(!c.url){ flash(b,'⚠️ Drive सेट नहीं है'); return; }   // कोई नेटवर्क-कोशिश नहीं
+      if(b.__busy) return;
+      b.__busy=true; flash(b,'⏳ भेजी जा रही है…');
+      sendFile(kind, filename, blob).then(function(r){
+        b.__busy=false;
+        if(r.state==='ok') flash(b,'✅ Drive पर भेज दी');
+        else if(r.state==='sent-unconfirmed') flash(b,'✅ भेज दी (पुष्टि नहीं)');
+        else if(r.state==='no-url') flash(b,'⚠️ Drive सेट नहीं है');
+        else flash(b,'❌ नहीं भेजी जा सकी — बाद में फिर कोशिश करें');
+      });
+    });
+    return b;
+  };
+
+  /* रिपोर्ट बनते ही बुलाया जाता है।
+     opts.container: किस element में लिंक/बटन दिखाएँ
+     opts.append:    true = मौजूदा डाउनलोड-लिंक मिटाए बिना सिर्फ़ बटन जोड़ें */
+  window.reportDriveAfterGenerate = function(kind, filename, blob, opts){
+    try{
+      opts = opts || {};
+      var cont = (typeof opts==='string') ? byId(opts) : (opts.container ? byId(opts.container) : null);
+      var appendOnly = (typeof opts==='object' && opts.append) ? true : false;
+      if(cont){
+        if(!appendOnly){
+          cont.innerHTML='';
+          var a=document.createElement('a');
+          a.href='#'; a.textContent='⬇️ '+filename+' (फिर से डाउनलोड)';
+          a.style.cssText='display:inline-block;margin:2px 6px 0 0;padding:4px 12px;background:#28a745;color:#fff;border-radius:6px;font-size:0.8rem;text-decoration:none;';
+          a.addEventListener('click', function(ev){ ev.preventDefault(); try{ downloadBlob(blob, filename); }catch(e){} });
+          cont.appendChild(a);
+        }
+        var btn=window.reportDriveMakeButton(kind, filename, blob);
+        if(btn) cont.appendChild(btn);
+        cont.style.display='block';
+      }
+      autoSend(kind, filename, blob);
+    }catch(e){}
+  };
+
+  // टॉगल (बैकअप-कार्ड में) — डिफ़ॉल्ट बंद
+  window.driveReportToggleAuto = function(){
+    var el=byId('driveReportAuto');
+    var on=!!(el && el.checked);
+    try{
+      var c={}; try{ c=JSON.parse(localStorage.getItem(SKEY))||{}; }catch(e){ c={}; }
+      c.url=String(c.url||'').trim(); c.token=String(c.token||''); c.autoSend=!!c.autoSend; c.reportAutoSend=on;
+      localStorage.setItem(SKEY, JSON.stringify(c));
+    }catch(e){}
+    var st=byId('driveBackupStatus');
+    if(st) st.textContent = on
+      ? '✅ अब हर बनाई गई रिपोर्ट भी चुपचाप Drive पर भेजी जाएगी।'
+      : '⏸️ रिपोर्ट अपने-आप भेजना बंद।';
+    try{ if(window.driveBackupRefreshUI) window.driveBackupRefreshUI(); }catch(e){}
+  };
+
+  function initReportDrive(){
+    try{ window.reportDriveRefreshLast(); }catch(e){}
+    var el=byId('driveReportAuto');
+    if(el){ try{ el.checked=!!getCfg().reportAutoSend; }catch(e){} }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initReportDrive);
+  else initReportDrive();
 })();
 </script>
 
