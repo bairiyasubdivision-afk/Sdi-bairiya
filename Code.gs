@@ -24,6 +24,23 @@
  *  Deploy → Manage deployments → Edit → Version: "New version" → Deploy
  *  करना पड़ता है, तभी नया बदलाव लागू होता है।
  * ============================================================
+ *
+ *  ------------------------------------------------------------
+ *  🆕 नया (रिपोर्ट भी Drive पर): अब यह script सिर्फ़ बैकअप ही नहीं,
+ *  ऐप की बनाई चारों .docx रिपोर्ट भी Drive में सहेज सकता है —
+ *    • BO निरीक्षण रिपोर्ट और SO निरीक्षण रिपोर्ट → "Inspection Reports"
+ *    • मासिक Tour Diary                          → "Tour Diary"
+ *    • TA Bill                                   → "TA Bill"
+ *  ये सब-फ़ोल्डर मुख्य "SDI Bairiya" फ़ोल्डर के अंदर बनते हैं।
+ *  बैकअप JSON फ़ाइलें पहले की तरह मुख्य "SDI Bairiya" फ़ोल्डर में
+ *  ही रहती हैं (कोई बदलाव नहीं) — ताकि पुराना prune/log जैसा था
+ *  वैसा ही चलता रहे।
+ *
+ *  ⚠️ यह नया कोड उसी पुराने प्रोजेक्ट में paste करें और फिर से
+ *     Deploy → Manage deployments → ✏️ Edit → Version: "New version"
+ *     → Deploy करें। नया version deploy किए बिना रिपोर्ट-भेजना काम
+ *     नहीं करेगा (पुराना बैकअप-भेजना चलता रहेगा)।
+ *  ------------------------------------------------------------
  */
 
 
@@ -53,6 +70,19 @@ var SHEET_NAME = 'Backup Log';
 // बैकअप फ़ाइलों के नाम का ढाँचा — इससे पुरानी फ़ाइलें पहचानी जाती हैं।
 var FILE_PREFIX = 'SDI_Bairiya_Backup_';
 
+// 🆕 सब-फ़ोल्डर: हर तरह की फ़ाइल अपनी जगह पर रहे। ऐप kind भेजता है
+// ('inspection' / 'tour' / 'ta') — उसके अनुसार सब-फ़ोल्डर चुना जाता है।
+var SUBFOLDERS = {
+  inspection: 'Inspection Reports',
+  tour: 'Tour Diary',
+  ta: 'TA Bill',
+  other: 'Other Files'
+};
+
+// 🆕 सुरक्षा-सीमा: इससे बड़ी फ़ाइल कभी नहीं लिखी जाएगी (15 MB).
+// (बैकअप पर असर नहीं — यह जाँच सिर्फ़ फ़ाइल-भेजने पर लगती है।)
+var FILE_MAX_BYTES = 15 * 1024 * 1024;
+
 
 /**
  * =====================================================================
@@ -79,6 +109,12 @@ function doPost(e) {
     // 2) टोकन जाँचें
     if (!tokenOk_(body && body.token)) {
       return jsonOut_({ ok: false, error: 'invalid token' });
+    }
+
+    // 2a) 🆕 अगर यह कोई फ़ाइल है (रिपोर्ट आदि) तो अलग रास्ते से सहेजें।
+    //     पुराना बैकअप-रास्ता बिलकुल नहीं छूते।
+    if (body && body.type === 'file') {
+      return handleFile_(body);
     }
 
     // 3) बैकअप का असली हिस्सा निकालें (ऐप body.data में पूरा envelope भेजता है)
@@ -130,6 +166,74 @@ function doPost(e) {
 
 /**
  * =====================================================================
+ *  🆕 handleFile_ — ऐप की बनाई फ़ाइल (जैसे .docx रिपोर्ट) सहेजें।
+ *  body: { type:'file', token, kind, name, mime, base64 }
+ *  कभी throw नहीं करता — हमेशा छोटा JSON लौटाता है।
+ * =====================================================================
+ */
+function handleFile_(body) {
+  try {
+    // 1) नाम / MIME / content पढ़ें
+    var name = sanitizeFileName_(body && body.name);
+    if (!name) name = 'file_' + formatStamp_(new Date());
+
+    var mime = String((body && body.mime) || '').trim() || 'application/octet-stream';
+    if (mime.length > 120) mime = 'application/octet-stream';
+
+    var b64 = String((body && body.base64) || '');
+    if (!b64) return jsonOut_({ ok: false, error: 'empty file content' });
+
+    // 2) बहुत बड़ी फ़ाइल कभी न लिखें (अंदाज़न decoded आकार)
+    var approx = Math.floor(b64.length * 3 / 4);
+    if (approx > FILE_MAX_BYTES) {
+      return jsonOut_({ ok: false, error: 'file too large' });
+    }
+
+    // 3) base64 → bytes
+    var bytes;
+    try {
+      bytes = Utilities.base64Decode(b64);
+    } catch (decErr) {
+      return jsonOut_({ ok: false, error: 'invalid base64' });
+    }
+    if (!bytes || !bytes.length) return jsonOut_({ ok: false, error: 'empty file content' });
+
+    // 4) kind के अनुसार सब-फ़ोल्डर चुनें (न हो तो बना दें)
+    var kind = String((body && body.kind) || '').trim();
+    var subName = SUBFOLDERS[kind] || SUBFOLDERS.other;
+    var root = getOrCreateFolder_(FOLDER_NAME);
+    var folder = getOrCreateSubfolder_(root, subName);
+
+    // 5) फ़ाइल सहेजें — नाम और MIME वैसे ही जैसे ऐप ने भेजे
+    var file = folder.createFile(Utilities.newBlob(bytes, mime, name));
+
+    // 6) इतिहास (न बने तो भी फ़ाइल सुरक्षित है)
+    var logNote = '';
+    try {
+      logNote = appendLog_(root, name, bytes.length, 'file (' + (kind || 'other') + ')',
+        { folder: subName });
+    } catch (logErr) {
+      logNote = 'log failed: ' + logErr;
+    }
+
+    return jsonOut_({
+      ok: true,
+      file: name,
+      fileId: file.getId(),
+      folder: FOLDER_NAME + '/' + subName,
+      size: bytes.length,
+      kind: kind,
+      log: logNote,
+      time: new Date().toISOString()
+    });
+  } catch (err) {
+    return jsonOut_({ ok: false, error: String(err && err.message ? err.message : err) });
+  }
+}
+
+
+/**
+ * =====================================================================
  *  doGet — ऐप का "जाँचें (Test)" बटन इसी को कॉल करता है।
  *  टोकन सही हो तो छोटा status JSON लौटाता है।
  * =====================================================================
@@ -141,6 +245,7 @@ function doGet(e) {
       return jsonOut_({ ok: false, error: 'invalid token' });
     }
     var count = 0;
+    var reportCount = 0;   // 🆕 सब-फ़ोल्डरों में सहेजी गई रिपोर्ट/फ़ाइलें
     var folderName = FOLDER_NAME;
     try {
       var it = DriveApp.getFoldersByName(FOLDER_NAME);
@@ -152,6 +257,15 @@ function doGet(e) {
           var fl = files.next();
           if (fl.getName().indexOf(FILE_PREFIX) === 0) count++;
         }
+        // 🆕 हर सब-फ़ोल्डर की फ़ाइलें गिनें
+        var subs = f.getFolders();
+        while (subs.hasNext()) {
+          var sf = subs.next();
+          try {
+            var sfiles = sf.getFiles();
+            while (sfiles.hasNext()) { sfiles.next(); reportCount++; }
+          } catch (subErr) {}
+        }
       }
     } catch (countErr) {}
 
@@ -161,6 +275,7 @@ function doGet(e) {
       app: 'SDI Bairiya Office Toolkit',
       folder: folderName,
       backups: count,
+      reports: reportCount,
       keep: KEEP_BACKUPS,
       time: new Date().toISOString()
     });
@@ -215,6 +330,29 @@ function sanitizeName_(n) {
   s = s.replace(/[\\\/:*?"<>|\r\n\t]+/g, '_');
   if (s.length > 120) s = s.substring(0, 120);
   if (!/\.json$/i.test(s)) s += '.json';
+  return s;
+}
+
+/**
+ * 🆕 फ़ोल्डर ढूँढें, न मिले तो बनाएँ — मुख्य फ़ोल्डर के अंदर (सब-फ़ोल्डर)।
+ */
+function getOrCreateSubfolder_(parent, name) {
+  try {
+    var it = parent.getFoldersByName(name);
+    if (it.hasNext()) return it.next();
+  } catch (findErr) {}
+  return parent.createFolder(name);
+}
+
+/**
+ * 🆕 फ़ाइल-नाम साफ़ करें — ध्यान दें: यह .json ज़बरदस्ती नहीं जोड़ता
+ * (रिपोर्ट .docx अपने नाम से ही सहेजी जाए)।
+ */
+function sanitizeFileName_(n) {
+  var s = String(n == null ? '' : n).trim();
+  if (!s) return '';
+  s = s.replace(/[\\\/:*?"<>|\r\n\t]+/g, '_');
+  if (s.length > 120) s = s.substring(0, 120);
   return s;
 }
 
@@ -282,4 +420,5 @@ function testSetup() {
   Logger.log('Folder OK: ' + folder.getName());
   Logger.log('Token set: ' + (SECRET_TOKEN.indexOf('CHANGE_ME') !== 0));
   Logger.log('Keeping last ' + KEEP_BACKUPS + ' backups.');
+  Logger.log('Report sub-folders: ' + SUBFOLDERS.inspection + ' / ' + SUBFOLDERS.tour + ' / ' + SUBFOLDERS.ta);
 }
