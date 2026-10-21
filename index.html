@@ -1713,6 +1713,38 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
               </p>
             </div>
           </div>
+          <!-- ☁️ Google Drive पर भेजें (Apps Script) — वैकल्पिक ऐड-ऑन।
+               URL खाली रहने पर ऐप हमेशा की तरह पूरी तरह ऑफ़लाइन चलता है;
+               कोई नेटवर्क-कोशिश नहीं होती। -->
+          <div class="data-card" id="driveBackupCard" style="margin-top:16px;margin-bottom:16px;background:#ede7f6;border:1px solid #b39ddb;">
+            <div style="padding:14px 18px;">
+              <div style="font-weight:700;font-size:0.95rem;color:var(--navy);margin-bottom:6px;">☁️ Google Drive पर भेजें (Apps Script)</div>
+              <p class="info-text" style="margin-top:0;">
+                अपने ही Google Apps Script Web App पर बैकअप भेजें — पूरी तरह वैकल्पिक। URL खाली रहने पर ऐप हमेशा की तरह ऑफ़लाइन चलता रहेगा; कोई नेटवर्क-कोशिश नहीं होगी।
+              </p>
+              <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;">
+                <label style="font-size:0.85rem;font-weight:600;color:var(--navy);">Web App URL
+                  <input type="text" id="driveBackupUrl" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://script.google.com/macros/s/..../exec" style="width:100%;box-sizing:border-box;margin-top:4px;padding:8px 10px;border:1px solid #d0d7de;border-radius:8px;font-size:0.78rem;font-family:monospace;">
+                </label>
+                <label style="font-size:0.85rem;font-weight:600;color:var(--navy);">गुप्त टोकन (Secret Token)
+                  <input type="text" id="driveBackupToken" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="वही टोकन जो Code.gs में लिखा है" style="width:100%;box-sizing:border-box;margin-top:4px;padding:8px 10px;border:1px solid #d0d7de;border-radius:8px;font-size:0.78rem;font-family:monospace;">
+                </label>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+                <button type="button" class="btn-sm btn-save" onclick="driveBackupTest()">🔌 जाँचें (Test)</button>
+                <button type="button" class="btn-sm btn-export" onclick="driveBackupSendNow()">☁️ अभी Drive पर भेजें</button>
+              </div>
+              <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;font-weight:600;cursor:pointer;margin-top:12px;">
+                <input type="checkbox" id="driveBackupAuto" onchange="driveBackupToggleAuto()">
+                अपने-आप भेजें (auto-send)
+              </label>
+              <p class="info-text" id="driveBackupStatus" style="margin-top:8px;">⚙️ अभी सेट नहीं किया गया।</p>
+              <p class="info-text" id="driveBackupLastSent" style="margin-top:4px;">अभी तक Drive पर कुछ नहीं भेजा गया।</p>
+              <p class="info-text" style="margin-top:6px;color:#666;">
+                यह आपका निजी सेटअप है — URL और टोकन किसी और को न बताएँ। पूरी विधि के लिए देखें <b>Drive_Backup_Setup.html</b>।
+              </p>
+            </div>
+          </div>
           <div class="data-card" style="margin-top:16px;background:#fff8e1;border:1px solid #ffe082;">
             <div style="padding:14px 18px;">
               <b style="color:#e65100;">Storage Info</b>
@@ -1846,6 +1878,7 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       if(typeof window.renderAcctPeriods==='function')window.renderAcctPeriods();
     }
     if(tab==='warning'&&typeof window.wlRender==='function')window.wlRender();
+    if(tab==='backup'&&typeof window.driveBackupRefreshUI==='function')window.driveBackupRefreshUI();
   };
 
   // ============================================================
@@ -2961,6 +2994,9 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       var key=localStorage.key(i);
       var val=localStorage.getItem(key);
       // Try to parse JSON values, otherwise keep as string
+      // Google Drive सेटिंग (Web App URL + गुप्त टोकन) बैकअप में न जाएँ —
+      // यह गोपनीय जानकारी है, किसी बनी फ़ाइल में नहीं लिखी जानी चाहिए।
+      if(/^drive_backup_/.test(key))continue;
       try{allStorage[key]=JSON.parse(val);}catch(e){allStorage[key]=val;}
     }
     var exportObj={
@@ -2982,6 +3018,9 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     if(silent){ showToast('🔄 Auto-backup saved to Downloads'); }
     else { showToast('Full backup downloaded! (TA + Inspection + Master Data)'); }
     if(typeof refreshAutoBackupInfo==='function') refreshAutoBackupInfo();
+    // ऑटो-बैकअप बनते ही (चुपचाप) Drive पर भी भेजने की कोशिश — वैकल्पिक,
+    // कभी ब्लॉक नहीं करता, कभी error-dialog नहीं। URL/टोकन न हो तो कुछ नहीं।
+    if(silent && typeof window.driveBackupAutoSend==='function'){ try{ window.driveBackupAutoSend(); }catch(e){} }
   };
   function pad2(n){return n<10?'0'+n:''+n;};
   // ------------------------------------------------------------------
@@ -15002,5 +15041,381 @@ function openCal(id){
   window.SO_IR={tab:tab,gen:gen,clr:clr,bkExport:bkExport,pick:pick,openCal:openCal,clearSample:clearSample};
 })();
 </script>
+<script>
+/* ============================================================
+   Google Drive बैकअप (Apps Script Web App) — वैकल्पिक ऐड-ऑन
+   ------------------------------------------------------------
+   • ऐप की सारी बनी हुई सुविधाएँ ज्यों की त्यों रहती हैं। URL न हो तो
+     यह हिस्सा कुछ नहीं करता — कोई नेटवर्क-कोशिश नहीं।
+   • Web App URL और गुप्त टोकन सिर्फ़ इसी फ़ोन के localStorage में रहते
+     हैं (कुंजी: drive_backup_settings)। कहीं hardcode नहीं हैं, और
+     बैकअप फ़ाइल में भी नहीं जाते।
+   • हर सफल भेजने का समय: drive_backup_last
+     हर प्रयास का समय (दोहराव रोकने हेतु): drive_backup_last_attempt
+   • कोई भी विफलता चुपचाप दबा दी जाती है — कभी error-dialog नहीं, कभी
+     ऐप धीमा नहीं।
+   ============================================================ */
+(function(){
+  "use strict";
+
+  var SKEY = 'drive_backup_settings';      // {url, token, autoSend}
+  var LKEY = 'drive_backup_last';          // अंतिम सफल भेजने का समय (ISO)
+  var AKEY = 'drive_backup_last_attempt';  // अंतिम प्रयास का समय (ISO)
+  var TIMEOUT_MS = 15000;                  // 15 सेकंड से ज़्यादा इंतज़ार नहीं
+  var AUTO_MIN_GAP_MS = 20 * 60 * 60 * 1000; // ऑटो: ~20 घंटे में एक बार
+  var _busy = false;
+  var _statusTouched = false;
+
+  function byId(id){ return document.getElementById(id); }
+  function pad2(n){ return n < 10 ? '0' + n : '' + n; }
+
+  function getCfg(){
+    try{
+      var raw = localStorage.getItem(SKEY);
+      if(raw){
+        var c = JSON.parse(raw) || {};
+        return { url: String(c.url || '').trim(), token: String(c.token || ''), autoSend: !!c.autoSend };
+      }
+    }catch(e){}
+    return { url: '', token: '', autoSend: false };
+  }
+  function saveCfg(c){
+    try{
+      localStorage.setItem(SKEY, JSON.stringify({
+        url: String(c.url || '').trim(),
+        token: String(c.token || ''),
+        autoSend: !!c.autoSend
+      }));
+    }catch(e){}
+  }
+
+  // पूरा बैकअप envelope — बिलकुल वही जो "Full Backup (All Data)" बनाता है।
+  // ध्यान: drive_backup_* कुंजियाँ (URL/टोकन) बैकअप में नहीं जातीं।
+  function buildEnvelope(){
+    var md = null;
+    try{ var r = localStorage.getItem('sdi_master_data'); if(r) md = JSON.parse(r); }catch(e){}
+    var ta = null;
+    try{ var t = localStorage.getItem('ta_tour_data'); if(t) ta = JSON.parse(t); }catch(e){}
+    var allStorage = {};
+    for(var i = 0; i < localStorage.length; i++){
+      var key = localStorage.key(i);
+      if(!key || /^drive_backup_/.test(key)) continue;   // गोपनीय सेटिंग बाहर
+      var val = localStorage.getItem(key);
+      try{ allStorage[key] = JSON.parse(val); }catch(e){ allStorage[key] = val; }
+    }
+    return {
+      masterData: md,
+      taData: ta,
+      allStorage: allStorage,
+      exportDate: new Date().toISOString(),
+      appVersion: '7.3',
+      backupType: 'full'
+    };
+  }
+  function stampStr(d){
+    return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate())
+         + '_' + pad2(d.getHours()) + '-' + pad2(d.getMinutes());
+  }
+  function withToken(url, token){
+    try{
+      var sep = url.indexOf('?') >= 0 ? '&' : '?';
+      return url + sep + 'token=' + encodeURIComponent(token || '');
+    }catch(e){ return url; }
+  }
+  function markSent(){
+    try{ localStorage.setItem(LKEY, new Date().toISOString()); }catch(e){}
+  }
+  function refreshLast(){
+    var ls = byId('driveBackupLastSent');
+    if(!ls) return;
+    var last = localStorage.getItem(LKEY);
+    ls.textContent = last
+      ? ('पिछली बार Drive पर भेजा: ' + new Date(last).toLocaleString())
+      : 'अभी तक Drive पर कुछ नहीं भेजा गया।';
+  }
+  function setStatus(msg){
+    _statusTouched = true;
+    var st = byId('driveBackupStatus');
+    if(st) st.textContent = msg;
+  }
+
+  /* --- एक POST (CORS के साथ) — जवाब पढ़ने की कोशिश --- */
+  function postJson(url, bodyStr){
+    return new Promise(function(resolve){
+      var settled = false, ctrl = null;
+      if(typeof AbortController !== 'undefined'){ try{ ctrl = new AbortController(); }catch(e){} }
+      var to = setTimeout(function(){
+        if(settled) return; settled = true;
+        if(ctrl){ try{ ctrl.abort(); }catch(e){} }
+        resolve({ state: 'timeout' });
+      }, TIMEOUT_MS);
+      var finish = function(r){ if(settled) return; settled = true; clearTimeout(to); resolve(r); };
+      try{
+        fetch(url, {
+          method: 'POST',
+          mode: 'cors',
+          redirect: 'follow',
+          // text/plain रखने से CORS preflight (OPTIONS) नहीं होता — Apps Script के लिए ज़रूरी
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: bodyStr,
+          signal: ctrl ? ctrl.signal : undefined
+        }).then(function(resp){
+          return resp.text();
+        }).then(function(txt){
+          var j = null;
+          try{ j = JSON.parse(txt); }catch(e){}
+          if(j && j.ok === true) finish({ state: 'ok', json: j });
+          else if(j && j.ok === false) finish({ state: 'fail', error: (j.error || 'स्क्रिप्ट ने मना कर दिया') });
+          else finish({ state: 'unconfirmed' });
+        }).catch(function(err){
+          finish({ state: 'error', error: String((err && err.message) || err) });
+        });
+      }catch(e){ finish({ state: 'error', error: String((e && e.message) || e) }); }
+    });
+  }
+
+  /* --- आख़िरी उपाय: no-cors POST (जवाब नहीं पढ़ा जा सकता) --- */
+  function postNoCors(url, bodyStr){
+    return new Promise(function(resolve){
+      var settled = false, ctrl = null;
+      if(typeof AbortController !== 'undefined'){ try{ ctrl = new AbortController(); }catch(e){} }
+      var to = setTimeout(function(){
+        if(settled) return; settled = true;
+        if(ctrl){ try{ ctrl.abort(); }catch(e){} }
+        resolve({ state: 'timeout' });
+      }, TIMEOUT_MS);
+      var finish = function(r){ if(settled) return; settled = true; clearTimeout(to); resolve(r); };
+      try{
+        fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          redirect: 'follow',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: bodyStr,
+          signal: ctrl ? ctrl.signal : undefined
+        }).then(function(){ finish({ state: 'sent-opaque' }); })
+          .catch(function(err){ finish({ state: 'error', error: String((err && err.message) || err) }); });
+      }catch(e){ finish({ state: 'error', error: String((e && e.message) || e) }); }
+    });
+  }
+
+  /* --- एक GET (CORS के साथ) — "जाँचें" के लिए --- */
+  function getJson(url){
+    return new Promise(function(resolve){
+      var settled = false, ctrl = null;
+      if(typeof AbortController !== 'undefined'){ try{ ctrl = new AbortController(); }catch(e){} }
+      var to = setTimeout(function(){
+        if(settled) return; settled = true;
+        if(ctrl){ try{ ctrl.abort(); }catch(e){} }
+        resolve({ state: 'timeout' });
+      }, TIMEOUT_MS);
+      var finish = function(r){ if(settled) return; settled = true; clearTimeout(to); resolve(r); };
+      try{
+        fetch(url, { method: 'GET', mode: 'cors', redirect: 'follow', signal: ctrl ? ctrl.signal : undefined })
+          .then(function(resp){ return resp.text(); })
+          .then(function(txt){
+            var j = null;
+            try{ j = JSON.parse(txt); }catch(e){}
+            if(j && j.ok === true) finish({ state: 'ok', json: j });
+            else if(j && j.ok === false) finish({ state: 'fail', error: (j.error || 'स्क्रिप्ट ने मना कर दिया') });
+            else finish({ state: 'unconfirmed' });
+          }).catch(function(err){
+            finish({ state: 'error', error: String((err && err.message) || err) });
+          });
+      }catch(e){ finish({ state: 'error', error: String((e && e.message) || e) }); }
+    });
+  }
+  function getNoCors(url){
+    return new Promise(function(resolve){
+      var settled = false, ctrl = null;
+      if(typeof AbortController !== 'undefined'){ try{ ctrl = new AbortController(); }catch(e){} }
+      var to = setTimeout(function(){
+        if(settled) return; settled = true;
+        if(ctrl){ try{ ctrl.abort(); }catch(e){} }
+        resolve({ state: 'timeout' });
+      }, TIMEOUT_MS);
+      var finish = function(r){ if(settled) return; settled = true; clearTimeout(to); resolve(r); };
+      try{
+        fetch(url, { method: 'GET', mode: 'no-cors', redirect: 'follow', signal: ctrl ? ctrl.signal : undefined })
+          .then(function(){ finish({ state: 'sent-opaque' }); })
+          .catch(function(err){ finish({ state: 'error', error: String((err && err.message) || err) }); });
+      }catch(e){ finish({ state: 'error', error: String((e && e.message) || e) }); }
+    });
+  }
+
+  /* --- असली भेजना --- */
+  function sendNow(){
+    var c = getCfg();
+    if(!c.url) return Promise.resolve({ state: 'no-url' });
+    if(_busy) return Promise.resolve({ state: 'busy' });
+    _busy = true;
+    var env = buildEnvelope();
+    var stamp = stampStr(new Date());
+    var fname = 'SDI_Bairiya_Backup_' + stamp + '.json';
+    var body = JSON.stringify({
+      token: c.token,
+      app: 'SDI Bairiya Office Toolkit',
+      sentAt: new Date().toISOString(),
+      backupType: 'full',
+      filename: fname,
+      counts: {
+        storageKeys: Object.keys(env.allStorage || {}).length,
+        offices: (env.masterData && env.masterData.offices && env.masterData.offices.length) || 0
+      },
+      data: env
+    });
+    try{ localStorage.setItem(AKEY, new Date().toISOString()); }catch(e){}
+
+    return postJson(c.url, body).then(function(r){
+      if(r.state === 'ok'){ _busy = false; markSent(); return { state: 'ok', file: (r.json && r.json.file) || fname }; }
+      if(r.state === 'fail'){ _busy = false; return { state: 'fail', error: r.error }; }
+      if(r.state === 'unconfirmed'){ _busy = false; markSent(); return { state: 'sent-unconfirmed' }; }
+      // error / timeout — आख़िरी उपाय: no-cors
+      return postNoCors(c.url, body).then(function(r2){
+        _busy = false;
+        if(r2.state === 'sent-opaque'){ markSent(); return { state: 'sent-unconfirmed' }; }
+        if(r2.state === 'timeout'){ return { state: 'fail', error: 'समय समाप्त (timeout)' }; }
+        return { state: 'fail', error: (r2.error || r.error || 'नेटवर्क त्रुटि') };
+      });
+    });
+  }
+
+  /* --- जाँच (doGet) --- */
+  function testConn(){
+    var c = getCfg();
+    if(!c.url) return Promise.resolve({ state: 'no-url' });
+    var u = withToken(c.url, c.token);
+    return getJson(u).then(function(r){
+      if(r.state === 'ok') return { state: 'ok', json: r.json };
+      if(r.state === 'fail') return { state: 'fail', error: r.error };
+      if(r.state === 'unconfirmed') return { state: 'unconfirmed' };
+      return getNoCors(u).then(function(r2){
+        if(r2.state === 'sent-opaque') return { state: 'unconfirmed' };
+        return { state: 'fail', error: (r2.error || r.error || 'नेटवर्क त्रुटि') };
+      });
+    });
+  }
+
+  /* --- UI --- */
+  window.driveBackupRefreshUI = function(){
+    var c = getCfg();
+    var urlEl = byId('driveBackupUrl');
+    var tokEl = byId('driveBackupToken');
+    var autoEl = byId('driveBackupAuto');
+    if(urlEl && document.activeElement !== urlEl) urlEl.value = c.url;
+    if(tokEl && document.activeElement !== tokEl) tokEl.value = c.token;
+    if(autoEl) autoEl.checked = c.autoSend;
+    var st = byId('driveBackupStatus');
+    if(st){
+      if(!c.url) st.textContent = '⚙️ अभी सेट नहीं किया गया। ऊपर Web App URL और टोकन भरें (विधि: Drive_Backup_Setup.html)।';
+      else if(!_statusTouched) st.textContent = 'सेट है — “🔌 जाँचें” दबाकर पुष्टि करें।';
+    }
+    refreshLast();
+  };
+
+  function saveFields(){
+    var c = getCfg();
+    var u = byId('driveBackupUrl'), t = byId('driveBackupToken');
+    c.url = u ? u.value : '';
+    c.token = t ? t.value : '';
+    saveCfg(c);
+    _statusTouched = false;
+    window.driveBackupRefreshUI();
+  }
+
+  window.driveBackupTest = function(){
+    saveFields();
+    var c = getCfg();
+    if(!c.url){ setStatus('⚠️ पहले Web App URL भरें।'); return; }
+    if(_busy){ setStatus('⏳ काम चल रहा है…'); return; }
+    _busy = true;
+    setStatus('⏳ जाँच हो रही है…');
+    testConn().then(function(r){
+      _busy = false;
+      if(r.state === 'ok'){
+        var n = (r.json && r.json.backups != null) ? r.json.backups : '?';
+        setStatus('✅ जुड़ गया! स्क्रिप्ट चालू है। (Drive में मौजूद बैकअप: ' + n + ')');
+      } else if(r.state === 'fail'){
+        setStatus('❌ जुड़ नहीं पाया — ' + (r.error || '') + '। टोकन, URL और "Who has access: Anyone" जाँचें।');
+      } else if(r.state === 'unconfirmed'){
+        setStatus('🟡 पक्का पता नहीं चला — सर्वर से जवाब पढ़ा नहीं जा सका। टोकन/URL ठीक लगता है; पुष्टि नहीं हुई।');
+      } else {
+        setStatus('❌ जुड़ नहीं पाया — ' + (r.error || '') + '। ऐप ऑफ़लाइन भी पूरी तरह ठीक चलता रहेगा।');
+      }
+      window.driveBackupRefreshUI();
+    });
+  };
+
+  window.driveBackupSendNow = function(){
+    saveFields();
+    var c = getCfg();
+    if(!c.url){ setStatus('⚠️ पहले Web App URL और टोकन भरें।'); return; }
+    if(_busy){ setStatus('⏳ अभी भेजा जा रहा है…'); return; }
+    setStatus('⏳ भेजा जा रहा है…');
+    sendNow().then(function(r){
+      if(r.state === 'ok') setStatus('✅ Drive पर भेज दिया — ' + (r.file || ''));
+      else if(r.state === 'sent-unconfirmed') setStatus('✅ भेज दिया (पुष्टि नहीं मिली, पर भेज दिया गया)।');
+      else if(r.state === 'no-url') setStatus('⚠️ पहले Web App URL भरें।');
+      else if(r.state === 'busy') setStatus('⏳ अभी भेजा जा रहा है…');
+      else setStatus('❌ नहीं भेजा जा सका — ' + (r.error || '') + '। नेटवर्क/सेटअप जाँचें; ऐप ऑफ़लाइन भी ठीक चलता रहेगा।');
+      window.driveBackupRefreshUI();
+    });
+  };
+
+  window.driveBackupToggleAuto = function(){
+    var c = getCfg();
+    var a = byId('driveBackupAuto');
+    c.autoSend = !!(a && a.checked);
+    saveCfg(c);
+    if(c.autoSend){
+      setStatus('✅ अपने-आप भेजना चालू। जब भी ऐप का बैकअप बनेगा, यह चुपचाप Drive पर भी भेजने की कोशिश करेगा।');
+      window.driveBackupAutoSend();
+    } else {
+      setStatus('⏸️ अपने-आप भेजना बंद।');
+    }
+    window.driveBackupRefreshUI();
+  };
+
+  // चुपचाप, न ब्लॉक करते हुए, न बार-बार — ऑटो-बैकअप पथ से बुलाया जाता है।
+  window.driveBackupAutoSend = function(){
+    try{
+      var c = getCfg();
+      if(!c.url || !c.autoSend) return;
+      if(_busy) return;
+      var lastA = localStorage.getItem(AKEY);
+      if(lastA){
+        var d = new Date(lastA).getTime();
+        if(!isNaN(d) && (Date.now() - d) < AUTO_MIN_GAP_MS) return; // बहुत जल्दी दोबारा नहीं
+      }
+      sendNow().then(function(r){
+        if(r && (r.state === 'ok' || r.state === 'sent-unconfirmed')){
+          setStatus('✅ अपने-आप Drive पर भेज दिया (' + new Date().toLocaleString() + ')।');
+          refreshLast();
+        }
+        // विफलता पर चुप रहें — कोई dialog नहीं, कोई लगातार दोहराव नहीं।
+      });
+    }catch(e){}
+  };
+
+  function initDriveBackup(){
+    var urlEl = byId('driveBackupUrl');
+    if(!urlEl) return; // कार्ड मौजूद नहीं — कुछ न करें
+    urlEl.addEventListener('change', saveFields);
+    urlEl.addEventListener('blur', saveFields);
+    var tokEl = byId('driveBackupToken');
+    if(tokEl){ tokEl.addEventListener('change', saveFields); tokEl.addEventListener('blur', saveFields); }
+    window.driveBackupRefreshUI();
+    // ऑटो-भेजने की हल्की-फुल्की नियमित जाँच (चुपचाप)
+    setTimeout(function(){ try{ window.driveBackupAutoSend(); }catch(e){} }, 20000);
+    setInterval(function(){ try{ window.driveBackupAutoSend(); }catch(e){} }, 30 * 60 * 1000);
+    window.addEventListener('visibilitychange', function(){
+      if(document.visibilityState === 'visible'){ try{ window.driveBackupAutoSend(); }catch(e){} }
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initDriveBackup);
+  else initDriveBackup();
+})();
+</script>
+
 </body>
 </html>
