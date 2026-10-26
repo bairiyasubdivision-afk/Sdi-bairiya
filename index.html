@@ -1356,8 +1356,12 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
 
   <div class="card">
     <h2><span class="step-badge">★</span> विशेष टिप्पणी (Special Remark) <span class="qref">(अंतिम प्रश्न के बाद)</span></h2>
-    <p class="note" style="margin-top:0;">यह पाठ रिपोर्ट में अंतिम प्रश्न (स्कोरिंग टिप्पणियाँ) के बाद, जैसा है वैसा ही आएगा।</p>
-    <textarea id="specialRemark" rows="4" placeholder="यहाँ लिखें... (खाली छोड़ने पर रिपोर्ट में कुछ नहीं जुड़ेगा)" style="width:100%;min-height:90px;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;font-family:inherit;box-sizing:border-box;"></textarea>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:600;margin-bottom:8px;">
+      <input type="checkbox" id="specialRemarkChk" style="width:18px;height:18px;cursor:pointer;">
+      यह विशेष टिप्पणी रिपोर्ट में जोड़ें (डिफ़ॉल्ट: नहीं — बिना टिक किए रिपोर्ट में यह अनुच्छेद नहीं आएगा)
+    </label>
+    <p class="note" style="margin-top:0;">टिक करने पर यह पाठ रिपोर्ट में अंतिम प्रश्न (स्कोरिंग टिप्पणियाँ) के बाद, जैसा है वैसा ही आएगा। नीचे दी गई टिप्पणी केवल नमूना है — जैसा चाहें बदल सकते हैं।</p>
+    <textarea id="specialRemark" rows="4" data-default="1" placeholder="यहाँ लिखें... (बिना टिक किए रिपोर्ट में कुछ नहीं जुड़ेगा)" style="width:100%;min-height:90px;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;font-family:inherit;box-sizing:border-box;">विशेष टिप्पणी — प्रभारी बी.पी.एम. द्वारा सभी जर्नलों को निर्धारित प्रारूप में विधिवत नहीं लिखा जा रहा है। एस.बी., आर.डी. तथा एस.एस.ए. के सभी जर्नलों में केवल नए खाते खोलने के लेन-देन अंकित किए जा रहे हैं, जबकि उसके पश्चात होने वाले लेन-देन अंकित नहीं किए जा रहे हैं, जो नियमों का घोर उल्लंघन है। इसके साथ ही खाते खोलने की पर्याप्त संभावना होते हुए भी उनके द्वारा निष्क्रिय कार्य किया गया है।</textarea>
   </div>
 
   <div class="card">
@@ -5886,6 +5890,38 @@ function appendAfterLabel(doc, bodyEl, labelSubstring, value, sep = " ") {
   return false;
 }
 
+// v? — Q24: टेम्पलेट के लेबल में खाली जगहें अनियमित हैं ("बैलेंस  :" में दो स्पेस),
+// इसलिए साधारण includes() से वह पंक्ति कभी नहीं मिलती और आँकड़ा ग़लत (नीचे की)
+// पंक्ति में चला जाता है। यह वाला लेबल को regex से मिलाता है — जिससे हर आँकड़ा
+// अपनी ही पंक्ति में बैठता है, ऊपर/नीचे कहीं अटका नहीं रहता।
+function appendAfterLabelRegex(doc, bodyEl, labelRegex, value, sep = " ") {
+  const paragraphs = getAllParagraphsInDoc(bodyEl);
+  for (const p of paragraphs) {
+    const full = getParagraphText(p);
+    if (labelRegex.test(full)) {
+      setParagraphTextPreserveFirstRun(doc, p, full + sep + value);
+      return true;
+    }
+  }
+  return false;
+}
+
+// Q24 — "डीटीआर और बीओ अकाउंट बैलेंस में अंतर/ अंतर नहीं पाया गया।" टेम्पलेट में
+// दोनों विकल्प एक साथ छपे रह जाते थे। बैलेंस बराबर होने पर साफ़ "अंतर नहीं पाया
+// गया" और अलग होने पर "अंतर पाया गया" छपे। दोनों में से कोई आँकड़ा ही न हो तो
+// टेम्पलेट की पंक्ति ज्यों-का-त्यों रहने दें (कोई अनुमान नहीं लगाया जाता)।
+function resolveQ24BalanceDifference(doc, bodyEl, manual) {
+  const dtr = parseFloat(manual.dtr_balance);
+  const bo = parseFloat(manual.bo_account_balance);
+  let equal = null;
+  if (!isNaN(dtr) && !isNaN(bo)) equal = (dtr === bo);
+  else if (manual.same_balance && (!isNaN(dtr) || !isNaN(bo))) equal = true;
+  if (equal === null) return false;
+  const replacement = equal ? "में अंतर नहीं पाया गया।" : "में अंतर पाया गया।";
+  return replaceClauseByAnchor(doc, bodyEl, "बीओ अकाउंट बैलेंस में अंतर",
+    /में\s*अंतर\s*\/\s*अंतर\s*नहीं\s*पाया\s*गया\s*।/, replacement);
+}
+
 function replaceClauseInParagraph(doc, bodyEl, matchClause, replacementClause) {
   // Finds the (first) paragraph whose text contains `matchClause` and swaps
   // just that clause for `replacementClause`, leaving the rest of the
@@ -6473,6 +6509,17 @@ function fillMasterData(doc, bodyEl, bo, inspectionDateStr) {
 }
 
 function fillManualData(doc, bodyEl, manual) {
+  // Q24/Q25: "डीटीआर, बीओ अकाउंट और भौतिक नक़दी समान हैं" टिका हो और कोई खाना
+  // खाली रह गया हो तो भरे हुए आँकड़े से वह भर जाए — वरना उसकी पंक्ति खाली छपती
+  // थी और आँकड़ा कहीं और अटका दिखता था।
+  if (manual.same_balance) {
+    var _sameSeed = manual.dtr_balance || manual.bo_account_balance || manual.physical_cash || "";
+    if (_sameSeed) {
+      if (!manual.dtr_balance) manual.dtr_balance = _sameSeed;
+      if (!manual.bo_account_balance) manual.bo_account_balance = _sameSeed;
+      if (!manual.physical_cash) manual.physical_cash = _sameSeed;
+    }
+  }
   const tables = getDocTables(bodyEl);
 
   // Table 0: last inspector / last inspection date overrides
@@ -6509,13 +6556,28 @@ function fillManualData(doc, bodyEl, manual) {
   if (manual.balance_remark) setCellText(doc, getRowCells(t4rows[3])[1], manual.balance_remark);
 
   // Paragraph-level DTR / wallet / cash lines
-  if (manual.dtr_balance) appendAfterLabel(doc, bodyEl, "के अनुसार बैलेंस :", manual.dtr_balance);
+  // v? — Q24 (बीओ/एसओ बैलेंस मिलान): पहले डीटीआर का आँकड़ा "के अनुसार बैलेंस :"
+  // लेबल से खोजा जाता था, पर टेम्पलेट की पंक्ति में "बैलेंस  :" के पहले दो स्पेस
+  // हैं — इसलिए वह पंक्ति कभी नहीं मिलती थी। नतीजा: डीटीआर का आँकड़ा ऊपर वाली
+  // पंक्ति में नहीं, नीचे बीओ अकाउंट वाली पंक्ति में जाकर चिपक जाता था
+  // ("... बैलेंस : 10625 10625") और "24. आखिरी प्राप्त डीटीआर दिनांक ... बैलेंस :"
+  // खाली पड़ी रहती थी। अब हर आँकड़ा regex से अपनी ही पंक्ति में भेजा जाता है।
+  if (manual.dtr_balance) {
+    var _dtrPlaced = appendAfterLabelRegex(doc, bodyEl, /आखिरी\s*प्राप्त\s*डीटीआर\s*दिनांक[^\n]*?बैलेंस\s*:/, manual.dtr_balance);
+    if (!_dtrPlaced) appendAfterLabelRegex(doc, bodyEl, /डीटीआर\s*दिनांक[^\n]*?बैलेंस\s*:/, manual.dtr_balance);
+  }
   // v? — Q24: "बीओ अकाउंट के अनुसार बैलेंस" को भी भाई-खानों (dtr/wallet) की तरह
   // appendAfterLabel से जोड़ें। टेम्पलेट में यह पंक्ति "डीटीआर  के दिनांक पर बीओ
   // अकाउंट के अनुसार बैलेंस :" है — इसमें बीच की खाली जगहें अनियमित (दोहरी) हैं,
   // इसलिए पूरा वाक्य अक्षरशः नहीं मिलता था और मान चुपचाप छूट जाता था। एक स्थिर
   // उप-वाक्यांश ("अकाउंट के अनुसार बैलेंस") से यह पंक्ति भरोसे से मिल जाती है।
-  if (manual.bo_account_balance) appendAfterLabel(doc, bodyEl, "अकाउंट के अनुसार बैलेंस", manual.bo_account_balance);
+  // v? — बीओ अकाउंट बैलेंस: अब regex से "बीओ अकाउंट के अनुसार बैलेंस :" वाली
+  // अपनी ही पंक्ति में — और पहले से भरी पंक्ति पर दोबारा नहीं चिपकेगा, क्योंकि
+  // डीटीआर ऊपर अपनी अलग पंक्ति में जा चुका है।
+  if (manual.bo_account_balance) {
+    var _boPlaced = appendAfterLabelRegex(doc, bodyEl, /बीओ\s*अकाउंट\s*के\s*अनुसार\s*बैलेंस\s*:/, manual.bo_account_balance);
+    if (!_boPlaced) appendAfterLabelRegex(doc, bodyEl, /अकाउंट\s*के\s*अनुसार\s*बैलेंस\s*:/, manual.bo_account_balance);
+  }
   if (manual.wallet_balance) appendAfterLabel(doc, bodyEl, "वॉलेट बैलेंस", manual.wallet_balance);
 
   // Build discrepancy remark: compare physical cash with DTR and BO balances
@@ -6538,6 +6600,9 @@ function fillManualData(doc, bodyEl, manual) {
   }
 
   if (manual.physical_cash) appendAfterLabel(doc, bodyEl, "भौतिक नक़दी", manual.physical_cash + cashRemark);
+
+  // Q24 — बैलेंस बराबर होने पर साफ़ "अंतर नहीं पाया गया" (देखें helper)
+  resolveQ24BalanceDifference(doc, bodyEl, manual);
 
   // Table 11: final scoring
   const t11 = tables[11];
@@ -7580,6 +7645,11 @@ function addParagraphAfterElement(doc, bodyEl, tableEl, text) {
   return p;
 }
 
+// v? — "विशेष टिप्पणी" ब्लॉक अब वैकल्पिक है: फ़ॉर्म में एक टिक-बॉक्स
+// (#specialRemarkChk, डिफ़ॉल्ट बंद) है और नीचे दिया पाठ उसका पूर्व-भरा नमूना।
+// टिक होने पर ही अनुच्छेद रिपोर्ट में जाता है, बिना टिक किए बिल्कुल नहीं आता।
+var SPECIAL_REMARK_DEFAULT = "विशेष टिप्पणी — प्रभारी बी.पी.एम. द्वारा सभी जर्नलों को निर्धारित प्रारूप में विधिवत नहीं लिखा जा रहा है। एस.बी., आर.डी. तथा एस.एस.ए. के सभी जर्नलों में केवल नए खाते खोलने के लेन-देन अंकित किए जा रहे हैं, जबकि उसके पश्चात होने वाले लेन-देन अंकित नहीं किए जा रहे हैं, जो नियमों का घोर उल्लंघन है। इसके साथ ही खाते खोलने की पर्याप्त संभावना होते हुए भी उनके द्वारा निष्क्रिय कार्य किया गया है।";
+
 // Special remark — inserted verbatim AFTER the last question's closing
 // paragraph ("शाखा डाकपाल कृपया उपरोक्त टिप्पणियों..."), before the IR
 // reference block. Multi-line text becomes one paragraph per line.
@@ -7598,14 +7668,30 @@ function addSpecialRemark(doc, bodyEl, text) {
     if (t.indexOf("शाखा डाकपाल कृपया उपरोक्त टिप्पणियों") !== -1) { anchor = el; break; }
   }
   if (!anchor) return;
+  // v? — टिप्पणी को रिपोर्ट के सामान्य अनुच्छेद-रूप में रखने के लिए एंकर पंक्ति
+  // की pPr (इंडेंट/स्पेसिंग/जस्टिफ़ाई) और उसके पहले रन की rPr (निर्मला UI, साइज़
+  // 20) की नक़ल ली जाती है — पहले नए रन में केवल साइज़ सेट होता था।
+  var anchorPPr = anchor.getElementsByTagNameNS(W_NS, "pPr")[0] || null;
+  var anchorRPr = null;
+  var _anchorRuns = anchor.getElementsByTagNameNS(W_NS, "r");
+  for (var _ri = 0; _ri < _anchorRuns.length; _ri++) {
+    var _rp = _anchorRuns[_ri].getElementsByTagNameNS(W_NS, "rPr")[0];
+    if (_rp) { anchorRPr = _rp; break; }
+  }
   var mk = function (txt, bold) {
     var p = doc.createElementNS(W_NS, "w:p");
+    if (anchorPPr) p.appendChild(anchorPPr.cloneNode(true));
     var r = doc.createElementNS(W_NS, "w:r");
-    var rPr = doc.createElementNS(W_NS, "w:rPr");
-    if (bold) rPr.appendChild(doc.createElementNS(W_NS, "w:b"));
-    var sz = doc.createElementNS(W_NS, "w:sz");
-    sz.setAttribute("w:val", "20");
-    rPr.appendChild(sz);
+    var rPr = anchorRPr ? anchorRPr.cloneNode(true) : doc.createElementNS(W_NS, "w:rPr");
+    if (bold) {
+      rPr.insertBefore(doc.createElementNS(W_NS, "w:b"), rPr.firstChild);
+      rPr.appendChild(doc.createElementNS(W_NS, "w:bCs"));
+    }
+    if (!rPr.getElementsByTagNameNS(W_NS, "sz").length) {
+      var sz = doc.createElementNS(W_NS, "w:sz");
+      sz.setAttribute("w:val", "20");
+      rPr.appendChild(sz);
+    }
     r.appendChild(rPr);
     var t2 = doc.createElementNS(W_NS, "w:t");
     t2.setAttribute("xml:space", "preserve");
@@ -7614,9 +7700,22 @@ function addSpecialRemark(doc, bodyEl, text) {
     p.appendChild(r);
     return p;
   };
-  var first = mk("विशेष टिप्पणी (Special Remark):", true);
-  anchor.parentNode.insertBefore(first, anchor.nextSibling);
-  var after = first;
+  // यदि अधिकारी की टिप्पणी खुद "विशेष टिप्पणी" शब्द से शुरू होती है (जैसे
+  // पूर्व-भरी गई टिप्पणी), तो ऊपर से अलग शीर्षक न जोड़ें — वरना वही शब्द दो बार
+  // छपेगा। अन्यथा पुरानी तरह शीर्षक + टिप्पणी छपे।
+  var _hasOwnHeading = /^विशेष\s*टिप्पणी/.test(lines[0]);
+  var first = null;
+  var after = null;
+  if (_hasOwnHeading) {
+    first = mk(lines[0], false);
+    anchor.parentNode.insertBefore(first, anchor.nextSibling);
+    after = first;
+    lines = lines.slice(1);
+  } else {
+    first = mk("विशेष टिप्पणी (Special Remark):", true);
+    anchor.parentNode.insertBefore(first, anchor.nextSibling);
+    after = first;
+  }
   lines.forEach(function (line) {
     var p = mk(line, false);
     after.parentNode.insertBefore(p, after.nextSibling);
@@ -11449,6 +11548,19 @@ const MASTER_DATA = {
 
 
 
+  // v? — विशेष टिप्पणी: खाने में पाठ लिखते/बदलते ही टिक-बॉक्स अपने आप टिक जाए,
+  // ताकि अधिकारी की लिखी टिप्पणी चुपचाप रिपोर्ट से बाहर न रह जाए (बॉक्स हटाकर
+  // वे चाहें तो उसे रिपोर्ट से बाहर भी रख सकते हैं)।
+  (function () {
+    var _srBox = document.getElementById("specialRemark");
+    var _srFlag = document.getElementById("specialRemarkChk");
+    if (_srBox && _srFlag) {
+      _srBox.addEventListener("input", function () {
+        if (_srBox.value.trim()) _srFlag.checked = true;
+      });
+    }
+  })();
+
   // ---------------------------------------------------------------------
   // Q27 — balance acknowledgement across 7 dates
   // ---------------------------------------------------------------------
@@ -13305,7 +13417,7 @@ const MASTER_DATA = {
 
   function resetInspFormFields() {
     const ids = [
-      "lastInspector", "supVisitDate", "boOpeningDate", "sdiVisitDates", "moVisitDates", "specialRemark",
+      "lastInspector", "supVisitDate", "boOpeningDate", "sdiVisitDates", "moVisitDates", "specialRemark", "specialRemarkChk",
       "dtrBalance", "boAccountBalance", "walletBalance", "physicalCash",
       "sameBalanceChk",
       "mailSp", "mailPl", "mailCod", "mailVpp", "mailOrdinary",
@@ -13316,6 +13428,11 @@ const MASTER_DATA = {
       if (el.type === "checkbox") { el.checked = false; }
       else { el.value = ""; }
     });
+    // v? — विशेष टिप्पणी का टिक-बॉक्स बंद और खाना पूर्व-भरे नमूने पर लौटे
+    try {
+      var _srEl2 = document.getElementById("specialRemark");
+      if (_srEl2) _srEl2.value = SPECIAL_REMARK_DEFAULT;
+    } catch (e) {}
     setLastInspectorSelect("");
     // Reset BO balance readonly state
     if (boBalInput) { boBalInput.readOnly = false; boBalInput.style.background = ""; }
@@ -13758,6 +13875,8 @@ generateBtn.addEventListener("click", async () => {
         sdi_visit_dates: document.getElementById("sdiVisitDates").value,
         mo_visit_dates: document.getElementById("moVisitDates").value,
         special_remark: document.getElementById("specialRemark") ? document.getElementById("specialRemark").value : "",
+        // v? — विशेष टिप्पणी केवल टिक होने पर रिपोर्ट में जाए
+        special_remark_on: !!(document.getElementById("specialRemarkChk") && document.getElementById("specialRemarkChk").checked),
         dtr_balance: document.getElementById("dtrBalance").value,
         same_balance: sameBalChk ? sameBalChk.checked : false,
         bo_account_balance: document.getElementById("boAccountBalance").value,
@@ -13808,7 +13927,8 @@ generateBtn.addEventListener("click", async () => {
 
       fillMasterData(doc, bodyEl, bo, inspectionDateStr);
       fillManualData(doc, bodyEl, manual);
-      addSpecialRemark(doc, bodyEl, manual.special_remark);
+      // वैकल्पिक विशेष टिप्पणी — टिक होने पर ही
+      addSpecialRemark(doc, bodyEl, manual.special_remark_on ? manual.special_remark : "");
       fillMailBagCounts(doc, bodyEl, mailBagCounts);
       applyToggleAnswers(doc, bodyEl, toggleAnswers);
       // v? — Q45: क्यूआर कार्ड गिनती वाक्य हटाकर निश्चित वाक्य (उपलब्धता टॉगल से)
@@ -13953,6 +14073,7 @@ generateBtn.addEventListener("click", async () => {
       sdiVisitDates: document.getElementById("sdiVisitDates").value,
       moVisitDates: document.getElementById("moVisitDates").value,
       specialRemark: document.getElementById("specialRemark") ? document.getElementById("specialRemark").value : "",
+      specialRemarkOn: !!(document.getElementById("specialRemarkChk") && document.getElementById("specialRemarkChk").checked),
       dtrBalance: document.getElementById("dtrBalance").value,
       boAccountBalance: document.getElementById("boAccountBalance").value,
       walletBalance: document.getElementById("walletBalance").value,
@@ -14245,6 +14366,22 @@ generateBtn.addEventListener("click", async () => {
         const el = document.getElementById(id);
         if (el) el.value = fieldMap[id] || "";
       });
+      // v? — विशेष टिप्पणी: मसौदे में यह खाना ही न हो (पुराना मसौदा) तो
+      // पूर्व-भरी नमूना टिप्पणी बनी रहे; मसौदे में खाली सहेजी हो तो खाली रहे।
+      try {
+        var _srEl = document.getElementById("specialRemark");
+        // खाली मसौदा (या पुराना मसौदा जिसमें यह खाना ही नहीं) → पूर्व-भरी नमूना
+        // टिप्पणी ही दिखे; अधिकारी ने कुछ लिखा हो तो वही बना रहे।
+        if (_srEl && !String(d.specialRemark || "").trim()) _srEl.value = SPECIAL_REMARK_DEFAULT;
+        var _srChk = document.getElementById("specialRemarkChk");
+        // पुराने मसौदों में टिक-बॉक्स का झंडा नहीं था; उनमें टिप्पणी लिखी हो तो
+        // बॉक्स अपने आप टिक जाए (वरना पहले छपने वाली टिप्पणी चुपचाप गायब हो जाती)।
+        if (_srChk) {
+          _srChk.checked = (d.specialRemarkOn !== undefined)
+            ? !!d.specialRemarkOn
+            : !!(d.specialRemark && String(d.specialRemark).trim());
+        }
+      } catch (e) {}
       setLastInspectorSelect(fieldMap.lastInspector);
       // Restore sameBalance checkbox
       if (d.same_balance && sameBalChk) {
