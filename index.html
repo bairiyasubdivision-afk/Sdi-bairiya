@@ -1200,13 +1200,19 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       </div>
       <div>
         <label for="lastInspector">आख़िरी निरीक्षण किसके द्वारा <span class="qref">(सारणी 1, क्रम 9)</span></label>
-        <!-- ITEM 2 (v?) — केवल तीन विकल्प: तत्कालीन निरीक्षक / तत्कालीन अधीक्षक / अधोहस्ताक्षरी -->
-        <select id="lastInspector">
+        <!-- ITEM 2 (v?) — चार निश्चित विकल्प (तत्कालीन निरीक्षक / तत्कालीन अधीक्षक /
+             अधोहस्ताक्षरी / परिवाद निरीक्षक) + अंत में "अन्य (स्वयं लिखें)…"।
+             स्वतंत्र खाना तभी खुलता है जब "अन्य" चुना जाए — फ़ॉर्म जितना था उतना ही compact रहे। -->
+        <select id="lastInspector" onchange="onLastInspectorChange()">
           <option value="">— चुनें —</option>
           <option value="तत्कालीन निरीक्षक">तत्कालीन निरीक्षक</option>
           <option value="तत्कालीन अधीक्षक">तत्कालीन अधीक्षक</option>
           <option value="अधोहस्ताक्षरी">अधोहस्ताक्षरी</option>
+          <option value="परिवाद निरीक्षक">परिवाद निरीक्षक</option>
+          <option value="__custom__">अन्य (स्वयं लिखें)…</option>
         </select>
+        <input type="text" id="lastInspectorCustom" placeholder="पदनाम / नाम लिखें"
+               style="display:none;margin-top:6px;" oninput="onLastInspectorCustomInput()">
       </div>
     </div>
 
@@ -13399,25 +13405,84 @@ const MASTER_DATA = {
       if (el.type === "checkbox" || el.type === "radio") el.checked = false;
       else el.value = "";
     });
+    // "अन्य (स्वयं लिखें)" वाला खाना भी छिप जाए (चयन साफ़ हुआ)
+    try { syncLastInspectorCustomBox(); } catch (e) {}
   }
-  // ITEM 2 (v?) — "आख़िरी निरीक्षण किसके द्वारा" चयन को सेट करें। खाना हमेशा केवल तीन
-  // विकल्प (तत्कालीन निरीक्षक / तत्कालीन अधीक्षक / अधोहस्ताक्षरी) + खाली "— चुनें —" ही दिखाए।
-  // किसी पुराने मसौदे में स्वतंत्र (free-text) मान सहेजा हो तो वह इन तीन में से नहीं है —
-  // इसलिए खाना खाली रहता है; कोई अतिरिक्त (पुराना) विकल्प नहीं जोड़ा जाता।
-  var LAST_INSPECTOR_OPTIONS = ["तत्कालीन निरीक्षक", "तत्कालीन अधीक्षक", "अधोहस्ताक्षरी"];
-  function setLastInspectorSelect(v) {
+  // ITEM 2 (v?) — "आख़िरी निरीक्षण किसके द्वारा" का चयन सेट करें।
+  // चार निश्चित विकल्प (तत्कालीन निरीक्षक / तत्कालीन अधीक्षक / अधोहस्ताक्षरी /
+  // परिवाद निरीक्षक) + खाली "— चुनें —" + अंत में "अन्य (स्वयं लिखें)…"।
+  // "अन्य" चुनने पर ही छोटा टेक्स्ट-खाना (#lastInspectorCustom) खुलता है।
+  // पुराने मसौदों में सीधा नाम (जैसे "Pravin kumar") सहेजा हो तो वह खाली न हो —
+  // "अन्य" में खोले और वही रिपोर्ट (सारणी 1, क्रम 9) में छपे।
+  var LAST_INSPECTOR_OPTIONS = ["तत्कालीन निरीक्षक", "तत्कालीन अधीक्षक", "अधोहस्ताक्षरी", "परिवाद निरीक्षक"];
+  var LAST_INSPECTOR_CUSTOM = "__custom__";
+  // चयन में "अन्य" लगा है या नहीं
+  function lastInspectorIsCustom() {
+    var sel = document.getElementById("lastInspector");
+    return !!(sel && sel.value === LAST_INSPECTOR_CUSTOM);
+  }
+  // रिपोर्ट/मसौदे के लिए असली मान: "अन्य" हो तो लिखा हुआ पाठ, वरना चुना हुआ विकल्प
+  function getLastInspectorValue() {
+    var sel = document.getElementById("lastInspector");
+    if (!sel) return "";
+    if (sel.value === LAST_INSPECTOR_CUSTOM) {
+      var box = document.getElementById("lastInspectorCustom");
+      return box ? String(box.value || "").trim() : "";
+    }
+    return sel.value || "";
+  }
+  // "अन्य" वाला टेक्स्ट-खाना केवल तभी दिखे जब "अन्य" चुना हो (फ़ॉर्म compact रहे)
+  function syncLastInspectorCustomBox() {
+    var box = document.getElementById("lastInspectorCustom");
+    if (!box) return;
+    if (lastInspectorIsCustom()) {
+      box.style.display = "";
+    } else {
+      box.style.display = "none";
+      box.value = "";
+    }
+  }
+  // अधिकारी ने ड्रॉपडाउन बदला
+  function onLastInspectorChange() {
+    syncLastInspectorCustomBox();
+    if (lastInspectorIsCustom()) {
+      var box = document.getElementById("lastInspectorCustom");
+      if (box) { try { box.focus(); } catch (e) {} }
+    }
+  }
+  // "अन्य" में कुछ लिखा गया — मसौदा अपने आप सहेजेगा (input listener)
+  function onLastInspectorCustomInput() {}
+  // v सेट करें। isCustom=true हो तो सीधे "अन्य" खोलें (मसौदे का झंडा),
+  // वरना निश्चित विकल्प हो तो वही, और जो भी नाम हो वह "अन्य" में भर जाए।
+  function setLastInspectorSelect(v, isCustom) {
     var sel = document.getElementById("lastInspector");
     if (!sel) return;
     Array.prototype.slice.call(sel.querySelectorAll("option[data-legacy='1']")).forEach(function (o) { o.parentNode.removeChild(o); });
-    v = (v == null ? "" : String(v)).trim();
-    if (LAST_INSPECTOR_OPTIONS.indexOf(v) === -1) v = "";
-    sel.value = v;
+    var box = document.getElementById("lastInspectorCustom");
+    var val = (v == null ? "" : String(v)).trim();
+    if (!isCustom && LAST_INSPECTOR_OPTIONS.indexOf(val) !== -1) {
+      sel.value = val;
+      if (box) box.value = "";
+    } else if (val) {
+      // पुराना/स्वतंत्र मान → "अन्य (स्वयं लिखें)…" में खोलकर वही पाठ भरें
+      sel.value = LAST_INSPECTOR_CUSTOM;
+      if (box) box.value = val;
+    } else {
+      sel.value = "";
+      if (box) box.value = "";
+    }
+    syncLastInspectorCustomBox();
   }
-  try { window.setLastInspectorSelect = setLastInspectorSelect; } catch (e) {}
+  try {
+    window.setLastInspectorSelect = setLastInspectorSelect;
+    window.onLastInspectorChange = onLastInspectorChange;
+    window.onLastInspectorCustomInput = onLastInspectorCustomInput;
+    window.getLastInspectorValue = getLastInspectorValue;
+  } catch (e) {}
 
   function resetInspFormFields() {
     const ids = [
-      "lastInspector", "supVisitDate", "boOpeningDate", "sdiVisitDates", "moVisitDates", "specialRemark", "specialRemarkChk",
+      "lastInspector", "lastInspectorCustom", "supVisitDate", "boOpeningDate", "sdiVisitDates", "moVisitDates", "specialRemark", "specialRemarkChk",
       "dtrBalance", "boAccountBalance", "walletBalance", "physicalCash",
       "sameBalanceChk",
       "mailSp", "mailPl", "mailCod", "mailVpp", "mailOrdinary",
@@ -13869,7 +13934,7 @@ generateBtn.addEventListener("click", async () => {
       const manual = {
         sb46Data: (typeof readSB46Data === "function") ? readSB46Data() : [],
         last_inspection_date: document.getElementById("lastInspectionDate").value,
-        last_inspector: document.getElementById("lastInspector").value,
+        last_inspector: (typeof getLastInspectorValue === "function") ? getLastInspectorValue() : document.getElementById("lastInspector").value,
         sup_visit_date: document.getElementById("supVisitDate").value,
         bo_opening_date: document.getElementById("boOpeningDate").value,
         sdi_visit_dates: document.getElementById("sdiVisitDates").value,
@@ -14067,7 +14132,9 @@ generateBtn.addEventListener("click", async () => {
       inspectionDate: inspectionDateInput.value,
       sb46Data: (typeof readSB46Data === "function") ? readSB46Data() : [],
       lastInspectionDate: document.getElementById("lastInspectionDate").value,
-      lastInspector: document.getElementById("lastInspector").value,
+      // "अन्य" चुना हो तो लिखा हुआ पाठ सहेजें; साथ में झंडा कि "अन्य" चुना था
+      lastInspector: (typeof getLastInspectorValue === "function") ? getLastInspectorValue() : document.getElementById("lastInspector").value,
+      lastInspectorCustom: (typeof lastInspectorIsCustom === "function") ? lastInspectorIsCustom() : false,
       supVisitDate: document.getElementById("supVisitDate").value,
       boOpeningDate: document.getElementById("boOpeningDate").value,
       sdiVisitDates: document.getElementById("sdiVisitDates").value,
@@ -14382,7 +14449,9 @@ generateBtn.addEventListener("click", async () => {
             : !!(d.specialRemark && String(d.specialRemark).trim());
         }
       } catch (e) {}
-      setLastInspectorSelect(fieldMap.lastInspector);
+      // झंडा मिले तो "अन्य" खोलें; न मिले (पुराना मसौदा) पर मान निश्चित विकल्पों में न हो
+      // तो भी "अन्य" में खोलकर वही नाम भरें — "Pravin kumar" जैसा पुराना मान खाली न हो।
+      setLastInspectorSelect(fieldMap.lastInspector, !!d.lastInspectorCustom);
       // Restore sameBalance checkbox
       if (d.same_balance && sameBalChk) {
         sameBalChk.checked = true;
