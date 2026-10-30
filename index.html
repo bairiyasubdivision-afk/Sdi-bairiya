@@ -1043,9 +1043,15 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     <div class="form-group"><label>Mileage Rate (Rs/Km)</label><input type="number" id="mileageRate" value="9.97" step="0.01" oninput="updateSummary()"></div>
     <div class="form-group"><label>DA Rate (Rs/day)</label><input type="number" id="daRate" value="1000" step="50" oninput="updateSummary()"></div>
     <div class="form-group"><label>DA Min Distance (Km)</label><input type="number" id="daMinDist" value="8" step="1" oninput="updateSummary()"></div>
-    <div class="form-group"><label>Assumed Speed (Km/h)</label><input type="number" id="assumedSpeed" value="55" step="1" min="1" max="200" title="A blank outward departure is calculated as arrival − (distance ÷ this speed). Times you have recorded are never changed." oninput="onAssumedSpeedChange()"></div>
+    <div class="form-group"><label>Assumed Speed Range (Km/h)</label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="number" id="speedMin" value="24" step="1" min="1" max="200" style="width:66px;" title="Lowest assumed speed (default 24 km/h)." oninput="onAssumedSpeedChange()">
+        <span style="color:#666;">to</span>
+        <input type="number" id="speedMax" value="30" step="1" min="1" max="200" style="width:66px;" title="Highest assumed speed (default 30 km/h)." oninput="onAssumedSpeedChange()">
+      </div>
+    </div>
   </div>
-  <div style="font-size:0.78rem;color:#666;margin-top:8px;line-height:1.45;">Assumed Speed is used only where a departure time was <b>not recorded</b>: departure = arrival − (leg distance ÷ assumed speed). Such a time is shown with a green <b>*</b> (calculated, not recorded). Recorded times are never altered.</div></div>
+  <div style="font-size:0.78rem;color:#666;margin-top:8px;line-height:1.45;">Assumed speed is used only where a departure time was <b>not recorded</b>: departure = arrival − (leg distance ÷ assumed speed). The speed is picked <b>at random between 24 and 30 km/h</b> — one draw per journey — and then <b>kept</b> with that journey, so its calculated departure, DA and bill total never change on regeneration. Such a time is shown with a green <b>*</b> (calculated, not recorded). Recorded times are never altered.</div></div>
 
   <div class="card"><div class="card-title">Leaves Availed</div>
     <div style="font-size:0.82rem;color:#666;margin-bottom:10px;">Mark leave days — they will be highlighted on the main calendar below and block journey planning on those dates.</div>
@@ -4213,20 +4219,67 @@ function getDaysInMonth(){return new Date(getYear(),getMonthIdx()+1,0).getDate()
 // ============================================================
 function timeToMin(t){if(!t)return 0;var p=t.split(':');return parseInt(p[0])*60+parseInt(p[1]);}
 function minToTime(m){m=((m%1440)+1440)%1440;return pad2(Math.floor(m/60))+':'+pad2(m%60);}
-function randomSpeed(){return 24+Math.random()*6;}
 function travelMinutes(distKm,speedKmph){return Math.round(distKm/speedKmph*60);}
 
 // ============================================================
 // v7.51 — CALCULATED DEPARTURE (अनुमानित गति से)
 // खाली outward departure = arrival − (दूरी ÷ अनुमानित गति)।
 // अधिकारी का दर्ज किया हुआ समय कभी नहीं बदला जाता — केवल खाली खाना भरा जाता है।
+// v7.52 — अनुमानित गति अब 24–30 km/h के बीच RANDOM है (अधिकारी की मांग),
+// पर हर journey के लिए एक ही बार निकाली जाती है और वहीं रख दी जाती है —
+// इसलिए calculated departure, DA और bill total दोबारा generate करने पर नहीं बदलते।
 // ============================================================
-var DEFAULT_ASSUMED_SPEED=55;
-function getAssumedSpeed(){
-  var el=document.getElementById('assumedSpeed');
+var DEFAULT_SPEED_MIN=24,DEFAULT_SPEED_MAX=30;
+function _speedNum(id,def){
+  var el=document.getElementById(id);
   var v=el?parseFloat(el.value):NaN;
-  if(!(v>0)||v>200)v=DEFAULT_ASSUMED_SPEED;
+  return (v>0&&v<=200)?v:def;
+}
+function getSpeedRange(){
+  var mn=_speedNum('speedMin',DEFAULT_SPEED_MIN);
+  var mx=_speedNum('speedMax',DEFAULT_SPEED_MAX);
+  if(mx<mn){var t=mn;mn=mx;mx=t;}
+  return {min:mn,max:mx};
+}
+function randomSpeed(){
+  var r=getSpeedRange();
+  var s=r.min+Math.random()*(r.max-r.min);
+  if(s<r.min)s=r.min;if(s>r.max)s=r.max;
+  return s;
+}
+// leg पर पहले से रखी गई गति (यदि सीमा में है) — वही लौटाओ, वरना null
+function keptSpeed(l){
+  if(!l)return null;
+  var v=parseFloat(l.speed);
+  if(!(v>0))return null;
+  var r=getSpeedRange();
+  if(v<r.min-0.0001||v>r.max+0.0001)return null;
   return v;
+}
+// इस leg की अनुमानित गति: एक ही बार निकालो, leg पर रख दो, फिर हमेशा वही
+var _speedKeepPending=false;
+function legSpeed(l){
+  var k=keptSpeed(l);
+  if(k)return k;
+  var s=randomSpeed();
+  if(l){l.speed=s;_speedKeepPending=true;}
+  return s;
+}
+function flushKeptSpeeds(){
+  if(!_speedKeepPending)return;
+  _speedKeepPending=false;
+  try{if(typeof autoSave==='function')autoSave();}catch(e){}
+}
+function fmtSpeed(v){return (Math.round(parseFloat(v)*10)/10);}
+function derivedSpeedOf(v){
+  var s=null;
+  if(v&&v.legs){for(var i=0;i<v.legs.length;i++){if(v.legs[i].depDerivedSpeed){s=v.legs[i].depDerivedSpeed;break;}}}
+  return s?fmtSpeed(s):'\u2014';
+}
+function derivedSpeedsText(list){
+  var u=[];
+  (list||[]).forEach(function(l){if(l.depDerived&&l.depDerivedSpeed){var s=fmtSpeed(l.depDerivedSpeed);if(u.indexOf(s)<0)u.push(s);}});
+  return u.length?u.join(', '):'\u2014';
 }
 function onAssumedSpeedChange(){try{renderJourneyList();updateSummary();}catch(e){}if(typeof autoSave==='function')autoSave();}
 // एक leg का अनुमानित departure (ISO) — या null यदि लागू नहीं
@@ -4237,7 +4290,7 @@ function deriveLegDeparture(l,spd){
   if(!l.arrival)return null;                  // arrival ज़रूरी
   var d=parseFloat(l.dist);
   if(!(d>0))return null;
-  var speed=(spd>0)?spd:getAssumedSpeed();
+  var speed=(spd>0)?spd:legSpeed(l);
   var t=travelMinutes(d,speed);
   if(!(t>0))return null;
   var m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(String(l.arrival));
@@ -4255,16 +4308,17 @@ function _shallowCopy(o){var c={};for(var k in o){if(Object.prototype.hasOwnProp
 // कोई खाली departure न हो तो वही ऑब्जेक्ट लौटता है (पुराना output जस का तस)।
 function journeyView(j){
   if(!j||!j.legs||!j.legs.length)return j;
-  var spd=getAssumedSpeed(),changed=false;
+  var changed=false;
   var legs=j.legs.map(function(l){
-    var dd=deriveLegDeparture(l,spd);
+    var dd=deriveLegDeparture(l);
     if(!dd)return l;
     changed=true;
     var c=_shallowCopy(l);
     c.departure=dd.iso;c.depDerived=true;c.depDerivedSpeed=dd.speed;c.depDerivedKm=dd.km;c.depDerivedMin=dd.minutes;
     return c;
   });
-  if(!changed)return j;
+  if(!changed){flushKeptSpeeds();return j;}
+  flushKeptSpeeds();
   var v=_shallowCopy(j);
   v.legs=legs;v.depDerived=true;
   for(var i=0;i<legs.length;i++){
@@ -4512,7 +4566,10 @@ function loadJourneyForEdit(idx){
     if(_fo&&!_fo.departure&&_fo.arrival&&parseFloat(_fo.dist)>0){
       var _info=document.getElementById('jfInfo');
       if(_info){
-        _info.textContent='Outward departure not recorded. Type the real departure to record it — if you leave it blank, the Tour Diary and TA Bill will show a calculated departure ('+minToTime(timeToMin(_fo.arrival)-travelMinutes(parseFloat(_fo.dist),getAssumedSpeed()))+' at '+getAssumedSpeed()+' km/h, arrival − travel time), marked *.';
+        var _ks=keptSpeed(_fo);
+        var _rs=getSpeedRange();
+        var _noteTxt=_ks?(minToTime(timeToMin(_fo.arrival)-travelMinutes(parseFloat(_fo.dist),_ks))+' at '+fmtSpeed(_ks)+' km/h, arrival − travel time'):('arrival − travel time, at an assumed speed picked at random between '+_rs.min+' and '+_rs.max+' km/h once and then kept for this journey');
+        _info.textContent='Outward departure not recorded. Type the real departure to record it — if you leave it blank, the Tour Diary and TA Bill will show a calculated departure ('+_noteTxt+'), marked *.';
         _info.style.display='block';
       }
     }
@@ -4970,8 +5027,8 @@ function recalcTimesV2(){
         // (पहले यहाँ nextLeg की departure से arrival को मिटा दिया जाता था)
         if(leg.arrival){
           leg.knownTime='arr';
-          leg.speed=getAssumedSpeed();
-          leg.departure=minToTime(timeToMin(leg.arrival)-travelMinutes(leg.dist,getAssumedSpeed()));
+          var _ls=legSpeed(leg);
+          leg.departure=minToTime(timeToMin(leg.arrival)-travelMinutes(leg.dist,_ls));
           leg.depAutoCalc=true;
           continue;
         }
@@ -5171,7 +5228,7 @@ function renderJourneyList(){
       var globalIdx=journeys.indexOf(j);
       var route=j.legs.map(function(l){return l.to;}).join(' -> ');
       var tr=document.createElement('tr');
-      var _jv=journeyView(j),_dm=_jv.depDerived?'<span style="color:#1b5e20;font-weight:700;" title="Departure not recorded \u2014 calculated as arrival \u2212 (distance \u00f7 '+getAssumedSpeed()+' km/h). Recorded times are never changed.">*</span>':'';
+      var _jv=journeyView(j),_dm=_jv.depDerived?'<span style="color:#1b5e20;font-weight:700;" title="Departure not recorded \u2014 calculated as arrival \u2212 (distance \u00f7 '+derivedSpeedOf(_jv)+' km/h; this assumed speed was picked at random between 24 and 30 km/h and kept for this journey). Recorded times are never changed.">*</span>':'';
       tr.innerHTML='<td>'+j.date+'</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(route)+'</td><td>'+_jv.depTime+_dm+'</td><td>'+_jv.retTime+'</td><td>'+j.dist+'</td><td>'+recalcJourneyDA(j).toFixed(1)+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(j.workLogEntry)+'">'+esc(j.workLogEntry)+'</td><td><button class="jl-edit" onclick="editJourney('+globalIdx+')" title="Edit/Modify this journey">&#9998;</button> <button class="jl-del" onclick="deleteJourney('+globalIdx+')" title="Delete this journey">&#10005;</button></td>';
       body.appendChild(tr);
     });
@@ -5193,7 +5250,7 @@ function renderJourneyList(){
     var globalIdx=journeys.indexOf(j);
     var route=j.legs.map(function(l){return l.to;}).join(' -> ');
     var tr=document.createElement('tr');
-    var _jv=journeyView(j),_dm=_jv.depDerived?'<span style="color:#1b5e20;font-weight:700;" title="Departure not recorded \u2014 calculated as arrival \u2212 (distance \u00f7 '+getAssumedSpeed()+' km/h). Recorded times are never changed.">*</span>':'';
+    var _jv=journeyView(j),_dm=_jv.depDerived?'<span style="color:#1b5e20;font-weight:700;" title="Departure not recorded \u2014 calculated as arrival \u2212 (distance \u00f7 '+derivedSpeedOf(_jv)+' km/h; this assumed speed was picked at random between 24 and 30 km/h and kept for this journey). Recorded times are never changed.">*</span>':'';
     tr.innerHTML='<td>'+j.date+'</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(route)+'</td><td>'+_jv.depTime+_dm+'</td><td>'+_jv.retTime+'</td><td>'+j.dist+'</td><td>'+recalcJourneyDA(j).toFixed(1)+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(j.workLogEntry)+'">'+esc(j.workLogEntry)+'</td><td><button class="jl-edit" onclick="editJourney('+globalIdx+')" title="Edit/Modify this journey">&#9998;</button> <button class="jl-del" onclick="deleteJourney('+globalIdx+')">X</button></td>';
     body.appendChild(tr);
   });
@@ -5222,7 +5279,7 @@ function buildLegs(){
     var jda=recalcJourneyDA(j),daShown=false,hasOut=(_jv.legs||[]).some(function(x){return !x.isReturn;});
     (_jv.legs||[]).forEach(function(l){
       var showDa=(!daShown&&(!l.isReturn||!hasOut));if(showDa)daShown=true;
-      legs.push({from:l.from,departure:l.departure,to:l.to,arrival:l.arrival,mode:l.mode,dist:l.dist,purpose:l.purpose,da:showDa?jda.toFixed(1):'',halt:'',fare:(l.fare===undefined?'':l.fare),date:j.date,depDerived:!!l.depDerived});
+      legs.push({from:l.from,departure:l.departure,to:l.to,arrival:l.arrival,mode:l.mode,dist:l.dist,purpose:l.purpose,da:showDa?jda.toFixed(1):'',halt:'',fare:(l.fare===undefined?'':l.fare),date:j.date,depDerived:!!l.depDerived,depDerivedSpeed:l.depDerivedSpeed});
     });
   });
   return legs;
@@ -5626,12 +5683,12 @@ async function generateTourDiary(){
     ch.push(new D.Paragraph({children:[new D.TextRun({text:name+', '+desig,size:20,font:'Times New Roman'})],alignment:'center',spacing:{after:300}}));
     ch.push(mkPara('First Fortnight (1'+ordinal(1)+' '+month+' '+y+' to 15'+ordinal(15)+' '+month+' '+y+')',{bold:true,size:24,after:100}));
     ch.push(mkPara('Departure / Arrival',{bold:true,size:22,after:80}));ch.push(bJT(f1));
-    if(f1.some(function(l){return l.depDerived;}))ch.push(mkPara('* Departure not recorded — calculated from leg distance ÷ assumed speed ('+getAssumedSpeed()+' km/h), i.e. arrival − travel time.',{size:18,before:60}));
+    if(f1.some(function(l){return l.depDerived;}))ch.push(mkPara('* Departure not recorded — calculated from leg distance ÷ assumed speed ('+derivedSpeedsText(f1)+' km/h, picked at random between '+getSpeedRange().min+' and '+getSpeedRange().max+' km/h once per journey and kept), i.e. arrival − travel time.',{size:18,before:60}));
     ch.push(mkPara('Details of Work',{bold:true,size:22,before:200,after:80}));ch.push(bWT(1));
     ch.push(new D.Paragraph({children:[new D.PageBreak()]}));
     ch.push(mkPara('Second Fortnight (16'+ordinal(16)+' '+month+' '+y+' to '+dim+ordinal(dim)+' '+month+' '+y+')',{bold:true,size:24,after:100}));
     ch.push(mkPara('Departure / Arrival',{bold:true,size:22,after:80}));ch.push(bJT(f2));
-    if(f2.some(function(l){return l.depDerived;}))ch.push(mkPara('* Departure not recorded — calculated from leg distance ÷ assumed speed ('+getAssumedSpeed()+' km/h), i.e. arrival − travel time.',{size:18,before:60}));
+    if(f2.some(function(l){return l.depDerived;}))ch.push(mkPara('* Departure not recorded — calculated from leg distance ÷ assumed speed ('+derivedSpeedsText(f2)+' km/h, picked at random between '+getSpeedRange().min+' and '+getSpeedRange().max+' km/h once per journey and kept), i.e. arrival − travel time.',{size:18,before:60}));
     ch.push(mkPara('Details of Work',{bold:true,size:22,before:200,after:80}));ch.push(bWT(2));
     var doc=new D.Document({sections:[{properties:{page:{size:{width:12240,height:15840,orientation:'landscape'},margin:{top:720,bottom:720,left:720,right:720}}},children:ch}]});
     var _blobTD=await D.Packer.toBlob(doc);
@@ -5716,7 +5773,7 @@ async function generateTABill(){
 // SAVE / LOAD
 // ============================================================
 function saveState(){
-  var data={officer:{name:document.getElementById('officerName').value,designation:document.getElementById('officerDesignation').value,pay:document.getElementById('officerPay').value,hq:document.getElementById('officerHQ').value,month:document.getElementById('billMonth').value,year:document.getElementById('billYear').value,mileageRate:document.getElementById('mileageRate').value,daRate:document.getElementById('daRate').value,daMinDist:document.getElementById('daMinDist').value,assumedSpeed:document.getElementById('assumedSpeed').value},journeys:journeys,workLog:[],holidays:holidays,hotel:{hasHotel:document.getElementById('hasHotel').checked,from:document.getElementById('hotelFrom').value,to:document.getElementById('hotelTo').value,name:document.getElementById('hotelName').value,amount:document.getElementById('hotelAmount').value},advance:{hasAdvance:document.getElementById('hasAdvance').checked,amount:document.getElementById('advanceAmount').value}};
+  var data={officer:{name:document.getElementById('officerName').value,designation:document.getElementById('officerDesignation').value,pay:document.getElementById('officerPay').value,hq:document.getElementById('officerHQ').value,month:document.getElementById('billMonth').value,year:document.getElementById('billYear').value,mileageRate:document.getElementById('mileageRate').value,daRate:document.getElementById('daRate').value,daMinDist:document.getElementById('daMinDist').value,assumedSpeedMin:document.getElementById('speedMin').value,assumedSpeedMax:document.getElementById('speedMax').value},journeys:journeys,workLog:[],holidays:holidays,hotel:{hasHotel:document.getElementById('hasHotel').checked,from:document.getElementById('hotelFrom').value,to:document.getElementById('hotelTo').value,name:document.getElementById('hotelName').value,amount:document.getElementById('hotelAmount').value},advance:{hasAdvance:document.getElementById('hasAdvance').checked,amount:document.getElementById('advanceAmount').value}};
   document.querySelectorAll('.wl-work').forEach(function(i){data.workLog.push(i.value);});
   data.leaves=leaves;
   // v7.50 — सफलता/विफलता ईमानदारी से बताएँ (चुपचाप डेटा न गुमे)
@@ -5729,7 +5786,7 @@ function loadState(){
   // किसी फ़ील्ड के लिए: केवल तभी भरें जब सहेजे गए डेटा में वह मौजूद हो —
   // वरना अधूरी/पुरानी backup से साल (year) जैसी चीज़ें खाली हो जाती हैं।
   function setIf(id, v){ if(v===undefined||v===null||v==='') return; var el=document.getElementById(id); if(el) el.value=v; }
-  setIf('officerName',d.officer.name);setIf('officerDesignation',d.officer.designation);setIf('officerPay',d.officer.pay);setIf('officerHQ',d.officer.hq);setIf('billMonth',d.officer.month);setIf('billYear',d.officer.year);setIf('mileageRate',d.officer.mileageRate);setIf('daRate',d.officer.daRate);setIf('daMinDist',d.officer.daMinDist);setIf('assumedSpeed',d.officer.assumedSpeed);
+  setIf('officerName',d.officer.name);setIf('officerDesignation',d.officer.designation);setIf('officerPay',d.officer.pay);setIf('officerHQ',d.officer.hq);setIf('billMonth',d.officer.month);setIf('billYear',d.officer.year);setIf('mileageRate',d.officer.mileageRate);setIf('daRate',d.officer.daRate);setIf('daMinDist',d.officer.daMinDist);setIf('speedMin',d.officer.assumedSpeedMin);setIf('speedMax',d.officer.assumedSpeedMax);
   journeys=d.journeys||[];holidays=mergeHolidays(d.holidays);
   leaves=d.leaves||[];
   renderLeaveList();
@@ -5749,7 +5806,7 @@ function autoSave(){
   if(_autoSaveTimer)clearTimeout(_autoSaveTimer);
   _autoSaveTimer=setTimeout(function(){
     try{
-      var data={officer:{name:document.getElementById('officerName').value,designation:document.getElementById('officerDesignation').value,pay:document.getElementById('officerPay').value,hq:document.getElementById('officerHQ').value,month:document.getElementById('billMonth').value,year:document.getElementById('billYear').value,mileageRate:document.getElementById('mileageRate').value,daRate:document.getElementById('daRate').value,daMinDist:document.getElementById('daMinDist').value,assumedSpeed:document.getElementById('assumedSpeed').value},journeys:journeys,holidays:holidays,leaves:leaves,workLog:[],hotel:{hasHotel:document.getElementById('hasHotel').checked,from:document.getElementById('hotelFrom').value,to:document.getElementById('hotelTo').value,name:document.getElementById('hotelName').value,amount:document.getElementById('hotelAmount').value},advance:{hasAdvance:document.getElementById('hasAdvance').checked,amount:document.getElementById('advanceAmount').value}};
+      var data={officer:{name:document.getElementById('officerName').value,designation:document.getElementById('officerDesignation').value,pay:document.getElementById('officerPay').value,hq:document.getElementById('officerHQ').value,month:document.getElementById('billMonth').value,year:document.getElementById('billYear').value,mileageRate:document.getElementById('mileageRate').value,daRate:document.getElementById('daRate').value,daMinDist:document.getElementById('daMinDist').value,assumedSpeedMin:document.getElementById('speedMin').value,assumedSpeedMax:document.getElementById('speedMax').value},journeys:journeys,holidays:holidays,leaves:leaves,workLog:[],hotel:{hasHotel:document.getElementById('hasHotel').checked,from:document.getElementById('hotelFrom').value,to:document.getElementById('hotelTo').value,name:document.getElementById('hotelName').value,amount:document.getElementById('hotelAmount').value},advance:{hasAdvance:document.getElementById('hasAdvance').checked,amount:document.getElementById('advanceAmount').value}};
       document.querySelectorAll('.wl-work').forEach(function(i){data.workLog.push(i.value);});
       __safeSet('ta_tour_data',JSON.stringify(data));
     }catch(e){console.warn('Auto-save failed:',e);}
@@ -5769,7 +5826,8 @@ function autoLoad(){
     document.getElementById('mileageRate').value=d.officer.mileageRate||9.97;
     document.getElementById('daRate').value=d.officer.daRate||1000;
     if(d.officer.daMinDist)document.getElementById('daMinDist').value=d.officer.daMinDist;
-    if(d.officer.assumedSpeed)document.getElementById('assumedSpeed').value=d.officer.assumedSpeed;
+    if(d.officer.assumedSpeedMin)document.getElementById('speedMin').value=d.officer.assumedSpeedMin;
+    if(d.officer.assumedSpeedMax)document.getElementById('speedMax').value=d.officer.assumedSpeedMax;
     journeys=d.journeys||[];holidays=mergeHolidays(d.holidays);
     leaves=d.leaves||[];
     if(d.workLog){
