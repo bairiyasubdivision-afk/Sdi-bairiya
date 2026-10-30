@@ -379,6 +379,14 @@
   }
 #insp-root .pill.working { background: #dcf5e3; color: #157a3e; }
 #insp-root .pill.vacant { background: #fde2e1; color: #b3241c; }
+/* v? — स्थापना टिप्पणी: हर staff पंक्ति के नीचे "टिप्पणी" का छोटा खाना और
+   पूरी तालिका के लिए एक सामान्य टिप्पणी का खाना */
+#insp-root .staff-remark { display: flex; align-items: center; gap: 6px; padding: 0 0 6px 12px; }
+#insp-root .staff-remark label { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
+#insp-root .staff-remark input { flex: 1; min-width: 0; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.82rem; font-family: inherit; background: #fff; }
+#insp-root .staff-note-wrap { margin-top: 10px; }
+#insp-root .staff-note-wrap label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; }
+#insp-root .staff-note-wrap textarea { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; font-family: inherit; resize: vertical; background: #fff; }
 #insp-root .file-input-wrap {
     border: 1.5px dashed var(--border);
     border-radius: 8px;
@@ -1170,6 +1178,12 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     <details>
       <summary>👥 स्थापना विवरण (Staff)</summary>
       <div id="staffBox" style="margin-top:8px;"></div>
+      <!-- v? — स्थापना पर टिप्पणी: पूरी staff तालिका के लिए एक सामान्य टिप्पणी।
+           यह रिपोर्ट में स्थापना तालिका के ठीक नीचे अपने पैराग्राफ में छपती है। -->
+      <div class="staff-note-wrap">
+        <label for="staffGeneralRemark">स्थापना पर टिप्पणी</label>
+        <textarea id="staffGeneralRemark" rows="2" placeholder="पूरी स्थापना तालिका पर सामान्य टिप्पणी (वैकल्पिक)"></textarea>
+      </div>
     </details>
 
     <details>
@@ -6432,7 +6446,116 @@ function tidyNameSpacing(doc, bodyEl, bo) {
   }
 }
 
-function fillMasterData(doc, bodyEl, bo, inspectionDateStr) {
+// v? — स्थापना टिप्पणी (रिपोर्ट): स्थापना तालिका में "टिप्पणी" स्तंभ और उसके
+// नीचे "स्थापना पर टिप्पणी" वाला पैराग्राफ। दोनों केवल तब जुड़ते हैं जब अधिकारी
+// ने कुछ लिखा हो — कोई टिप्पणी न हो तो रिपोर्ट आज जैसी ही (बिल्कुल वैसी) छपे।
+function _srRunProps(doc, rPr) {
+  var rf = doc.createElementNS(W_NS, "w:rFonts");
+  ["ascii", "eastAsia", "hAnsi", "cs"].forEach(function (a) {
+    rf.setAttribute("w:" + a, "Nirmala UI");
+  });
+  rPr.appendChild(rf);
+  var sz = doc.createElementNS(W_NS, "w:sz"); sz.setAttribute("w:val", "20"); rPr.appendChild(sz);
+  var szcs = doc.createElementNS(W_NS, "w:szCs"); szcs.setAttribute("w:val", "20"); rPr.appendChild(szcs);
+  return rPr;
+}
+
+// तालिका का एक नया खाना — टेम्पलेट की बाकी कोठों जैसी ही फ़ॉन्ट/साइज़ के साथ
+function makeStaffRemarkCell(doc, widthDxa, text) {
+  var tc = doc.createElementNS(W_NS, "w:tc");
+  var tcPr = doc.createElementNS(W_NS, "w:tcPr");
+  var tcW = doc.createElementNS(W_NS, "w:tcW");
+  tcW.setAttribute("w:w", String(widthDxa));
+  tcW.setAttribute("w:type", "dxa");
+  tcPr.appendChild(tcW);
+  tc.appendChild(tcPr);
+
+  var p = doc.createElementNS(W_NS, "w:p");
+  var pPr = doc.createElementNS(W_NS, "w:pPr");
+  pPr.appendChild(_srRunProps(doc, doc.createElementNS(W_NS, "w:rPr")));
+  p.appendChild(pPr);
+  var r = doc.createElementNS(W_NS, "w:r");
+  r.appendChild(_srRunProps(doc, doc.createElementNS(W_NS, "w:rPr")));
+  var t = doc.createElementNS(W_NS, "w:t");
+  t.setAttribute("xml:space", "preserve");
+  t.textContent = text || "";
+  r.appendChild(t);
+  p.appendChild(r);
+  tc.appendChild(p);
+  return tc;
+}
+
+// तालिका के नीचे "स्थापना पर टिप्पणी" वाला सामान्य पैराग्राफ़ (रिपोर्ट की
+// सामान्य body-शैली: justified, Nirmala UI 10pt → बाद में 10.5pt)
+function makeStaffNoteParagraph(doc, text) {
+  var p = doc.createElementNS(W_NS, "w:p");
+  var pPr = doc.createElementNS(W_NS, "w:pPr");
+  var sp = doc.createElementNS(W_NS, "w:spacing");
+  sp.setAttribute("w:before", "80");
+  sp.setAttribute("w:after", "120");
+  sp.setAttribute("w:line", "276");
+  sp.setAttribute("w:lineRule", "auto");
+  pPr.appendChild(sp);
+  var jc = doc.createElementNS(W_NS, "w:jc"); jc.setAttribute("w:val", "both"); pPr.appendChild(jc);
+  pPr.appendChild(_srRunProps(doc, doc.createElementNS(W_NS, "w:rPr")));
+  p.appendChild(pPr);
+  var r = doc.createElementNS(W_NS, "w:r");
+  r.appendChild(_srRunProps(doc, doc.createElementNS(W_NS, "w:rPr")));
+  var t = doc.createElementNS(W_NS, "w:t");
+  t.setAttribute("xml:space", "preserve");
+  t.textContent = text;
+  r.appendChild(t);
+  p.appendChild(r);
+  return p;
+}
+
+function applyStaffRemarks(doc, tbl, remarks) {
+  if (!tbl || !remarks) return;
+  var rows = getTableRows(tbl);
+  if (!rows.length) return;
+  var rowRemarks = remarks.rows || [];
+  var note = String(remarks.note || "").trim();
+  // स्तंभ केवल तब जब किसी ऐसी पंक्ति की टिप्पणी हो जिसकी तालिका में जगह है
+  // (पहली पंक्ति हेडर है, इसलिए उपलब्ध डेटा-पंक्तियाँ = rows.length - 1)
+  var hasRowRemark = rowRemarks.slice(0, rows.length - 1).some(function (r) {
+    return String(r || "").trim() !== "";
+  });
+  if (!hasRowRemark && !note) return;
+
+  if (hasRowRemark) {
+    // नई चौड़ाइयाँ — कुल 10302 dxa, यानी तालिका पहले जितनी ही चौड़ी रहती है
+    var NEW_W = [731, 1750, 1600, 1150, 1120, 1150, 1101];
+    var REMARK_W = 1700;
+    var grid = tbl.getElementsByTagNameNS(W_NS, "tblGrid")[0];
+    if (grid) {
+      var gcs = grid.getElementsByTagNameNS(W_NS, "gridCol");
+      for (var gi = 0; gi < gcs.length; gi++) {
+        if (NEW_W[gi]) gcs[gi].setAttribute("w:w", String(NEW_W[gi]));
+      }
+      var ng = doc.createElementNS(W_NS, "w:gridCol");
+      ng.setAttribute("w:w", String(REMARK_W));
+      grid.appendChild(ng);
+    }
+    rows.forEach(function (tr, ri) {
+      var cells = getRowCells(tr);
+      cells.forEach(function (tc, ci) {
+        if (!NEW_W[ci]) return;
+        var tcPr = getDirectChildren(tc, "tcPr")[0];
+        if (!tcPr) { tcPr = doc.createElementNS(W_NS, "tcPr"); tc.insertBefore(tcPr, tc.firstChild); }
+        var tcW = getDirectChildren(tcPr, "tcW")[0];
+        if (tcW) { tcW.setAttribute("w:w", String(NEW_W[ci])); tcW.setAttribute("w:type", "dxa"); }
+      });
+      var txt = (ri === 0) ? "टिप्पणी" : String(rowRemarks[ri - 1] || "").trim();
+      tr.appendChild(makeStaffRemarkCell(doc, REMARK_W, txt));
+    });
+  }
+
+  if (note) {
+    tbl.parentNode.insertBefore(makeStaffNoteParagraph(doc, "स्थापना पर टिप्पणी: " + note), tbl.nextSibling);
+  }
+}
+
+function fillMasterData(doc, bodyEl, bo, inspectionDateStr, staffRemarks) {
   const villages = bo.villages_hi || "";
   const device = bo.device || {};
   const history = bo.inspection_history || {};
@@ -6520,6 +6643,11 @@ function fillMasterData(doc, bodyEl, bo, inspectionDateStr) {
       t2rows[ri].parentNode.removeChild(t2rows[ri]);
     }
   }
+
+  // v? — स्थापना टिप्पणी: खाली पंक्तियाँ हटने के बाद ही टिप्पणी का स्तंभ/पैराग्राफ
+  // जोड़ें। कुछ भी न लिखा हो तो applyStaffRemarks कुछ नहीं करता — रिपोर्ट आज
+  // जैसी ही रहती है (न खाली स्तंभ, न खाली पैराग्राफ)।
+  applyStaffRemarks(doc, t2, staffRemarks);
 }
 
 function fillManualData(doc, bodyEl, manual) {
@@ -10777,14 +10905,23 @@ const MASTER_DATA = {
       row("स्वीकृत पद", bo.sanctioned_posts);
 
     const staff = bo.staff || [];
+    // v? — स्थापना टिप्पणी: नाम/स्थिति पहले की तरह केवल-पढ़ने योग्य (auto-fetched)
+    // ही रहते हैं; हर पंक्ति के नीचे सिर्फ़ अधिकारी के लिखने का "टिप्पणी" खाना है।
+    const _srEsc = (v) => String(v == null ? "" : v)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     staffBox.innerHTML = staff.length
       ? staff
-          .map((s) => {
+          .map((s, i) => {
             const pillClass = s.status === "WORKING" ? "working" : "vacant";
-            return `<div class="staff-line">${s.post}: <strong>${s.name}</strong> (${s.employee_id || "ID N/A"})<span class="pill ${pillClass}">${s.status}</span></div>`;
+            return `<div class="staff-line">${s.post}: <strong>${_srEsc(s.name)}</strong> (${_srEsc(s.employee_id || "ID N/A")})<span class="pill ${pillClass}">${_srEsc(s.status)}</span></div>` +
+              `<div class="staff-remark"><label for="staffRemark_${i}">टिप्पणी</label>` +
+              `<input type="text" class="staff-remark-input" id="staffRemark_${i}" placeholder="इस पद के लिए टिप्पणी (वैकल्पिक)"></div>`;
           })
           .join("")
       : "<span class='small-muted'>कोई जानकारी नहीं</span>";
+    // v? — यह खाना अब किस BO का दिख रहा है, वह अंत में दर्ज करें (टिप्पणी सहेजते
+    // समय जाँचने के लिए कि फ़ॉर्म उसी BO का दिख रहा है)
+    staffBox.setAttribute("data-bo-id", boId || "");
 
     villagesBox.textContent = bo.villages_hi || "—";
 
@@ -13576,6 +13713,16 @@ const MASTER_DATA = {
       if (tSpan) tSpan.textContent = "—";
     });
 
+    // v? — स्थापना टिप्पणी: प्रति-पंक्ति टिप्पणियाँ और सामान्य टिप्पणी भी साफ़ करें
+    try {
+      var _srBox = document.getElementById("staffBox");
+      if (_srBox) {
+        Array.prototype.forEach.call(_srBox.querySelectorAll("input.staff-remark-input"), function (el) { el.value = ""; });
+      }
+      var _srGenEl = document.getElementById("staffGeneralRemark");
+      if (_srGenEl) _srGenEl.value = "";
+    } catch (e) {}
+
     // Clear SB-46 entries and re-render so old rows disappear from the UI
     sb46Entries = [];
     if (typeof renderSB46Entries === "function") renderSB46Entries();
@@ -13922,6 +14069,42 @@ const MASTER_DATA = {
   const statusMsg = document.getElementById("statusMsg");
   const dlLinks = document.getElementById("dlLinks");
 
+  // v? — स्थापना टिप्पणी: UI से प्रति-पंक्ति टिप्पणियाँ और सामान्य टिप्पणी पढ़ें।
+  // पंक्ति-क्रम वही है जो auto-fetched staff सूची का है (BPM, ABPM-1, ABPM-2 ...)।
+  // v7.? — खानों की गिनती DOM से लें, boSelect से नहीं: BO बदलते समय यह फ़ंक्शन
+  // पुराने BO का फ़ॉर्म पढ़ता है जबकि boSelect.value पहले ही नया BO हो चुका होता
+  // है — उससे नए BO की staff-सूची पढ़ी जाती थी और पिछली BO की आख़िरी पंक्ति की
+  // टिप्पणी चुपचाप खो जाती थी।
+  // v7.? — सुरक्षा: BO बदलते समय यह फ़ंक्शन कभी-कभी ऐसे क्षण पढ़ा जाता है जब
+  // boSelect.value नया BO दिखा रहा हो पर फ़ॉर्म अभी पुराने BO का हो। ऐसे में
+  // टिप्पणी ग़लत BO के मसौदे में लिख दी जाती थी (cross-contamination)। इसलिए
+  // staffBox पर लिखे BO-निशान से जाँचें: न मिले तो DOM से नहीं, उस BO के पहले
+  // से सहेजे मसौदे से ही टिप्पणियाँ लौटाएँ।
+  function readStaffRemarks(forBoId) {
+    var want = forBoId || boSelect.value || "";
+    var box = document.getElementById("staffBox");
+    var rendered = box ? String(box.getAttribute("data-bo-id") || "") : "";
+    if (want && rendered && rendered !== want) {
+      try {
+        var raw = localStorage.getItem(INSP_DRAFT_KEY_PREFIX + want);
+        if (raw) {
+          var d = JSON.parse(raw);
+          if (d && d.staffRemarks) return d.staffRemarks;
+        }
+      } catch (e) {}
+      return { rows: [], note: "" };
+    }
+    var rows = [];
+    for (var i = 0; ; i++) {
+      var el = document.getElementById("staffRemark_" + i);
+      if (!el) break;
+      rows.push(String(el.value || "").trim());
+    }
+    var noteEl = document.getElementById("staffGeneralRemark");
+    return { rows: rows, note: noteEl ? String(noteEl.value || "").trim() : "" };
+  }
+  try { window.sdiReadStaffRemarks = readStaffRemarks; } catch (e) {}
+
   function b64ToArrayBuffer(b64) {
     const binaryStr = atob(b64);
     const len = binaryStr.length;
@@ -13953,6 +14136,9 @@ generateBtn.addEventListener("click", async () => {
 
     try {
       const inspectionDateStr = ddmmyyyy(inspectionDateInput.value) || "";
+
+      // v? — स्थापना टिप्पणी (रिपोर्ट में जाने के लिए)
+      const staffRemarks = readStaffRemarks();
 
       const manual = {
         sb46Data: (typeof readSB46Data === "function") ? readSB46Data() : [],
@@ -14013,7 +14199,7 @@ generateBtn.addEventListener("click", async () => {
 
       const bodyEl = doc.getElementsByTagNameNS(W_NS, "body")[0];
 
-      fillMasterData(doc, bodyEl, bo, inspectionDateStr);
+      fillMasterData(doc, bodyEl, bo, inspectionDateStr, staffRemarks);
       fillManualData(doc, bodyEl, manual);
       // वैकल्पिक विशेष टिप्पणी — टिक होने पर ही
       addSpecialRemark(doc, bodyEl, manual.special_remark_on ? manual.special_remark : "");
@@ -14147,7 +14333,7 @@ generateBtn.addEventListener("click", async () => {
   const INSP_DRAFT_KEY_PREFIX = "insp_draft_";
   var _inspSaveTimer = null;
 
-  function collectInspDraft() {
+  function collectInspDraft(forBoId) {
   // Read SB-46 data
   var sb46Data = (typeof readSB46Data === "function") ? readSB46Data() : [];
     const draft = {
@@ -14174,6 +14360,8 @@ generateBtn.addEventListener("click", async () => {
       mailVpp: document.getElementById("mailVpp").value,
       mailOrdinary: document.getElementById("mailOrdinary").value,
       same_balance: sameBalChk ? sameBalChk.checked : false,
+      // v? — स्थापना टिप्पणी: प्रति-पंक्ति टिप्पणियाँ + पूरी तालिका की सामान्य टिप्पणी
+      staffRemarks: readStaffRemarks(forBoId),
     };
 
     // Toggles
@@ -14305,6 +14493,11 @@ generateBtn.addEventListener("click", async () => {
   }
 
   var _prevBoIdForDraft = boSelect.value || "";
+  // v? — BO बदलते समय बीच में होने वाले ऑटो-सेव रोकने का झंडा। renderAutoFill
+  // चलते ही फ़ॉर्म पर एक 'change' घटना आ जाती है जो पूरा फ़ॉर्म नए BO के मसौदे में
+  // लिख देती थी — जबकि खानों में अभी पुराने BO का डेटा होता है (स्थापना टिप्पणी
+  // इसी से ग़लत BO में चली जाती थी)।
+  var _inspSwitching = false;
 
   var _inspPendingBoId = "";
   var _inspPendingDraft = null;
@@ -14326,8 +14519,12 @@ generateBtn.addEventListener("click", async () => {
     // debounced now.
     var boIdToSave = targetBoId || boSelect.value;
     if (!boIdToSave) return;
+    // बदलाव के बीच में नए BO के नाम पर कुछ न लिखें — खानों में अभी पुराने BO का
+    // डेटा है। पुराने BO का मसौदा (boIdToSave !== boSelect.value) सामान्य रूप से
+    // सहेजा जाएगा।
+    if (_inspSwitching && boIdToSave === boSelect.value) return;
     var draft;
-    try { draft = collectInspDraft(); }
+    try { draft = collectInspDraft(boIdToSave); }
     catch (e) { console.warn("Insp auto-save failed:", e); return; }
     draft.boId = boIdToSave;
     _inspPendingBoId = boIdToSave;
@@ -14361,6 +14558,13 @@ generateBtn.addEventListener("click", async () => {
       if (Object.prototype.hasOwnProperty.call(_hdrDefaults, id) && _el.value === _hdrDefaults[id]) continue;
       return true;
     }
+    // v? — स्थापना टिप्पणी भी मसौदा-डेटा है (सिर्फ़ टिप्पणी लिखकर BO बदलने पर
+    // भी मसौदा सहेजा जाए, वरना वह चुपचाप खो जाती)
+    try {
+      var _srNow = readStaffRemarks();
+      if (_srNow.note) return true;
+      if ((_srNow.rows || []).some(function (r) { return String(r || "").trim() !== ""; })) return true;
+    } catch (e) {}
     for (const spec of [...STOCK_TOGGLES, ...OTHER_TOGGLES]) {
       const el = document.getElementById(`toggle_${spec.id}`);
       if (el && el.value) return true;
@@ -14625,6 +14829,18 @@ generateBtn.addEventListener("click", async () => {
         });
         renderSB46Entries();
       }
+      // v? — स्थापना टिप्पणी: प्रति-पंक्ति टिप्पणियाँ और सामान्य टिप्पणी लौटाएँ
+      try {
+        var _srD = d.staffRemarks || {};
+        var _srRows = Array.isArray(_srD.rows) ? _srD.rows : [];
+        for (var _sri = 0; _sri < _srRows.length; _sri++) {
+          var _srEl = document.getElementById("staffRemark_" + _sri);
+          if (_srEl) _srEl.value = _srRows[_sri] || "";
+        }
+        var _srNoteEl = document.getElementById("staffGeneralRemark");
+        if (_srNoteEl) _srNoteEl.value = _srD.note || "";
+      } catch (e) {}
+
       // Fill any date fields the draft left empty with the defaults
       applyDateDefaults();
       return true;
@@ -14639,6 +14855,7 @@ generateBtn.addEventListener("click", async () => {
     var oldBoId = _prevBoIdForDraft;
     var newBoId = boSelect.value;
     if (!oldBoId || oldBoId === newBoId) return;
+    _inspSwitching = true;
     writeInspDraftNow();                      // flush any pending save first
     if (hasInspDraftData()) {
       saveInspDraft(oldBoId);                 // snapshot while form still shows old BO
@@ -14677,13 +14894,17 @@ generateBtn.addEventListener("click", async () => {
 
     // After auto-fill renders, try to restore a saved draft for the new BO
     setTimeout(function() {
-      if (boSelect.value) {
-        var hasDraft = restoreInspDraft(boSelect.value);
-        if (hasDraft) {
-          statusMsg.className = "status ok";
-          statusMsg.textContent = "✅ इस BO का सहेजा हुआ मसौदा लोड हो गया है";
-          setTimeout(function(){ statusMsg.textContent = ""; statusMsg.className = "status"; }, 3000);
+      try {
+        if (boSelect.value) {
+          var hasDraft = restoreInspDraft(boSelect.value);
+          if (hasDraft) {
+            statusMsg.className = "status ok";
+            statusMsg.textContent = "✅ इस BO का सहेजा हुआ मसौदा लोड हो गया है";
+            setTimeout(function(){ statusMsg.textContent = ""; statusMsg.className = "status"; }, 3000);
+          }
         }
+      } finally {
+        _inspSwitching = false;   // बदलाव पूरा — अब ऑटो-सेव सामान्य रूप से चले
       }
     }, 100);
 
