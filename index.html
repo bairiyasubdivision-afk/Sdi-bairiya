@@ -574,6 +574,14 @@
   #data-tab .info-text{font-size:0.8rem;color:var(--muted);margin-top:8px;line-height:1.4;}
   #data-tab .toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:white;padding:12px 20px;border-radius:8px;font-size:0.85rem;box-shadow:0 4px 12px rgba(0,0,0,0.2);z-index:10000;opacity:0;transition:opacity 0.3s;pointer-events:none;}
   #data-tab .toast.show{opacity:1;}
+  /* v7.54 — काग़ज़ी अभिलेख टिक: फ़ोन पर आसान निशाना (44px), और अपनी पंक्ति का चिह्न */
+  #data-tab .progPaperLbl{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:44px;min-height:44px;padding:2px 0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;}
+  #data-tab .progPaperLbl input[type="checkbox"]{width:24px;height:24px;min-width:24px;min-height:24px;margin:0;accent-color:#1b5e20;cursor:pointer;}
+  #data-tab .progSrcTag{display:inline-block;font-size:0.68rem;font-weight:700;padding:1px 7px;border-radius:9px;margin-top:3px;white-space:nowrap;}
+  #data-tab .progSrcTag.paper{background:#fff4cc;color:#7b5d00;border:1px solid #e6cf7a;}
+  #data-tab .progSrcTag.app{background:#e3f4e7;color:#1b5e20;border:1px solid #a8d8b3;}
+  #data-tab tr.progRowFlash td{background:#fff8d6 !important;}
+  #data-tab #progDoneSummary.progCountFlash{background:#fff8d6;border-color:#e0b400;}
   #data-tab .empty-msg{text-align:center;padding:30px;color:var(--muted);font-size:0.9rem;}
   @media(max-width:768px){
     #data-tab .form-row{grid-template-columns:1fr;}
@@ -2043,7 +2051,9 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       'पूर्ण: <b>'+_cApp+' (ऐप/डायरी) + '+_cPaper+' (काग़ज़ी) = '+_cTot+'</b> / '+rows.length+
       ' &nbsp;•&nbsp; बाक़ी: <b>'+(rows.length-_cTot)+'</b>'+
       '<div style="font-size:0.74rem;color:#546e8a;margin-top:2px;">काग़ज़ी = IR फ़ाइल के काग़ज़ी अभिलेख के आधार पर पूर्ण (ऐप के चिह्न से अलग गिना जाता है)।</div></div>';
-    var h=_summary+'<table><thead><tr><th style="width:30px;">✓</th><th>#</th><th>Post Office Name</th><th>Accounts Office</th><th>Inspector</th><th>Last Inspection (2025)</th><th>Days</th><th>Proposed Month (2026)</th><th>Inspection Date (2026)</th><th style="width:76px;">काग़ज़ी अभिलेख</th><th>Remark</th></tr></thead><tbody>';
+    // v7.54 — तालिका-शीर्ष के नीचे स्थायी संकेत: "काग़ज़ी" टिक का अर्थ और तुरंत-सहेजा जाना
+    var _hint='<div id="progPaperHint" style="font-size:0.76rem;color:#4a5b6e;line-height:1.45;margin:0 0 8px;background:#fffdf2;border:1px dashed #e2cf8a;border-radius:6px;padding:6px 8px;">टिप: पंक्ति में <b>&ldquo;काग़ज़ी&rdquo;</b> का टिक तब लगाएँ जब वह दफ़्तर IR फ़ाइल के <b>काग़ज़ी अभिलेख</b> के आधार पर पूर्ण माना गया हो। टिक लगाते ही वह <b>तुरंत सहेजा</b> जाता है, ऊपर की गिनती बदल जाती है और उस पंक्ति के Remark में <b>काग़ज़</b> दिखने लगता है।</div>';
+    var h=_summary+_hint+'<table><thead><tr><th style="width:30px;">✓</th><th>#</th><th>Post Office Name</th><th>Accounts Office</th><th>Inspector</th><th>Last Inspection (2025)</th><th>Days</th><th>Proposed Month (2026)</th><th>Inspection Date (2026)</th><th style="width:76px;">काग़ज़ी अभिलेख</th><th>Remark</th></tr></thead><tbody>';
     var shown=0;
     // 'केवल पूर्ण निरीक्षण दिखाएँ' फ़िल्टर (चुनिंदा export कार्ड में चेकबॉक्स)
     var doneOnly=!!(document.getElementById('progDoneOnly')||{}).checked;
@@ -2083,14 +2093,16 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       }
       // v7.53 — "पूर्ण — काग़ज़ी अभिलेख (IR फ़ाइल में)" का टिक (अलग भंडारण)
       var _pk=progRowKey(r);
-      h+='<td style="text-align:center;vertical-align:top;"><label style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;" title="पूर्ण — काग़ज़ी अभिलेख (IR फ़ाइल में)"><input type="checkbox" class="progPaperChk"'+((paperMap.hasOwnProperty(_pk))?' checked':'')+' onchange="progTogglePaper('+i+',this.checked)"><span style="font-size:0.62rem;color:#6b7f95;white-space:nowrap;">काग़ज़ी</span></label></td>';
+      // v7.54 — टिक का निशाना बड़ा (44px) और label पर रोका गया click पंक्ति तक नहीं जाता
+      h+='<td style="text-align:center;vertical-align:middle;"><label class="progPaperLbl" title="पूर्ण — काग़ज़ी अभिलेख (IR फ़ाइल में)" onclick="event.stopPropagation();"><input type="checkbox" class="progPaperChk" data-idx="'+i+'"'+((paperMap.hasOwnProperty(_pk))?' checked':'')+' onchange="progTogglePaper('+i+',this.checked)"><span style="font-size:0.62rem;color:#6b7f95;white-space:nowrap;">काग़ज़ी</span></label></td>';
+      // v7.54 — पंक्ति की स्थिति (ऐप / डायरी / काग़ज़) स्पष्ट टैग के रूप में, तुरंत दिखे
       var _srcTag='';
-      if(done)_srcTag='<div style="font-size:0.66rem;margin-top:2px;white-space:nowrap;color:'+((fin&&fin.src==='paper')?'#7b5d00':'#1b5e20')+';">'+((fin&&fin.src==='paper')?'काग़ज़':((fin&&fin.src==='diary')?'डायरी':'ऐप'))+'</div>';
+      if(done){ var _st=((fin&&fin.src==='paper')?'काग़ज़':((fin&&fin.src==='diary')?'डायरी':'ऐप')); _srcTag='<div><span class="progSrcTag '+((_st==='काग़ज़')?'paper':'app')+'">'+_st+'</span></div>'; }
       h+='<td><input type="text" '+inSt+' value="'+escapeAttr(r.remark||'')+'" onchange="progCellEdit('+i+',\'remark\',this.value)">'+_srcTag+'</td>';
       h+='</tr>';
     });
     h+='</tbody></table>';
-    if(!shown)h=_summary+'<div class="empty-msg">No post office found</div>';   // v7.53 — गिनती हमेशा दिखे
+    if(!shown)h=_summary+_hint+'<div class="empty-msg">No post office found</div>';   // v7.53 — गिनती हमेशा दिखे
     wrap.innerHTML=h;
     if(typeof expUpdateCount==='function')expUpdateCount();
   };
@@ -2422,7 +2434,29 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       else { var _n=new Date();var _dd=(_n.getDate()<10?'0':'')+_n.getDate();var _mm=(_n.getMonth()+1<10?'0':'')+(_n.getMonth()+1); d=_dd+'.'+_mm+'.'+_n.getFullYear(); }
     }
     setPaperDone(progRowKey(r),!!on,d);
+    // v7.54 — टिक बदलते ही: पंक्ति पहले से ऐप/डायरी से पूर्ण है या नहीं, यह जान लें (संदेश सही रहे)
+    var _wasDone=false;
+    try{ var _f=progFinalMap(rows)[idx]; _wasDone=!!(_f&&_f.final&&_f.src!=='paper'); }catch(e){}
     if(document.getElementById('progTableWrap'))renderProgTable();
+    // v7.54 — पुष्टि: छोटा हिंदी संदेश, गिनती का झलक और पंक्ति का हल्का रंग
+    var _nm=(r.name||'').trim();
+    var _msg;
+    if(on){
+      _msg = _wasDone
+        ? ('✔ काग़ज़ी अभिलेख सहेजा — '+_nm+' (यह पंक्ति पहले से ऐप/डायरी से पूर्ण है)')
+        : ('✔ काग़ज़ी अभिलेख के आधार पर पूर्ण चिह्नित — '+_nm);
+    } else {
+      _msg = ('काग़ज़ी अभिलेख का चिह्न हटाया — '+_nm);
+    }
+    try{ if(typeof window.showToast==='function')window.showToast(_msg); }catch(e){}
+    try{
+      var _sb=document.getElementById('progDoneSummary');
+      if(_sb){ _sb.classList.remove('progCountFlash'); void _sb.offsetWidth; _sb.classList.add('progCountFlash'); setTimeout(function(){ _sb.classList.remove('progCountFlash'); },1500); }
+      var _cb=document.querySelector('.progPaperChk[data-idx="'+idx+'"]');
+      if(_cb){ var _tr=_cb.closest?(_cb.closest('tr')):(null);
+        if(_tr){ _tr.classList.add('progRowFlash'); try{_tr.scrollIntoView({block:'nearest'});}catch(e){}
+          setTimeout(function(){ _tr.classList.remove('progRowFlash'); },1400); } }
+    }catch(e){}
   };
   // गिनती स्रोत के हिसाब से — "30 (ऐप/डायरी) + N (काग़ज़ी)" जैसी पंक्ति के लिए
   function progDoneCounts(rows){
