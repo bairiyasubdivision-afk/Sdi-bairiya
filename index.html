@@ -1100,6 +1100,8 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
             <input type="text" id="journeySearch" placeholder="Search journeys — date, office or purpose" oninput="renderJourneyList()" style="flex:1;min-width:220px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;">
             <label style="font-size:0.85rem;display:flex;gap:6px;align-items:center;white-space:nowrap;"><input type="checkbox" id="journeyAllMonths" onchange="renderJourneyList()"> All months</label>
           </div>
+          <!-- v7.53 — अनुमानित departure की स्क्रीन पर साफ़ सूचना (फ़ोन पर tooltip नहीं दिखता) -->
+          <div id="journeyDerivedNote" style="display:none;background:#eef7ee;border:1px solid #a5d6a7;border-radius:8px;padding:8px 10px;margin:0 0 10px;font-size:0.8rem;line-height:1.5;color:#1b5e20;"></div>
           <div class="card-body" style="display:none;">
             <div style="overflow-x:auto;">
               <table style="width:100%;font-size:0.8rem;"><thead><tr><th>Date</th><th>Route</th><th>Dep</th><th>Ret HQ</th><th>Km</th><th>DA</th><th>Work Log Entry</th><th></th></tr></thead><tbody id="journeyListBody"></tbody></table>
@@ -2009,7 +2011,7 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
   // Inspection_Programme_2026_Bairia_1.xlsx register)
   // ============================================================
   var PROG_KEY='sdi_prog_2026_v1';
-  var PROG_DEFAULT=[{"sn": 1, "name": "शाखा डाकघर बलिहार", "ao": "उप डाकघर दुबेछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "15.02.2025", "days": "1", "month": "जनवरी 2026", "inspDate": "14/02/26", "remark": ""}, {"sn": 2, "name": "शाखा डाकघर बेलहरी", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "01.03.2025", "days": "1", "month": "जनवरी 2026", "inspDate": "17/02/26", "remark": ""}, {"sn": 3, "name": "शाखा डाकघर कुसौरा", "ao": "उप डाकघर सहतवार", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "03.03.2025", "days": "1", "month": "फरवरी 2026", "inspDate": "02/03/26", "remark": ""}, {"sn": 4, "name": "शाखा डाकघर भोपालपुर", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.03.2025", "days": "1", "month": "फरवरी 2026", "inspDate": "03/03/26", "remark": ""}, {"sn": 5, "name": "शाखा डाकघर भोजछपरा", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "17.03.2025", "days": "1", "month": "फरवरी 2026", "inspDate": "16/03/26", "remark": ""}, {"sn": 6, "name": "शाखा डाकघर रोहुआ", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "22.03.2025", "days": "1", "month": "मार्च 2026", "inspDate": "21/03/26", "remark": ""}, {"sn": 7, "name": "शाखा डाकघर चेरीडीह", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "29.03.2025", "days": "1", "month": "मार्च 2026", "inspDate": "17/03/26", "remark": ""}, {"sn": 8, "name": "शाखा डाकघर जयप्रकाश नगर", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "01.04.2025", "days": "1", "month": "मार्च 2026", "inspDate": "06/03/26", "remark": ""}, {"sn": 9, "name": "शाखा डाकघर बिनहा", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "05.04.2025", "days": "1", "month": "मार्च 2026", "inspDate": "12/03/26", "remark": ""}, {"sn": 10, "name": "शाखा डाकघर केवरा", "ao": "उप डाकघर छाता", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "08.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "08/04/26", "remark": ""}, {"sn": 11, "name": "शाखा डाकघर डुमरिया", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "20/03/26", "remark": ""}, {"sn": 12, "name": "शाखा डाकघर नौरंगा", "ao": "उप डाकघर दुबेछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "09.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "13/03/26", "remark": ""}, {"sn": 13, "name": "शाखा डाकघर गोपालनगर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "11.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "24/03/26", "remark": ""}, {"sn": 14, "name": "शाखा डाकघर लक्ष्मणछपरा", "ao": "उप डाकघर करनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "15.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "01/04/26", "remark": ""}, {"sn": 15, "name": "शाखा डाकघर हडिहांकला", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "30.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "23/03/26", "remark": ""}, {"sn": 16, "name": "शाखा डाकघर बाबूबेल", "ao": "उप डाकघर हल्दी", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "02.05.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "29/04/26", "remark": ""}, {"sn": 17, "name": "शाखा डाकघर पुरास", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "07.05.2025", "days": "1", "month": "मई 2026", "inspDate": "18/04/26", "remark": ""}, {"sn": 18, "name": "शाखा डाकघर श्रीनगर", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.05.2025", "days": "1", "month": "मई 2026", "inspDate": "18/05/26", "remark": ""}, {"sn": 19, "name": "शाखा डाकघर सूर्यभानपुर", "ao": "उप डाकघर लालगंज", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "09.05.2025", "days": "1", "month": "मई 2026", "inspDate": "03/04/26", "remark": ""}, {"sn": 20, "name": "शाखा डाकघर शोभाछपरा", "ao": "उप डाकघर करनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "15.05.2025", "days": "1", "month": "मई 2026", "inspDate": "30/03/26", "remark": ""}, {"sn": 21, "name": "शाखा डाकघर सोनबरसा", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "19.05.2025", "days": "1", "month": "मई 2026", "inspDate": "11/04/26", "remark": ""}, {"sn": 22, "name": "शाखा डाकघर सोनवानी", "ao": "उप डाकघर हल्दी", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "29.05.2025", "days": "1", "month": "मई 2026", "inspDate": "", "remark": ""}, {"sn": 23, "name": "शाखा डाकघर गयाघाट", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "30.05.2025", "days": "1", "month": "मई 2026", "inspDate": "11/05/26", "remark": ""}, {"sn": 24, "name": "शाखा डाकघर दलछपरा", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "11.06.2025", "days": "1", "month": "जून 2026", "inspDate": "13/05/26", "remark": ""}, {"sn": 25, "name": "शाखा डाकघर रामनगर", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "14.06.2025", "days": "1", "month": "जून 2026", "inspDate": "19/05/26", "remark": ""}, {"sn": 26, "name": "शाखा डाकघर जगदेवा", "ao": "उप डाकघर बैरिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "19.06.2025", "days": "1", "month": "जून 2026", "inspDate": "08/05/26", "remark": ""}, {"sn": 27, "name": "उप डाकघर बैरिया", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "25.06.2025", "days": "2", "month": "जून 2026", "inspDate": "21–23/05/26", "remark": ""}, {"sn": 28, "name": "शाखा डाकघर इब्राहिमाबाद", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "30.06.2025", "days": "1", "month": "जून 2026", "inspDate": "16/05/26", "remark": ""}, {"sn": 29, "name": "शाखा डाकघर कुसौरी", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "05.07.2025", "days": "1", "month": "जून 2026", "inspDate": "30/05/26", "remark": ""}, {"sn": 30, "name": "उप डाकघर दलनछपरा", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "18.07.2025", "days": "2", "month": "जुलाई 2026", "inspDate": "30/05/26", "remark": ""}, {"sn": 31, "name": "शाखा डाकघर इब्राहिमाबाद उपरवार", "ao": "उप डाकघर करनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "21.07.2025", "days": "1", "month": "जुलाई 2026", "inspDate": "22/05/26", "remark": ""}, {"sn": 32, "name": "शाखा डाकघर टेरही", "ao": "उप डाकघर बैरिया", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "31.07.2025", "days": "1", "month": "जुलाई 2026", "inspDate": "25/05/26", "remark": ""}, {"sn": 33, "name": "शाखा डाकघर दयाछपरा", "ao": "उप डाकघर दुबेछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "06.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 34, "name": "शाखा डाकघर दुधैलाकला", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 35, "name": "शाखा डाकघर चांदपुर", "ao": "उप डाकघर बैरिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "09.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 36, "name": "शाखा डाकघर गंगापुर", "ao": "उप डाकघर दुबेछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "12.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 37, "name": "शाखा डाकघर अचलगढ़", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "14.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 38, "name": "शाखा डाकघर पाण्डेयपुर", "ao": "उप डाकघर बैरिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "23.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 39, "name": "उप डाकघर हल्दी", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "25.08.2025", "days": "2", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 40, "name": "शाखा डाकघर बिसौली", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "26.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 41, "name": "शाखा डाकघर भगवानपुर", "ao": "उप डाकघर बैरिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "28.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 42, "name": "शाखा डाकघर कोडहरा उपरवार", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "01.09.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 43, "name": "शाखा डाकघर सीताकुण्ड", "ao": "उप डाकघर हल्दी", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "02.09.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 44, "name": "शाखा डाकघर छोटी शेरिया", "ao": "उप डाकघर छाता", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "03.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 45, "name": "शाखा डाकघर चादपुर", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "04.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 46, "name": "शाखा डाकघर — (स्कैन में अस्पष्ट)", "ao": "उप डाकघर हल्दी", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "11.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 47, "name": "शाखा डाकघर सेमरिया", "ao": "उप डाकघर लालगंज", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "13.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 48, "name": "शाखा डाकघर सुरेमनपुर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "16.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 49, "name": "शाखा डाकघर डोकटी", "ao": "उप डाकघर दलनछपरा", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "22.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 50, "name": "शाखा डाकघर पियरोटा", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "23.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 51, "name": "शाखा डाकघर बहुआरा", "ao": "उप डाकघर लालगंज", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "24.09.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 52, "name": "शाखा डाकघर दिघार", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "25.09.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 53, "name": "शाखा डाकघर मुडाडीह", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "03.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 54, "name": "शाखा डाकघर श्रीपालपुर", "ao": "उप डाकघर लालगंज", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "04.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 55, "name": "शाखा डाकघर मुनछपरा", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "06.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 56, "name": "शाखा डाकघर जमालपुर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "07.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 57, "name": "शाखा डाकघर करमानपुर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 58, "name": "शाखा डाकघर मधुबनी", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "09.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 59, "name": "शाखा डाकघर जवही", "ao": "उप डाकघर हल्दी", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "25.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 60, "name": "शाखा डाकघर मुरलीछपरा", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "27.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 61, "name": "उप डाकघर मझौवा", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "28.10.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 62, "name": "शाखा डाकघर नारायणगढ़", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "31.10.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 63, "name": "शाखा डाकघर दुर्जनपुर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "31.10.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 64, "name": "शाखा डाकघर सावनछपरा", "ao": "उप डाकघर लालगंज", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "04.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 65, "name": "शाखा डाकघर गोहियाछपरा", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "06.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 66, "name": "उप डाकघर रेवती", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "07.11.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 67, "name": "शाखा डाकघर कचनपुर", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "10.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 68, "name": "शाखा डाकघर चकिया", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "11.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 69, "name": "उप डाकघर रानीगंज बाजार", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "13.11.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 70, "name": "उप डाकघर तालगंज", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "15.11.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 71, "name": "शाखा डाकघर सोनकीभट", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "17.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 72, "name": "उप डाकघर करनछपरा", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "20.11.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 73, "name": "शाखा डाकघर चांददियर", "ao": "उप डाकघर करनछपरा", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "22.12.2025", "days": "1", "month": "दिसम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 74, "name": "उप डाकघर छाता", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "23.12.2025", "days": "2", "month": "दिसम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 75, "name": "उप डाकघर दुबेछपरा", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "26.12.2025", "days": "2", "month": "दिसम्बर 2026", "inspDate": "", "remark": ""}];
+  var PROG_DEFAULT=[{"sn": 1, "name": "शाखा डाकघर बलिहार", "ao": "उप डाकघर दुबेछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "15.02.2025", "days": "1", "month": "जनवरी 2026", "inspDate": "14/02/26", "remark": ""}, {"sn": 2, "name": "शाखा डाकघर बेलहरी", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "01.03.2025", "days": "1", "month": "जनवरी 2026", "inspDate": "17/02/26", "remark": ""}, {"sn": 3, "name": "शाखा डाकघर कुसौरा", "ao": "उप डाकघर सहतवार", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "03.03.2025", "days": "1", "month": "फरवरी 2026", "inspDate": "02/03/26", "remark": ""}, {"sn": 4, "name": "शाखा डाकघर भोपालपुर", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.03.2025", "days": "1", "month": "फरवरी 2026", "inspDate": "03/03/26", "remark": ""}, {"sn": 5, "name": "शाखा डाकघर भोजछपरा", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "17.03.2025", "days": "1", "month": "फरवरी 2026", "inspDate": "16/03/26", "remark": ""}, {"sn": 6, "name": "शाखा डाकघर रोहुआ", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "22.03.2025", "days": "1", "month": "मार्च 2026", "inspDate": "21/03/26", "remark": ""}, {"sn": 7, "name": "शाखा डाकघर चेरीडीह", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "29.03.2025", "days": "1", "month": "मार्च 2026", "inspDate": "17/03/26", "remark": ""}, {"sn": 8, "name": "शाखा डाकघर जयप्रकाश नगर", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "01.04.2025", "days": "1", "month": "मार्च 2026", "inspDate": "06/03/26", "remark": ""}, {"sn": 9, "name": "शाखा डाकघर बिनहा", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "05.04.2025", "days": "1", "month": "मार्च 2026", "inspDate": "12/03/26", "remark": ""}, {"sn": 10, "name": "शाखा डाकघर केवरा", "ao": "उप डाकघर छाता", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "08.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "08/04/26", "remark": ""}, {"sn": 11, "name": "शाखा डाकघर डुमरिया", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "20/03/26", "remark": ""}, {"sn": 12, "name": "शाखा डाकघर नौरंगा", "ao": "उप डाकघर दुबेछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "09.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "13/03/26", "remark": ""}, {"sn": 13, "name": "शाखा डाकघर गोपालनगर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "11.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "24/03/26", "remark": ""}, {"sn": 14, "name": "शाखा डाकघर लक्ष्मणछपरा", "ao": "उप डाकघर करनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "15.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "01/04/26", "remark": ""}, {"sn": 15, "name": "शाखा डाकघर हडिहांकला", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "30.04.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "23/03/26", "remark": ""}, {"sn": 16, "name": "शाखा डाकघर बाबूबेल", "ao": "उप डाकघर हल्दी", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "02.05.2025", "days": "1", "month": "अप्रैल 2026", "inspDate": "29/04/26", "remark": ""}, {"sn": 17, "name": "शाखा डाकघर पुरास", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "07.05.2025", "days": "1", "month": "मई 2026", "inspDate": "18/04/26", "remark": ""}, {"sn": 18, "name": "शाखा डाकघर श्रीनगर", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.05.2025", "days": "1", "month": "मई 2026", "inspDate": "18/05/26", "remark": ""}, {"sn": 19, "name": "शाखा डाकघर सूर्यभानपुर", "ao": "उप डाकघर लालगंज", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "09.05.2025", "days": "1", "month": "मई 2026", "inspDate": "03/04/26", "remark": ""}, {"sn": 20, "name": "शाखा डाकघर शोभाछपरा", "ao": "उप डाकघर करनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "15.05.2025", "days": "1", "month": "मई 2026", "inspDate": "30/03/26", "remark": ""}, {"sn": 21, "name": "शाखा डाकघर सोनबरसा", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "19.05.2025", "days": "1", "month": "मई 2026", "inspDate": "11/04/26", "remark": ""}, {"sn": 22, "name": "शाखा डाकघर सोनवानी", "ao": "उप डाकघर हल्दी", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "29.05.2025", "days": "1", "month": "मई 2026", "inspDate": "", "remark": ""}, {"sn": 23, "name": "शाखा डाकघर गयाघाट", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "30.05.2025", "days": "1", "month": "मई 2026", "inspDate": "11/05/26", "remark": ""}, {"sn": 24, "name": "शाखा डाकघर दलछपरा", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "11.06.2025", "days": "1", "month": "जून 2026", "inspDate": "13/05/26", "remark": ""}, {"sn": 25, "name": "शाखा डाकघर रामनगर", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "14.06.2025", "days": "1", "month": "जून 2026", "inspDate": "19/05/26", "remark": ""}, {"sn": 26, "name": "शाखा डाकघर जगदेवा", "ao": "उप डाकघर बैरिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "19.06.2025", "days": "1", "month": "जून 2026", "inspDate": "08/05/26", "remark": ""}, {"sn": 27, "name": "उप डाकघर बैरिया", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "25.06.2025", "days": "2", "month": "जून 2026", "inspDate": "21–23/05/26", "remark": ""}, {"sn": 28, "name": "शाखा डाकघर इब्राहिमाबाद", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "30.06.2025", "days": "1", "month": "जून 2026", "inspDate": "16/05/26", "remark": ""}, {"sn": 29, "name": "शाखा डाकघर कुसौरी", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "05.07.2025", "days": "1", "month": "जून 2026", "inspDate": "30/05/26", "remark": ""}, {"sn": 30, "name": "उप डाकघर दलनछपरा", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "18.07.2025", "days": "2", "month": "जुलाई 2026", "inspDate": "30/05/26", "remark": ""}, {"sn": 31, "name": "शाखा डाकघर इब्राहिमाबाद उपरवार", "ao": "उप डाकघर करनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "21.07.2025", "days": "1", "month": "जुलाई 2026", "inspDate": "22/05/26", "remark": ""}, {"sn": 32, "name": "शाखा डाकघर टेंगरही", "ao": "उप डाकघर बैरिया", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "31.07.2025", "days": "1", "month": "जुलाई 2026", "inspDate": "25/05/26", "remark": ""}, {"sn": 33, "name": "शाखा डाकघर दयाछपरा", "ao": "उप डाकघर दुबेछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "06.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 34, "name": "शाखा डाकघर दुधैलाकला", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 35, "name": "शाखा डाकघर चांदपुर", "ao": "उप डाकघर बैरिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "09.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 36, "name": "शाखा डाकघर गंगापुर", "ao": "उप डाकघर दुबेछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "12.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 37, "name": "शाखा डाकघर अचलगढ़", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "14.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 38, "name": "शाखा डाकघर पाण्डेयपुर", "ao": "उप डाकघर बैरिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "23.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 39, "name": "उप डाकघर हल्दी", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "25.08.2025", "days": "2", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 40, "name": "शाखा डाकघर बिसौली", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "26.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 41, "name": "शाखा डाकघर भगवानपुर", "ao": "उप डाकघर बैरिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "28.08.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 42, "name": "शाखा डाकघर कोडहरा उपरवार", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "01.09.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 43, "name": "शाखा डाकघर सीताकुण्ड", "ao": "उप डाकघर हल्दी", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "02.09.2025", "days": "1", "month": "अगस्त 2026", "inspDate": "", "remark": ""}, {"sn": 44, "name": "शाखा डाकघर छोटी शेरिया", "ao": "उप डाकघर छाता", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "03.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 45, "name": "शाखा डाकघर चादपुर", "ao": "उप डाकघर सहतवार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "04.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 46, "name": "शाखा डाकघर — (स्कैन में अस्पष्ट)", "ao": "उप डाकघर हल्दी", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "11.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 47, "name": "शाखा डाकघर सेमरिया", "ao": "उप डाकघर लालगंज", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "13.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 48, "name": "शाखा डाकघर सुरेमनपुर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "16.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 49, "name": "शाखा डाकघर डोकटी", "ao": "उप डाकघर दलनछपरा", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "22.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 50, "name": "शाखा डाकघर पियरोटा", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "23.09.2025", "days": "1", "month": "सितम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 51, "name": "शाखा डाकघर बहुआरा", "ao": "उप डाकघर लालगंज", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "24.09.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 52, "name": "शाखा डाकघर दिघार", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "25.09.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 53, "name": "शाखा डाकघर मुराडीह", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "03.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 54, "name": "शाखा डाकघर श्रीपालपुर", "ao": "उप डाकघर लालगंज", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "04.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 55, "name": "शाखा डाकघर मुनछपरा", "ao": "उप डाकघर रेवती", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "06.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 56, "name": "शाखा डाकघर जमालपुर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "07.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 57, "name": "शाखा डाकघर करमानपुर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "08.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 58, "name": "शाखा डाकघर मधुबनी", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "09.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 59, "name": "शाखा डाकघर जवही", "ao": "उप डाकघर हल्दी", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "25.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 60, "name": "शाखा डाकघर मुरलीछपरा", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "27.10.2025", "days": "1", "month": "अक्टूबर 2026", "inspDate": "", "remark": ""}, {"sn": 61, "name": "उप डाकघर मझौवा", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "28.10.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 62, "name": "शाखा डाकघर नारायणगढ़", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "31.10.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 63, "name": "शाखा डाकघर दुर्जनपुर", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "31.10.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 64, "name": "शाखा डाकघर सावनछपरा", "ao": "उप डाकघर लालगंज", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "04.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 65, "name": "शाखा डाकघर गोहियाछपरा", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "06.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 66, "name": "उप डाकघर रेवती", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "07.11.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 67, "name": "शाखा डाकघर कचनपुर", "ao": "उप डाकघर मझौवा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "10.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 68, "name": "शाखा डाकघर चकिया", "ao": "उप डाकघर रानीगंज बाजार", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "11.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 69, "name": "उप डाकघर रानीगंज बाजार", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "13.11.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 70, "name": "उप डाकघर तालगंज", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "15.11.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 71, "name": "शाखा डाकघर सोनकीभट", "ao": "उप डाकघर दलनछपरा", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "17.11.2025", "days": "1", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 72, "name": "उप डाकघर करनछपरा", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "20.11.2025", "days": "2", "month": "नवम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 73, "name": "शाखा डाकघर चांददियर", "ao": "उप डाकघर करनछपरा", "inspector": "अधीक्षक डाकघर बलिया", "lastDate": "22.12.2025", "days": "1", "month": "दिसम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 74, "name": "उप डाकघर छाता", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "23.12.2025", "days": "2", "month": "दिसम्बर 2026", "inspDate": "", "remark": ""}, {"sn": 75, "name": "उप डाकघर दुबेछपरा", "ao": "प्रधान डाकघर बलिया", "inspector": "निरीक्षक डाकघर पूर्वी उपमण्डल", "lastDate": "26.12.2025", "days": "2", "month": "दिसम्बर 2026", "inspDate": "", "remark": ""}];
   function getProgRows(){
     try{var raw=localStorage.getItem(PROG_KEY);if(raw)return JSON.parse(raw);}catch(e){}
     return JSON.parse(JSON.stringify(PROG_DEFAULT));
@@ -2032,7 +2034,16 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     // डायरी-व्युत्पन्न तिथि-सेल की अलग शैली (इटैलिक + डैशड बॉर्डर + हल्का नीला) — ताकि वह
     // भंडारित/IR-भरी तिथि से अलग दिखे। (एक ही style एट्रिब्यूट रखें, वरना ब्राउज़र पहला ही लेता है।)
     var inStDiary='style="width:100%;min-width:90px;border:1px dashed #9db4cc;border-radius:4px;padding:4px 6px;font-size:0.82rem;font-family:inherit;background:#eef4fb;font-weight:600;font-style:italic;color:#2b4a6f;"';
-    var h='<table><thead><tr><th style="width:30px;">✓</th><th>#</th><th>Post Office Name</th><th>Accounts Office</th><th>Inspector</th><th>Last Inspection (2025)</th><th>Days</th><th>Proposed Month (2026)</th><th>Inspection Date (2026)</th><th>Remark</th></tr></thead><tbody>';
+    // v7.53 — पूर्ण की गिनती स्रोत के हिसाब से (ऐप/डायरी + काग़ज़ी), एक में नहीं मिलाई जाती
+    var paperMap=getPaperDone();
+    var _cApp=0,_cPaper=0;
+    rows.forEach(function(r,i){var f=finalMap[i];if(!f||!f.final)return;if(f.src==='paper')_cPaper++;else _cApp++;});
+    var _cTot=_cApp+_cPaper;
+    var _summary='<div id="progDoneSummary" style="background:#eef4ff;border:1px solid #b9cdf0;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:0.82rem;line-height:1.5;color:#2a4a86;">'+
+      'पूर्ण: <b>'+_cApp+' (ऐप/डायरी) + '+_cPaper+' (काग़ज़ी) = '+_cTot+'</b> / '+rows.length+
+      ' &nbsp;•&nbsp; बाक़ी: <b>'+(rows.length-_cTot)+'</b>'+
+      '<div style="font-size:0.74rem;color:#546e8a;margin-top:2px;">काग़ज़ी = IR फ़ाइल के काग़ज़ी अभिलेख के आधार पर पूर्ण (ऐप के चिह्न से अलग गिना जाता है)।</div></div>';
+    var h=_summary+'<table><thead><tr><th style="width:30px;">✓</th><th>#</th><th>Post Office Name</th><th>Accounts Office</th><th>Inspector</th><th>Last Inspection (2025)</th><th>Days</th><th>Proposed Month (2026)</th><th>Inspection Date (2026)</th><th style="width:76px;">काग़ज़ी अभिलेख</th><th>Remark</th></tr></thead><tbody>';
     var shown=0;
     // 'केवल पूर्ण निरीक्षण दिखाएँ' फ़िल्टर (चुनिंदा export कार्ड में चेकबॉक्स)
     var doneOnly=!!(document.getElementById('progDoneOnly')||{}).checked;
@@ -2070,11 +2081,16 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
         // पंक्ति "अंतिम नहीं" के रूप में ही रहेगी (हरा नहीं)। तारीख़ मिटाई नहीं जाती।
         h+='<td style="vertical-align:top;"><input type="text" '+inSt+' style="background:'+(done?'#d9f2e0':'#fff')+';font-weight:600;" value="'+escapeAttr(r.inspDate||'')+'" onchange="progCellEdit('+i+',\'inspDate\',this.value)" placeholder="dd.mm.yyyy">'+((r.inspDate&&String(r.inspDate).trim()&&!done)?'<div style="font-size:0.66rem;color:#c62828;margin-top:2px;white-space:nowrap;">अंतिम नहीं</div>':'')+'</td>';
       }
-      h+='<td><input type="text" '+inSt+' value="'+escapeAttr(r.remark||'')+'" onchange="progCellEdit('+i+',\'remark\',this.value)"></td>';
+      // v7.53 — "पूर्ण — काग़ज़ी अभिलेख (IR फ़ाइल में)" का टिक (अलग भंडारण)
+      var _pk=progRowKey(r);
+      h+='<td style="text-align:center;vertical-align:top;"><label style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;" title="पूर्ण — काग़ज़ी अभिलेख (IR फ़ाइल में)"><input type="checkbox" class="progPaperChk"'+((paperMap.hasOwnProperty(_pk))?' checked':'')+' onchange="progTogglePaper('+i+',this.checked)"><span style="font-size:0.62rem;color:#6b7f95;white-space:nowrap;">काग़ज़ी</span></label></td>';
+      var _srcTag='';
+      if(done)_srcTag='<div style="font-size:0.66rem;margin-top:2px;white-space:nowrap;color:'+((fin&&fin.src==='paper')?'#7b5d00':'#1b5e20')+';">'+((fin&&fin.src==='paper')?'काग़ज़':((fin&&fin.src==='diary')?'डायरी':'ऐप'))+'</div>';
+      h+='<td><input type="text" '+inSt+' value="'+escapeAttr(r.remark||'')+'" onchange="progCellEdit('+i+',\'remark\',this.value)">'+_srcTag+'</td>';
       h+='</tr>';
     });
     h+='</tbody></table>';
-    if(!shown)h='<div class="empty-msg">No post office found</div>';
+    if(!shown)h=_summary+'<div class="empty-msg">No post office found</div>';   // v7.53 — गिनती हमेशा दिखे
     wrap.innerHTML=h;
     if(typeof expUpdateCount==='function')expUpdateCount();
   };
@@ -2100,11 +2116,13 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     "कंचनपुर":"शाखा डाकघर कचनपुर",
     "मधुबनी":"शाखा डाकघर मधुबनी",
     "मूनछपरा":"शाखा डाकघर मुनछपरा",
-    "मुरादीह":"शाखा डाकघर मुडाडीह",
+    "मुरादीह":"शाखा डाकघर मुराडीह",
+    "मुराडीह":"शाखा डाकघर मुराडीह",
     "पांडेयपुर":"शाखा डाकघर पाण्डेयपुर",
     "पियारौंता":"शाखा डाकघर पियरोटा",
     "सीताकुंड":"शाखा डाकघर सीताकुण्ड",
-    "तेंगरिही":"शाखा डाकघर टेरही",
+    "तेंगरिही":"शाखा डाकघर टेंगरही",
+    "टेंगरही":"शाखा डाकघर टेंगरही",
     "छेरीडीह":"शाखा डाकघर चेरीडीह",
     "दुमरिया":"शाखा डाकघर डुमरिया",
     "गोनिया छपरा":"शाखा डाकघर गोहियाछपरा",
@@ -2112,12 +2130,24 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     "सोनकी भाट":"शाखा डाकघर सोनकीभट",
     "सुरेमानपुर":"शाखा डाकघर सुरेमनपुर"
   };
+  // v7.53 — वर्तनी-सहिष्णु सामान्यीकरण: ड/ड़→द, ण→न, हलंत हटाओ, मात्राएँ सपाट करो
+  // (ि→ी, ु→ू, ो→ौ), ँ→ं। इससे टेंगरही / टेंग्रही / तेंगरिही एक ही कुंजी बन जाते हैं।
   function progNorm(s){
-    return String(s||'').replace(/[\s।.()\-]+/g,'').replace(/ँ/g,'ं');
+    return String(s||'')
+      .replace(/[\s।.()\-_,;:]+/g,'')
+      .replace(/ँ/g,'ं')
+      .replace(/ड़|ड/g,'द')
+      .replace(/ण/g,'न')
+      .replace(/्/g,'')
+      .replace(/ि/g,'ी')
+      .replace(/ु/g,'ू')
+      .replace(/ो/g,'ौ');
   }
-  function progRowKey(r){
-    return progNorm(String(r.name||'').replace(/^\s*(शाखा डाकघर|उप डाकघर)\s*/,''));
-  }
+  // अंत का ी/ा हटाकर कुंजी — एक नाम में हो और दूसरे में न हो, तब भी मिलान हो जाए
+  function progTail(k){k=String(k||'');return k.length>3?k.replace(/[ीा]+$/,''):k;}
+  function progStripPrefix(s){return String(s||'').replace(/^\s*(शाखा डाकघर|उप डाकघर)\s*/,'');}
+  function progRowKey(r){return progTail(progNorm(progStripPrefix(r&&r.name)));}
+  function progNameKey(n){return progTail(progNorm(progStripPrefix(n)));}
   function progBigrams(s){
     var set={};
     for(var i=0;i<s.length-1;i++)set[s.substr(i,2)]=true;
@@ -2131,16 +2161,24 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     A.forEach(function(x){if(bset[x])inter++;});
     return 2*inter/(A.length+B.length);
   }
+  // BO नाम → कार्यक्रम पंक्ति। v7.53 — पहले पिन किया हुआ BO कोड (bo_id) देखो,
+  // फिर alias, फिर सामान्यीकृत नाम, फिर contains, फिर dice — सब वर्तनी-सहिष्णु।
+  function progFindRowByBo(boId,rows){
+    if(!boId||!rows)return null;
+    for(var i=0;i<rows.length;i++){if(rows[i]&&rows[i].bo_id===boId)return rows[i];}
+    return null;
+  }
   function progFindRow(boNameHi,rows){
-    if(!boNameHi)return null;
+    if(!boNameHi||!rows)return null;
     var alias=PROG_ALIAS[boNameHi];
-    var bn=progNorm(boNameHi);
+    var bn=progNameKey(boNameHi);
     if(alias){
+      var an=progNameKey(alias);
       for(var i=0;i<rows.length;i++){
-        if(progNorm(rows[i].name)===progNorm(alias))return rows[i];
+        if(progRowKey(rows[i])===an)return rows[i];
       }
     }
-    // exact (normalised, prefix-stripped)
+    // exact (normalised, prefix-stripped, tail-folded)
     var exact=[];
     rows.forEach(function(r){if(progRowKey(r)===bn)exact.push(r);});
     if(exact.length===1)return exact[0];
@@ -2148,17 +2186,27 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     var cont=[];
     rows.forEach(function(r){var rk=progRowKey(r);if((bn&&rk.indexOf(bn)!==-1)||(rk&&bn.indexOf(rk)!==-1))cont.push(r);});
     if(cont.length===1)return cont[0];
-    // best fuzzy
+    // best fuzzy (पूरा नाम और अंत-रहित कुंजी, दोनों में से जो बेहतर हो)
     if(bn){
       var best=null,bestD=0;
       rows.forEach(function(r){
-        var d=progDice(bn,progRowKey(r));
+        var d=Math.max(progDice(bn,progRowKey(r)),progDice(progNorm(boNameHi),progNorm(r&&r.name)));
         if(d>bestD){bestD=d;best=r;}
       });
       if(best&&bestD>=0.75)return best;
     }
     return null;
   }
+  // BO कोड + नाम से पंक्ति — मिलने पर कोड पंक्ति पर पिन कर दो (वर्तनी पर निर्भरता ख़त्म)
+  function progResolveBo(boId,boNameHi,rows){
+    var r=progFindRowByBo(boId,rows);
+    if(r)return r;
+    r=progFindRow(boNameHi,rows);
+    if(r&&boId&&r.bo_id!==boId){r.bo_id=boId;progPinDirty=true;}
+    return r;
+  }
+  var progPinDirty=false;
+
   window.setProgInspectionDate=function(boNameHi,dateStr){
     if(!boNameHi||!dateStr)return null;
     var rows=getProgRows();
@@ -2278,7 +2326,10 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       else if(appD){date=appD;src='App';}
       else {date=null;src=null;}
       // ITEM 1 (v?) — "अंतिम रूप से पूर्ण" तभी जब ऐप का चिह्न या डायरी-यात्रा हो; अकेली inspDate नहीं।
-      if(!date && fin && fin.final && fin.date){ date=mergeNormDate(fin.date); src='App'; }
+      if(!date && fin && fin.final && fin.date){ date=mergeNormDate(fin.date); src=(fin.src==='paper')?'काग़ज़':'App'; }
+      // v7.53 — काग़ज़ी अभिलेख से पूर्ण: स्रोत 'काग़ज़' ही दिखे (ऐप की inspDate भरी हो तब भी),
+      // ताकि सूची और सारांश में गिनती स्रोत के हिसाब से अलग रहे।
+      if(fin && fin.final && fin.src==='paper'){ if(!date)date=mergeNormDate(fin.date||''); src='काग़ज़'; }
       out.push({
         sn:(row.sn!==undefined?row.sn:(i+1)),
         name:row.name||'', ao:row.ao||'', month:row.month||'',
@@ -2331,8 +2382,9 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     try{ var md=JSON.parse(localStorage.getItem('sdi_master_data')||'{}'); boRecords=(md&&md.boRecords)||{}; }catch(e){}
     Object.keys(boRecords).forEach(function(bid){
       if(!done[bid])return;
-      var bo=boRecords[bid]; if(!bo||!bo.bo_name_hi)return;
-      var r=progFindRow(bo.bo_name_hi,rows);
+      var bo=boRecords[bid]; if(!bo)return;
+      // v7.53 — पहले पिन किया कोड, फिर नाम; मिलने पर कोड पिन कर दो
+      var r=progResolveBo(bid,bo.bo_name_hi,rows);
       if(!r)return;
       var idx=rows.indexOf(r);
       if(idx<0)return;
@@ -2340,8 +2392,48 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       if(byRow[idx]){ byRow[idx].src='done'; if(dv)byRow[idx].date=dv; }
       else byRow[idx]={final:true,src:'done',date:dv};
     });
+    // v7.53 — दूसरा स्रोत: "पूर्ण — काग़ज़ी अभिलेख" (IR फ़ाइल में)। यह ऐप के चिह्न से
+    // अलग कुंजी (sdi_prog_done_paper_v1) में रहता है, ताकि दोनों गिनती अलग-अलग रहें।
+    var paper=getPaperDone();
+    rows.forEach(function(r,i){
+      if(byRow[i])return;                      // ऐप/डायरी को प्राथमिकता
+      var pk=progRowKey(r);
+      if(!paper.hasOwnProperty(pk))return;
+      byRow[i]={final:true,src:'paper',date:paper[pk]||''};
+    });
+    if(progPinDirty){ progPinDirty=false; try{ saveProgRows(rows); }catch(e){} }
     return byRow;
   }
+  // ---- v7.53 — "पूर्ण — काग़ज़ी अभिलेख" : अलग भंडारण, अलग गिनती ----
+  var PAPER_KEY='sdi_prog_done_paper_v1';   // { <पंक्ति-कुंजी>: 'dd.mm.yyyy' }
+  function getPaperDone(){ try{return JSON.parse(localStorage.getItem(PAPER_KEY)||'{}')||{};}catch(e){return {};} }
+  function setPaperDone(rowKey,on,dateStr){
+    var m=getPaperDone();
+    if(on){ if(!m[rowKey])m[rowKey]=dateStr||''; } else { delete m[rowKey]; }
+    __safeSet(PAPER_KEY,JSON.stringify(m));
+  }
+  window.progTogglePaper=function(idx,on){
+    var rows=getProgRows();
+    var r=rows[idx]; if(!r)return;
+    var d='';
+    if(on){
+      var _iv=String(r.inspDate||'').trim();
+      if(/^\d{2}[.\/-]\d{2}[.\/-]\d{2,4}$/.test(_iv)){ d=_iv.replace(/[\/-]/g,'.'); }
+      else { var _n=new Date();var _dd=(_n.getDate()<10?'0':'')+_n.getDate();var _mm=(_n.getMonth()+1<10?'0':'')+(_n.getMonth()+1); d=_dd+'.'+_mm+'.'+_n.getFullYear(); }
+    }
+    setPaperDone(progRowKey(r),!!on,d);
+    if(document.getElementById('progTableWrap'))renderProgTable();
+  };
+  // गिनती स्रोत के हिसाब से — "30 (ऐप/डायरी) + N (काग़ज़ी)" जैसी पंक्ति के लिए
+  function progDoneCounts(rows){
+    var fm=progFinalMap(rows),app=0,paper=0;
+    rows.forEach(function(r,i){
+      var f=fm[i]; if(!f||!f.final)return;
+      if(f.src==='paper')paper++; else app++;
+    });
+    return {app:app,paper:paper,total:app+paper,all:rows.length,pending:rows.length-(app+paper)};
+  }
+  function progDoneSplitText(c){ return c.app+' (ऐप/डायरी) + '+c.paper+' (काग़ज़ी) = '+c.total; }
   // ---- न्यूनतम .xlsx लेखक (JSZip) ----
   function mergeXmlEsc(s){
     return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -2433,6 +2525,8 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
         ['',''],
         ['कुल डाकघर (Total offices)',total],
         ['पूर्ण (Done)',done],
+        ['   पूर्ण — ऐप/डायरी (app/diary)',(bySrc['डायरी']||0)+(bySrc['App']||0)],
+        ['   पूर्ण — काग़ज़ी अभिलेख (paper record)',bySrc['काग़ज़']||0],
         ['बाक़ी (Pending)',total-done],
         ['',''],
         ['स्रोत अनुसार (by source — date actually used)',''],
@@ -4661,7 +4755,7 @@ function renderLegs(){
     var depHTML='<div class="lf"><label>Departure</label><input type="time" id="legDep_'+idx+'" value="'+leg.departure+'" class="'+depReadonly+'" '+(depReadonly?'readonly':'')+' onchange="onLegTimeChange('+idx+',\'dep\')"></div>';
     // Arrival
     var arrReadonly=leg.arrival&&leg.knownTime==='dep'?'auto-calc':'';
-    var arrHTML='<div class="lf"><label>Arrival</label><input type="time" id="legArr_'+idx+'" value="'+leg.arrival+'" class="'+arrReadonly+'" '+(arrReadonly?'readonly':'')+' onchange="onLegTimeChange('+idx+',\'arr\')"></div>';
+    var arrHTML='<div class="lf"><label>Arrival</label><input type="time" id="legArr_'+idx+'" value="'+leg.arrival+'" class="'+arrReadonly+'" '+(arrReadonly?'readonly':'')+' onchange="onLegTimeChange('+idx+',\'arr\')">'+((leg.departure&&leg.arrival&&timeToMin(leg.arrival)<timeToMin(leg.departure))?'<span style="font-size:0.7rem;color:#b22222;font-weight:700;">+1 day (past midnight)</span>':'')+'</div>';
     // Mode
     var modeHTML='<div class="lf"><label>Mode</label><select id="legMode_'+idx+'" onchange="onLegModeChange('+idx+')"><option'+(leg.mode==='Motorcycle'?' selected':'')+'>Motorcycle</option><option'+(leg.mode==='Bus'?' selected':'')+'>Bus</option><option'+(leg.mode==='Car'?' selected':'')+'>Car</option><option'+(leg.mode==='Train'?' selected':'')+'>Train</option><option'+(leg.mode==='Other'?' selected':'')+'>Other</option></select></div>';
     // Distance
@@ -4785,7 +4879,7 @@ function onLegDayOffsetChange(idx){
   var el=document.getElementById('legDayOffset_'+idx);
   if(!el)return;
   var v=parseInt(el.value,10);if(isNaN(v)||v<0)v=0;if(v>31)v=31;
-  currentLegs[idx].returnDayOffset=v;
+  currentLegs[idx].returnDayOffset=v;currentLegs[idx].offsetManual=true;   // v7.53 — हाथ से दिया गया दिन
   var lbl=document.getElementById('legDateLbl_'+idx);
   if(lbl)lbl.textContent=legDateLabel(v);
   autoSave();
@@ -4934,7 +5028,7 @@ function onLegPurposeChange(idx){
 
 function onLegTimeChange(idx,which){
   if(currentLegs[idx])currentLegs[idx].fromStore=false;   // v7.51 — अधिकारी ने छुआ
-  if(which==='dep'){currentLegs[idx].departure=document.getElementById('legDep_'+idx).value;currentLegs[idx].knownTime='dep';}
+  if(which==='dep'){currentLegs[idx].departure=document.getElementById('legDep_'+idx).value;currentLegs[idx].knownTime='dep';currentLegs[idx].depDerived=false;delete currentLegs[idx].depDerivedSpeed;}   // v7.53 — दर्ज समय अब अनुमानित नहीं
   else{currentLegs[idx].arrival=document.getElementById('legArr_'+idx).value;currentLegs[idx].knownTime='arr';}
   autoCalcTimes(idx);
 }
@@ -4970,7 +5064,7 @@ function recalcTimesV2(){
         leg.knownTime='arr';
         t=travelMinutes(leg.dist,leg.speed);
         leg.departure=minToTime(timeToMin(leg.arrival)-t);
-        leg.depAutoCalc=true;
+        leg.depAutoCalc=true;leg.depDerived=true;leg.depDerivedSpeed=(parseFloat(leg.speed)>0?leg.speed:null);   // v7.53 — अनुमानित समय का निशान बिल तक जाए
       }
     }
   }
@@ -4987,7 +5081,7 @@ function recalcTimesV2(){
       if(!(retLeg.fromStore&&retLeg.departure)){
         t=travelMinutes(retLeg.dist,retLeg.speed);
         retLeg.departure=minToTime(timeToMin(retLeg.arrival)-t);
-        retLeg.depAutoCalc=true;
+        retLeg.depAutoCalc=true;retLeg.depDerived=true;retLeg.depDerivedSpeed=(parseFloat(retLeg.speed)>0?retLeg.speed:null);   // v7.53
       }
 
       // Work backwards: for each outward leg before the return
@@ -5029,7 +5123,7 @@ function recalcTimesV2(){
           leg.knownTime='arr';
           var _ls=legSpeed(leg);
           leg.departure=minToTime(timeToMin(leg.arrival)-travelMinutes(leg.dist,_ls));
-          leg.depAutoCalc=true;
+          leg.depAutoCalc=true;leg.depDerived=true;leg.depDerivedSpeed=(parseFloat(leg.speed)>0?leg.speed:null);   // v7.53 — अनुमानित समय का निशान बिल तक जाए
           continue;
         }
         // If this leg's arrival is not yet calculated (no departure entered)
@@ -5049,7 +5143,7 @@ function recalcTimesV2(){
           // Calc this leg's departure
           t=travelMinutes(leg.dist,leg.speed);
           leg.departure=minToTime(timeToMin(leg.arrival)-t);
-          leg.depAutoCalc=true;
+          leg.depAutoCalc=true;leg.depDerived=true;leg.depDerivedSpeed=(parseFloat(leg.speed)>0?leg.speed:null);   // v7.53 — अनुमानित समय का निशान बिल तक जाए
         }
       }
     } else if(retLeg.departure&&retLeg.dist){
@@ -5061,7 +5155,27 @@ function recalcTimesV2(){
     }
   }
 
+  normalizeLegDays();   // v7.53 — आधी रात के बाद वाले leg का दिन अपने-आप आगे
   renderLegs();
+}
+
+// Midnight travel: a leg may leave on one day and arrive after midnight (+1 day);
+// the next leg then automatically moves to the following day unless Day (+N) was set by hand.
+// v7.53 — यह index-7 (v7.51) से वापस लाया गया (मेरे build से छूट गया था)।
+function normalizeLegDays(){
+  var prevEnd=null;
+  for(var i=0;i<currentLegs.length;i++){
+    var l=currentLegs[i];
+    var off=parseInt(l.returnDayOffset,10)||0;
+    if(i>0&&l.departure&&prevEnd!==null&&!l.offsetManual){
+      var dm0=timeToMin(l.departure);
+      if(off*1440+dm0<prevEnd){off=Math.min(31,Math.ceil((prevEnd-dm0)/1440));l.returnDayOffset=off;}
+    }
+    if(l.departure&&l.arrival){
+      var dm=timeToMin(l.arrival)-timeToMin(l.departure);if(dm<0)dm+=1440;
+      prevEnd=off*1440+timeToMin(l.departure)+dm;
+    }else if(l.arrival){prevEnd=off*1440+timeToMin(l.arrival);}
+  }
 }
 
 function autoCalcTimes(idx){
@@ -5098,6 +5212,17 @@ function saveDayJourney(){
     if(!l.departure&&!l.arrival){err.textContent='Leg '+(i+1)+': enter departure or arrival time.';err.classList.add('show');return;}
     if(!l.isReturn){hasOutward=true;if(!l.purposeType){err.textContent='Leg '+(i+1)+': select a purpose.';err.classList.add('show');return;}}
   }
+  // v7.53 — वक़्त की जाँच: अगला leg पिछले leg के पहुँचने से पहले नहीं निकल सकता
+  // (आधी रात के बाद की यात्रा के लिए Day (+N) बढ़ाएँ)। index-7 से वापस लाया गया।
+  var _prevEnd=null;
+  for(var _vi=0;_vi<currentLegs.length;_vi++){
+    var _L=currentLegs[_vi],_o=parseInt(_L.returnDayOffset,10)||0;
+    if(_L.departure&&_prevEnd!==null&&_o*1440+timeToMin(_L.departure)<_prevEnd){
+      err.textContent='Leg '+(_vi+1)+' departs ('+_L.departure+') before Leg '+_vi+' has arrived. Correct the times, or set Day (+N) if the journey continues past midnight.';err.classList.add('show');return;
+    }
+    if(_L.departure&&_L.arrival){var _dm=timeToMin(_L.arrival)-timeToMin(_L.departure);if(_dm<0)_dm+=1440;_prevEnd=_o*1440+timeToMin(_L.departure)+_dm;}
+    else if(_L.arrival){_prevEnd=_o*1440+timeToMin(_L.arrival);}
+  }
   err.classList.remove('show');
 
   var mi=getMonthIdx(),y=getYear(),dayNum=parseInt(selectedDate.split('.')[0]);
@@ -5120,7 +5245,10 @@ function saveDayJourney(){
     var purpose=l.isReturn?'':buildPurpose(l.purposeType,l.to,l.customPurpose);
     if(purpose&&!l.isReturn&&_off===0)outwardPurposes.push({office:l.to,purpose:purpose,purposeType:l.purposeType});
 
-    journey.legs.push({from:l.from,to:l.to,departure:depDT,arrival:arrDT,mode:l.mode,dist:oneWay,purpose:purpose,isReturn:l.isReturn,fare:(l.fare===undefined?'':l.fare)});
+    var _legOut={from:l.from,to:l.to,departure:depDT,arrival:arrDT,mode:l.mode,dist:oneWay,purpose:purpose,isReturn:l.isReturn,fare:(l.fare===undefined?'':l.fare)};
+    // v7.53 — फ़ॉर्म में गणना किया गया समय सहेजते समय भी 'अनुमानित' रहे (बिल में * छपे)
+    if(l.depDerived){_legOut.depDerived=true;if(parseFloat(l.speed)>0)_legOut.depDerivedSpeed=l.speed;}
+    journey.legs.push(_legOut);
   });
 
   // Build combined purpose for the outward leg (first row in table)
@@ -5207,6 +5335,22 @@ function renderJourneyList(){
     var parts=j.date.split('.');
     return parseInt(parts[1])===mi+1 && parseInt(parts[2])===y;
   });
+  // v7.53 — इस महीने की जिन जर्नी में departure अनुमानित है, उनकी संख्या स्क्रीन पर दिखाओ
+  (function(){
+    var _n=0;
+    monthJourneys.forEach(function(j){
+      var _v=journeyView(j);
+      if(_v&&_v.legs&&_v.legs.some(function(l){return !!l.depDerived;}))_n++;
+    });
+    var _el=document.getElementById('journeyDerivedNote');
+    if(!_el)return;
+    if(_n>0){
+      _el.style.display='block';
+      _el.innerHTML='\u2139\ufe0f इस महीने <b>'+_n+'</b> जर्नी में departure अनुमानित है (हरा *) — दर्ज करने पर * हट जाएगा।';
+    }else{
+      _el.style.display='none';_el.innerHTML='';
+    }
+  })();
   // v7.34 — Search (English) + "All months": find any journey by date, office or purpose
   var _qEl=document.getElementById('journeySearch');
   var _q=_qEl?String(_qEl.value||'').trim().toLowerCase():'';
@@ -5428,12 +5572,27 @@ function addLeave(){
 }
 function deleteLeave(idx){leaves.splice(idx,1);renderLeaveList();renderCalendar();generateWorkLog();updateSummary();autoSave();}
 function getLeaveForDate(ds){for(var i=0;i<leaves.length;i++){if(leaves[i].date===ds)return leaves[i];}return null;}
-function getLeaveDateString(){
-  if(leaves.length===0)return'';
+function _dmyKey(s){
+  // 'dd.mm.yyyy' → तुलना-योग्य संख्या (साल, महीना, दिन) — localeCompare दिन से छाँटता है, वह ग़लत था
+  var p=String(s||'').split('.');
+  if(p.length!==3)return 0;
+  return (parseInt(p[2],10)||0)*10000+(parseInt(p[1],10)||0)*100+(parseInt(p[0],10)||0);
+}
+function getLeaveDateString(monthIdx,year){
+  // v7.53 — बिल की अवकाश-पंक्ति अब उसी महीने/साल तक सीमित (पहले पूरे साल की छुट्टियाँ
+  // सितम्बर के बिल में छप जाती थीं)। क्रम असली तारीख़ से — dd.mm.yyyy की string-tulna से नहीं।
+  var _mi=(monthIdx===undefined||monthIdx===null||monthIdx<0)?getMonthIdx():parseInt(monthIdx,10);
+  var _y=(year===undefined||year===null||!year)?getYear():parseInt(year,10);
+  var list=(leaves||[]).filter(function(l){
+    var p=String((l&&l.date)||'').split('.');
+    if(p.length!==3)return false;
+    return (parseInt(p[1],10)===_mi+1)&&(parseInt(p[2],10)===_y);
+  });
+  if(list.length===0)return'';
   // Group consecutive dates
   var ranges=[];
   var start=null,end=null;
-  var sorted=leaves.slice().sort(function(a,b){return a.date.localeCompare(b.date);});
+  var sorted=list.slice().sort(function(a,b){return _dmyKey(a.date)-_dmyKey(b.date);});
   for(var i=0;i<sorted.length;i++){
     if(!start){start=sorted[i].date;end=sorted[i].date;}
     else{
@@ -5736,7 +5895,7 @@ async function generateTABill(){
     s0.push(mkPara('TOTAL(rounded off): Rupees '+num2words(totR)+' only',{bold:true,size:22,after:200}));
     var s1=[];
     s1.push(new D.Paragraph({children:[new D.TextRun({text:'Annexure \u2014 T.A. Certificate / Particulars (Part A & B)',bold:true,size:28,font:'Times New Roman'})],alignment:'center',heading:'Heading1',spacing:{after:200}}));
-    var annex=[['1. Mode of Journey :-',1],['(i) Air :-',0],['(a) Exchange voucher arranged by officer _______________________________________',0],['(b) Ticket / Exchange voucher arranged by _______________________________________',0],['(ii) Rail :-',0],['(a) Whether travelled by mail / Express / Ordinary Train _______________________________________',0],['(b) Whether return tickets available ? _______________________________________',0],['(c) If available, whether return tickets purchased ? If not, state reasons. _______________________________________',0],['(iii) Road :- By Motor Cycle / Bus',0],['Mode of conveyance used, i.e. by Govt. Transport / by taking a Taxi, a single seat in a Bus or other Public Conveyance / by sharing with another Govt. Servant in a Car belonging to him or to a third person to be specified.',0],['2. Dates of absence from place of halt on account of :-',1],['(a) R.H. and C.L. '+(getLeaveDateString()||'_______________________________________'),0],['(b) Not being actually in camp on Sundays and Holidays _______________________________________',0],['3. Dates on which free board and/or lodging provided by the State or any organization financed by State funds :-',1],['(a) Board only _______________________________________',0],['(b) Lodging only _______________________________________',0],['(c) Board and Lodging _______________________________________',0],['4. Particulars to be furnished along with hotel receipts etc. in cases where highest rate of DA for stay in hotel/other establishments providing board and/or lodging at scheduled tariffs :-',1],['Total Rs. (Lodging): _______     Daily rate of Food Charges: _______     Total Rs. (Fooding): _______     Total Rs. (Lodging + Fooding): _______',0],['5. Particulars of journey(s) for which higher class of accommodation than the one to which the Govt. Servant is entitled was used :-',1],['If the journey(s) by higher class of accommodation has been performed with the approval of the competent authority, No. and Date of sanction may be quoted.',0],['6. Details of journey(s) performed by Road between places connected by Rail :-',1],['7. Amount of T.A. Advances, if any, drawn :- '+(adv>0?'Rs. '+adv:'NIL'),0],];
+    var annex=[['1. Mode of Journey :-',1],['(i) Air :-',0],['(a) Exchange voucher arranged by officer _______________________________________',0],['(b) Ticket / Exchange voucher arranged by _______________________________________',0],['(ii) Rail :-',0],['(a) Whether travelled by mail / Express / Ordinary Train _______________________________________',0],['(b) Whether return tickets available ? _______________________________________',0],['(c) If available, whether return tickets purchased ? If not, state reasons. _______________________________________',0],['(iii) Road :- By Motor Cycle / Bus',0],['Mode of conveyance used, i.e. by Govt. Transport / by taking a Taxi, a single seat in a Bus or other Public Conveyance / by sharing with another Govt. Servant in a Car belonging to him or to a third person to be specified.',0],['2. Dates of absence from place of halt on account of :-',1],['(a) R.H. and C.L. '+(getLeaveDateString(mi,y)||'_______________________________________'),0],['(b) Not being actually in camp on Sundays and Holidays _______________________________________',0],['3. Dates on which free board and/or lodging provided by the State or any organization financed by State funds :-',1],['(a) Board only _______________________________________',0],['(b) Lodging only _______________________________________',0],['(c) Board and Lodging _______________________________________',0],['4. Particulars to be furnished along with hotel receipts etc. in cases where highest rate of DA for stay in hotel/other establishments providing board and/or lodging at scheduled tariffs :-',1],['Total Rs. (Lodging): _______     Daily rate of Food Charges: _______     Total Rs. (Fooding): _______     Total Rs. (Lodging + Fooding): _______',0],['5. Particulars of journey(s) for which higher class of accommodation than the one to which the Govt. Servant is entitled was used :-',1],['If the journey(s) by higher class of accommodation has been performed with the approval of the competent authority, No. and Date of sanction may be quoted.',0],['6. Details of journey(s) performed by Road between places connected by Rail :-',1],['7. Amount of T.A. Advances, if any, drawn :- '+(adv>0?'Rs. '+adv:'NIL'),0],];
     // --- v7.22: annexure tables now sit at their template positions
     // (hotel under item 4, higher-class under item 5, road/rail under
     // item 6) instead of being dumped after the signature ---
@@ -5812,6 +5971,59 @@ function autoSave(){
     }catch(e){console.warn('Auto-save failed:',e);}
   },1000);
 }
+// ============================================================
+// v7.53 — दो नामों की वर्तनी-सुधार (अधिकारी का आदेश): टेंगरही (क्रम 32) और मुराडीह (क्रम 53)।
+// केवल यही दो दफ़्तर बदलते हैं — बाक़ी कोई नाम नहीं छुआ जाता। भंडारित कार्यक्रम-पंक्तियों
+// और भंडारित मास्टर-डेटा दोनों में एक ही बार (sdi_name_fix_v1) लागू होता है, और साथ ही
+// इन दो पंक्तियों का BO कोड पिन कर दिया जाता है।
+// ============================================================
+var NAME_FIX_KEY='sdi_name_fix_v1';
+var NAME_FIX_MAP={
+  'टेंग्रही':'टेंगरही','तेंगरिही':'टेंगरही','टेंगरिही':'टेंगरही','टेरही':'टेंगरही',
+  'मुराडीह':'मुराडीह','मुरादीह':'मुराडीह','मुडाडीह':'मुराडीह'
+};
+var NAME_FIX_BO={'टेंगरही':'BO30403102005','मुराडीह':'BO30403125011'};
+window.fixOfficeNamesV753=function(){
+  try{
+    if(localStorage.getItem(NAME_FIX_KEY)==='1')return false;
+    var changed=false,sawData=false;
+    // (1) कार्यक्रम पंक्तियाँ — नाम सुधार + BO कोड पिन
+    var rows=null;
+    try{ var pr=localStorage.getItem('sdi_prog_2026_v1'); if(pr)rows=JSON.parse(pr); }catch(e){ rows=null; }
+    if(rows&&rows.length){
+      sawData=true;
+      rows.forEach(function(r){
+        var nm=String(r.name||'');
+        var bare=nm.replace(/^\s*(शाखा डाकघर|उप डाकघर)\s*/,'');
+        if(NAME_FIX_MAP.hasOwnProperty(bare)){
+          var _nb=NAME_FIX_MAP[bare];
+          if(_nb!==bare){ r.name=nm.replace(bare,_nb); changed=true; }
+          bare=_nb;
+        }
+        if(NAME_FIX_BO.hasOwnProperty(bare)&&r.bo_id!==NAME_FIX_BO[bare]){ r.bo_id=NAME_FIX_BO[bare]; changed=true; }
+      });
+      if(changed)__safeSet('sdi_prog_2026_v1',JSON.stringify(rows));
+    }
+    // (2) मास्टर डेटा — केवल ये दो BO रिकॉर्ड
+    var md=null;
+    try{ var mr=localStorage.getItem('sdi_master_data'); if(mr)md=JSON.parse(mr); }catch(e){ md=null; }
+    if(md&&md.boRecords&&Object.keys(md.boRecords).length){
+      sawData=true;
+      Object.keys(NAME_FIX_BO).forEach(function(nm){          // nm = सही हिन्दी नाम
+        var bo=md.boRecords[NAME_FIX_BO[nm]];                  // कुंजी = BO कोड
+        if(bo&&bo.bo_name_hi!==nm){ bo.bo_name_hi=nm; changed=true; }
+      });
+      if(changed)__safeSet('sdi_master_data',JSON.stringify(md));
+    }
+    // झंडा तभी लगाएँ जब सुधारने को कुछ मिला हो — वरना बाद में आए असली data पर
+    // सुधार कभी नहीं लगेगा (पहली बार खाली ऐप खुलने पर यह गड़बड़ होती थी)।
+    if(sawData)__safeSet(NAME_FIX_KEY,'1');
+    return changed;
+  }catch(e){ return false; }
+};
+// तुरंत चलाएँ (DOM ready से पहले) — ताकि मास्टर-डेटा सिंक और तालिका-रेंडर सुधरे नाम पढ़ें।
+try{ window.fixOfficeNamesV753(); }catch(e){}
+
 function autoLoad(){
   var raw=localStorage.getItem('ta_tour_data');
   if(!raw)return false;
@@ -5843,6 +6055,7 @@ function autoLoad(){
 }
 
 window.addEventListener('DOMContentLoaded',function(){
+  try{ window.fixOfficeNamesV753(); }catch(e){}   // v7.53 — दो नामों की वर्तनी-सुधार, एक बार
   var loaded=autoLoad();
   renderCalendar();renderLeaveList();generateWorkLog();updateSummary();renderJourneyList();
   if(loaded){renderHolidayDisplay();}
@@ -5909,9 +6122,11 @@ window.createInspectionJourney=function(dateISO,boName,boDist){
   return{ok:true,date:dateDMY};
 };
 window.addEventListener('beforeunload',function(e){
-  if(journeys.length>0||currentLegs.length>0){
+  // v7.53 — सहेजी हुई जर्नियाँ अपने-आप भंडारित हैं; चेतावनी केवल अधूरे खुले फ़ॉर्म पर
+  var _jf=document.getElementById('journeyForm');
+  if(_jf&&_jf.style.display!=='none'&&currentLegs.length>0){
     e.preventDefault();
-    e.returnValue='You have unsaved tour diary data. Are you sure you want to leave?';
+    e.returnValue='A journey is still open and not saved. Leave anyway?';
     return e.returnValue;
   }
 });
@@ -9886,7 +10101,7 @@ const MASTER_DATA = {
   "BO30403125011": {
     "bo_id": "BO30403125011",
     "facility_id": "BO30403125011",
-    "bo_name_hi": "मुरादीह",
+    "bo_name_hi": "मुराडीह",
     "so_name_hi": "रेवती",
     "ho_name_hi": "बलिया",
     "pin_village_list": "277209",
@@ -10714,7 +10929,7 @@ const MASTER_DATA = {
   "BO30403102005": {
     "bo_id": "BO30403102005",
     "facility_id": "BO30403102005",
-    "bo_name_hi": "तेंगरिही",
+    "bo_name_hi": "टेंगरही",
     "so_name_hi": "बैरिया",
     "ho_name_hi": "बलिया",
     "pin_village_list": "277201",
@@ -16007,12 +16222,6 @@ function openCal(id){
     return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate())
          + '_' + pad2(d.getHours()) + '-' + pad2(d.getMinutes());
   }
-  function withToken(url, token){
-    try{
-      var sep = url.indexOf('?') >= 0 ? '&' : '?';
-      return url + sep + 'token=' + encodeURIComponent(token || '');
-    }catch(e){ return url; }
-  }
   function markSent(){
     try{ __safeSet(LKEY, new Date().toISOString()); }catch(e){}
   }
@@ -16174,15 +16383,16 @@ function openCal(id){
   }
 
   /* --- जाँच (doGet) --- */
+  /* --- जाँच (v7.53) — टोकन अब URL में नहीं, POST body में ही जाता है --- */
   function testConn(){
     var c = getCfg();
     if(!c.url) return Promise.resolve({ state: 'no-url' });
-    var u = withToken(c.url, c.token);
-    return getJson(u).then(function(r){
+    var body = JSON.stringify({ token: c.token, type: 'ping', app: 'SDI Bairiya Office Toolkit' });
+    return postJson(c.url, body).then(function(r){
       if(r.state === 'ok') return { state: 'ok', json: r.json };
       if(r.state === 'fail') return { state: 'fail', error: r.error };
       if(r.state === 'unconfirmed') return { state: 'unconfirmed' };
-      return getNoCors(u).then(function(r2){
+      return postNoCors(c.url, body).then(function(r2){
         if(r2.state === 'sent-opaque') return { state: 'unconfirmed' };
         return { state: 'fail', error: (r2.error || r.error || 'नेटवर्क त्रुटि') };
       });
