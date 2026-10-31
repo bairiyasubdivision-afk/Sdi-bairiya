@@ -106,9 +106,15 @@ function doPost(e) {
       return jsonOut_({ ok: false, error: 'invalid JSON body' });
     }
 
-    // 2) टोकन जाँचें
+    // 2) टोकन जाँचें — v7.53: टोकन अब POST body में ही आता है (URL में नहीं)
     if (!tokenOk_(body && body.token)) {
       return jsonOut_({ ok: false, error: 'invalid token' });
+    }
+
+    // 2b) 🆕 v7.53 — ऐप का "🔌 जाँचें" बटन अब यही POST भेजता है
+    //     ({ token, type:'ping' }) — टोकन query string में नहीं जाता।
+    if (body && body.type === 'ping') {
+      return statusPayload_();
     }
 
     // 2a) 🆕 अगर यह कोई फ़ाइल है (रिपोर्ट आदि) तो अलग रास्ते से सहेजें।
@@ -234,8 +240,10 @@ function handleFile_(body) {
 
 /**
  * =====================================================================
- *  doGet — ऐप का "जाँचें (Test)" बटन इसी को कॉल करता है।
- *  टोकन सही हो तो छोटा status JSON लौटाता है।
+ *  doGet — पुराना "जाँचें (Test)" रास्ता (टोकन query string में)।
+ *  v7.53: नया ऐप यह रास्ता नहीं इस्तेमाल करता — वह POST body में टोकन भेजता
+ *  है (doPost का type:'ping')। यह फंक्शन पुराने ऐप/पुराने लिंक के लिए
+ *  बिलकुल पहले जैसा चलता रहता है।
  * =====================================================================
  */
 function doGet(e) {
@@ -244,6 +252,17 @@ function doGet(e) {
     if (!tokenOk_(token)) {
       return jsonOut_({ ok: false, error: 'invalid token' });
     }
+    return statusPayload_();
+  } catch (err) {
+    return jsonOut_({ ok: false, error: String(err && err.message ? err.message : err) });
+  }
+}
+
+/**
+ * दोनों रास्तों (doGet और doPost type:'ping') का साझा जवाब।
+ */
+function statusPayload_() {
+  try {
     var count = 0;
     var reportCount = 0;   // 🆕 सब-फ़ोल्डरों में सहेजी गई रिपोर्ट/फ़ाइलें
     var folderName = FOLDER_NAME;
