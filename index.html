@@ -646,6 +646,10 @@ body{background:var(--bg)!important;color:var(--ink);
   .tab-btn{flex:0 0 auto;}
 }
 
+/* v7.53 — स्थिर बिल्ड मोहर (होम स्क्रीन): पुरानी कैश प्रति पकड़ने के लिए */
+.build-stamp{font-size:.7rem;color:var(--muted);letter-spacing:.2px;line-height:1.45;
+  margin:0 0 10px;text-align:center;font-variant-numeric:tabular-nums;}
+
 /* ---------- Layout ---------- */
 .container{max-width:1180px;margin:0 auto;padding:18px 16px 40px;}
 @media(min-width:900px){.container{padding:22px 20px 56px;}}
@@ -1032,6 +1036,7 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
   <div class="container">
 
 <div class="container">
+  <div class="build-stamp">v7.55 · 01.11.2026 · डेटा: अप्रैल–अक्टूबर 2026</div>
   <div class="info-banner"><b>How to use</b>
     <ol>
       <li>Select the month &rarr; tap a date on the calendar.</li>
