@@ -1571,10 +1571,10 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
         <div class="data-card-body">
           <p style="font-size:0.9rem;margin-bottom:14px;color:var(--muted);line-height:1.6;">
             For <b>Branch Offices (BO)</b> the four applicable schemes (SSA, RD, SB, TD) are shown, and for <b>Sub Offices (SO)</b> all schemes.
-            Choose the period above &mdash; <b>CY 2025</b> (calendar year 2025), <b>CY 2026</b> (calendar year 2026, Jan&ndash;Sep) or
-            <b>FY 2026-27</b> (financial year, Apr 2026 onwards) &mdash; and the office type.
+            Choose the period above &mdash; <b>CY 2025</b> (calendar year 2025), <b>CY 2026</b> (calendar year 2026, Jan&ndash;Oct) or
+            <b>FY 2026-27</b> (financial year, Apr&ndash;Oct 2026 so far) &mdash; and the office type.
             Any figure can be edited directly &mdash; changes save instantly and flow into <b>Question 53</b> (business-development comparison).
-            Accounts opened after 30 September are entered in the Inspection tab&rsquo;s Question 53 card under &ldquo;later accounts &mdash; enter here&rdquo;,
+            Accounts opened after 31 October are entered in the Inspection tab&rsquo;s Question 53 card under &ldquo;later accounts &mdash; enter here&rdquo;,
             or uploaded above as a monthly/quarterly report (which adds to both CY 2026 and FY 2026-27).
           </p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
@@ -12633,10 +12633,95 @@ const MASTER_DATA = {
   //  • Q53 (निरीक्षण) + Account Opening टैब + जनरेट होने वाली रिपोर्ट — तीनों पर असर
   // ==================================================================
   var ACCT_MONTHS_KEY = "sdi_acct_months_v1";
+  // अक्टूबर 2026 का रिपोर्ट app में पहले से जुड़ा है (Product_Wise_AC_Report_40.xlsx)।
+  // यह मूल (अप्रैल–सितम्बर) डेटा के ऊपर जुड़ता है — इसलिए अब अप्रैल–अक्टूबर 2026।
+  // नीचे "Remove" से हटाया जा सकता है; नवम्बर आदि आगे अपलोड होते रहेंगे।
+  var ACCT_MONTHS_DEFAULT = {"2026-10":{
+    "BO13203203009":{"mis":0,"ppfgp":0,"ssa":0,"rd":5,"sbbas":0,"sbsgp":1,"scss":0,"td":6,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403100009":{"mis":0,"ppfgp":0,"ssa":1,"rd":43,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403102001":{"mis":0,"ppfgp":0,"ssa":1,"rd":15,"sbbas":0,"sbsgp":3,"scss":0,"td":4,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403102002":{"mis":0,"ppfgp":0,"ssa":1,"rd":0,"sbbas":0,"sbsgp":3,"scss":0,"td":2,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403102003":{"mis":0,"ppfgp":0,"ssa":0,"rd":6,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403102004":{"mis":0,"ppfgp":0,"ssa":2,"rd":0,"sbbas":0,"sbsgp":2,"scss":0,"td":27,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403102005":{"mis":0,"ppfgp":0,"ssa":1,"rd":10,"sbbas":0,"sbsgp":1,"scss":0,"td":10,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403109001":{"mis":0,"ppfgp":0,"ssa":2,"rd":3,"sbbas":0,"sbsgp":5,"scss":0,"td":14,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403109002":{"mis":0,"ppfgp":0,"ssa":1,"rd":33,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403109003":{"mis":0,"ppfgp":0,"ssa":0,"rd":29,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403111001":{"mis":0,"ppfgp":0,"ssa":1,"rd":20,"sbbas":0,"sbsgp":1,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403111002":{"mis":0,"ppfgp":0,"ssa":1,"rd":4,"sbbas":0,"sbsgp":7,"scss":0,"td":13,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403111003":{"mis":0,"ppfgp":0,"ssa":0,"rd":19,"sbbas":0,"sbsgp":1,"scss":0,"td":1,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403111004":{"mis":0,"ppfgp":0,"ssa":0,"rd":25,"sbbas":0,"sbsgp":1,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403111005":{"mis":0,"ppfgp":0,"ssa":2,"rd":15,"sbbas":0,"sbsgp":4,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403111006":{"mis":0,"ppfgp":0,"ssa":1,"rd":16,"sbbas":0,"sbsgp":1,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403112001":{"mis":0,"ppfgp":0,"ssa":0,"rd":22,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403112002":{"mis":0,"ppfgp":0,"ssa":2,"rd":21,"sbbas":0,"sbsgp":3,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403112003":{"mis":0,"ppfgp":0,"ssa":0,"rd":21,"sbbas":0,"sbsgp":2,"scss":0,"td":9,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403113001":{"mis":0,"ppfgp":0,"ssa":0,"rd":9,"sbbas":0,"sbsgp":2,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403113002":{"mis":0,"ppfgp":0,"ssa":0,"rd":19,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403113003":{"mis":0,"ppfgp":0,"ssa":0,"rd":40,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403113004":{"mis":0,"ppfgp":0,"ssa":0,"rd":22,"sbbas":0,"sbsgp":2,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403113005":{"mis":0,"ppfgp":0,"ssa":0,"rd":20,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403113006":{"mis":0,"ppfgp":0,"ssa":0,"rd":15,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403115001":{"mis":0,"ppfgp":0,"ssa":0,"rd":20,"sbbas":0,"sbsgp":3,"scss":0,"td":10,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403115002":{"mis":0,"ppfgp":0,"ssa":3,"rd":36,"sbbas":0,"sbsgp":1,"scss":0,"td":1,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403115003":{"mis":0,"ppfgp":0,"ssa":0,"rd":6,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403115004":{"mis":0,"ppfgp":0,"ssa":0,"rd":30,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403118001":{"mis":0,"ppfgp":0,"ssa":0,"rd":1,"sbbas":0,"sbsgp":2,"scss":0,"td":12,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403118002":{"mis":0,"ppfgp":0,"ssa":0,"rd":0,"sbbas":0,"sbsgp":5,"scss":0,"td":35,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403118003":{"mis":0,"ppfgp":0,"ssa":2,"rd":0,"sbbas":0,"sbsgp":8,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403118004":{"mis":0,"ppfgp":0,"ssa":0,"rd":0,"sbbas":0,"sbsgp":3,"scss":0,"td":1,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403118005":{"mis":0,"ppfgp":0,"ssa":0,"rd":11,"sbbas":0,"sbsgp":2,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403119001":{"mis":0,"ppfgp":0,"ssa":0,"rd":17,"sbbas":0,"sbsgp":3,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403119002":{"mis":0,"ppfgp":0,"ssa":1,"rd":4,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403119003":{"mis":0,"ppfgp":0,"ssa":1,"rd":3,"sbbas":0,"sbsgp":5,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403119004":{"mis":0,"ppfgp":0,"ssa":0,"rd":15,"sbbas":0,"sbsgp":1,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403119005":{"mis":0,"ppfgp":0,"ssa":1,"rd":20,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403123001":{"mis":0,"ppfgp":0,"ssa":1,"rd":35,"sbbas":0,"sbsgp":0,"scss":0,"td":10,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403123002":{"mis":0,"ppfgp":0,"ssa":1,"rd":15,"sbbas":0,"sbsgp":2,"scss":0,"td":9,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403123003":{"mis":0,"ppfgp":0,"ssa":2,"rd":0,"sbbas":0,"sbsgp":6,"scss":0,"td":17,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403123004":{"mis":0,"ppfgp":0,"ssa":0,"rd":5,"sbbas":0,"sbsgp":0,"scss":0,"td":16,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403123005":{"mis":0,"ppfgp":0,"ssa":1,"rd":45,"sbbas":0,"sbsgp":1,"scss":0,"td":5,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403123006":{"mis":0,"ppfgp":0,"ssa":0,"rd":46,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403123007":{"mis":0,"ppfgp":0,"ssa":1,"rd":20,"sbbas":0,"sbsgp":2,"scss":0,"td":46,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403123008":{"mis":0,"ppfgp":0,"ssa":3,"rd":10,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403123009":{"mis":0,"ppfgp":0,"ssa":0,"rd":18,"sbbas":0,"sbsgp":0,"scss":0,"td":35,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403123010":{"mis":0,"ppfgp":0,"ssa":0,"rd":18,"sbbas":0,"sbsgp":2,"scss":0,"td":15,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403123011":{"mis":0,"ppfgp":0,"ssa":0,"rd":20,"sbbas":0,"sbsgp":2,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403125001":{"mis":0,"ppfgp":0,"ssa":1,"rd":15,"sbbas":0,"sbsgp":1,"scss":0,"td":10,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403125002":{"mis":0,"ppfgp":0,"ssa":0,"rd":0,"sbbas":0,"sbsgp":4,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403125003":{"mis":0,"ppfgp":0,"ssa":1,"rd":14,"sbbas":0,"sbsgp":2,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403125004":{"mis":0,"ppfgp":0,"ssa":0,"rd":22,"sbbas":0,"sbsgp":3,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403125005":{"mis":0,"ppfgp":0,"ssa":0,"rd":8,"sbbas":0,"sbsgp":4,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403125006":{"mis":0,"ppfgp":0,"ssa":1,"rd":11,"sbbas":0,"sbsgp":2,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403125007":{"mis":0,"ppfgp":0,"ssa":1,"rd":10,"sbbas":0,"sbsgp":2,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403125008":{"mis":0,"ppfgp":0,"ssa":1,"rd":13,"sbbas":0,"sbsgp":0,"scss":0,"td":2,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403125009":{"mis":0,"ppfgp":0,"ssa":0,"rd":15,"sbbas":0,"sbsgp":0,"scss":0,"td":2,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403125010":{"mis":0,"ppfgp":0,"ssa":0,"rd":8,"sbbas":0,"sbsgp":1,"scss":0,"td":24,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403125011":{"mis":0,"ppfgp":0,"ssa":0,"rd":15,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403125012":{"mis":0,"ppfgp":0,"ssa":1,"rd":10,"sbbas":0,"sbsgp":1,"scss":0,"td":5,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403126001":{"mis":0,"ppfgp":0,"ssa":0,"rd":20,"sbbas":0,"sbsgp":1,"scss":0,"td":50,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403126002":{"mis":0,"ppfgp":0,"ssa":2,"rd":35,"sbbas":0,"sbsgp":0,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403126003":{"mis":0,"ppfgp":0,"ssa":1,"rd":8,"sbbas":0,"sbsgp":7,"scss":0,"td":52,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403126004":{"mis":0,"ppfgp":0,"ssa":0,"rd":30,"sbbas":0,"sbsgp":4,"scss":0,"td":5,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403126005":{"mis":0,"ppfgp":0,"ssa":1,"rd":47,"sbbas":0,"sbsgp":3,"scss":0,"td":0,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403126006":{"mis":0,"ppfgp":0,"ssa":4,"rd":10,"sbbas":0,"sbsgp":2,"scss":0,"td":25,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403126007":{"mis":0,"ppfgp":0,"ssa":0,"rd":24,"sbbas":0,"sbsgp":3,"scss":0,"td":29,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "BO30403126008":{"mis":0,"ppfgp":0,"ssa":0,"rd":8,"sbbas":0,"sbsgp":5,"scss":0,"td":3,"prfts":0,"kvn":0,"nsc8":0,"msc":0},
+    "SO27720101":{"mis":21,"ppfgp":0,"ssa":7,"rd":122,"sbbas":0,"sbsgp":52,"scss":4,"td":176,"prfts":0,"kvn":75,"nsc8":35,"msc":0},
+    "SO27720401":{"mis":5,"ppfgp":0,"ssa":5,"rd":34,"sbbas":0,"sbsgp":22,"scss":1,"td":66,"prfts":0,"kvn":48,"nsc8":2,"msc":0},
+    "SO27720801":{"mis":11,"ppfgp":0,"ssa":3,"rd":84,"sbbas":0,"sbsgp":63,"scss":3,"td":165,"prfts":0,"kvn":48,"nsc8":18,"msc":0},
+    "SO27720901":{"mis":8,"ppfgp":0,"ssa":2,"rd":124,"sbbas":0,"sbsgp":66,"scss":4,"td":246,"prfts":0,"kvn":55,"nsc8":55,"msc":0},
+    "SO27721001":{"mis":5,"ppfgp":0,"ssa":2,"rd":18,"sbbas":0,"sbsgp":10,"scss":1,"td":15,"prfts":0,"kvn":8,"nsc8":3,"msc":0},
+    "SO27721101":{"mis":19,"ppfgp":0,"ssa":10,"rd":75,"sbbas":0,"sbsgp":74,"scss":1,"td":147,"prfts":0,"kvn":115,"nsc8":20,"msc":0},
+    "SO27721401":{"mis":0,"ppfgp":0,"ssa":2,"rd":13,"sbbas":0,"sbsgp":8,"scss":0,"td":40,"prfts":0,"kvn":9,"nsc8":3,"msc":0},
+    "SO27721601":{"mis":4,"ppfgp":0,"ssa":2,"rd":39,"sbbas":0,"sbsgp":21,"scss":1,"td":103,"prfts":0,"kvn":64,"nsc8":9,"msc":0},
+    "SO27740201":{"mis":10,"ppfgp":1,"ssa":10,"rd":14,"sbbas":0,"sbsgp":27,"scss":1,"td":53,"prfts":0,"kvn":22,"nsc8":10,"msc":0},
+    "SO27740301":{"mis":2,"ppfgp":0,"ssa":1,"rd":7,"sbbas":0,"sbsgp":6,"scss":0,"td":13,"prfts":0,"kvn":11,"nsc8":3,"msc":0}
+  }};
   var ACCT_MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   function getAcctMonths() {
     try { var r = localStorage.getItem(ACCT_MONTHS_KEY); if (r) { var o = JSON.parse(r); if (o && typeof o === "object") return o; } } catch (e) {}
-    return {};
+    return JSON.parse(JSON.stringify(ACCT_MONTHS_DEFAULT));
   }
   function saveAcctMonths(o) { try { __safeSet(ACCT_MONTHS_KEY, JSON.stringify(o)); } catch (e) {} }
   function acctPeriodLabel(key) {
@@ -13444,7 +13529,7 @@ const MASTER_DATA = {
       note.style.display = "block";
       if (prev) {
         note.textContent = cur
-          ? "वर्तमान वर्ष (1 जनवरी – 30 सितम्बर 2026) का डेटा app में पहले से भरा है। 1 अक्टूबर के बाद खुले खाते 'बाद के खाते — आप भरें' में लिखें; दोनों जुड़कर रिपोर्ट में जाएँगे।"
+          ? "वर्तमान वर्ष (1 जनवरी – 31 अक्टूबर 2026) का डेटा app में पहले से भरा है। 1 नवम्बर के बाद खुले खाते 'बाद के खाते — आप भरें' में लिखें; दोनों जुड़कर रिपोर्ट में जाएँगे।"
           : "पिछले वर्ष की संख्याएँ 2025 Excel से भर दी गई हैं। वर्तमान वर्ष का Excel मिलने पर Import करें; तब तक 'बाद के खाते' में पूरी संख्या लिखें।";
         note.style.background = "#e8f6ec";
       } else {
