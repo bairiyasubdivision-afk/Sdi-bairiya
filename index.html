@@ -572,8 +572,12 @@
   #data-tab .modal-body{padding:20px;}
   #data-tab .modal-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
   #data-tab .info-text{font-size:0.8rem;color:var(--muted);margin-top:8px;line-height:1.4;}
-  #data-tab .toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:white;padding:12px 20px;border-radius:8px;font-size:0.85rem;box-shadow:0 4px 12px rgba(0,0,0,0.2);z-index:10000;opacity:0;transition:opacity 0.3s;pointer-events:none;}
-  #data-tab .toast.show{opacity:1;}
+  /* v110 — संदेश अब body पर लगता है (पहले #data-tab के अंदर लगता था; वह टैब छिपा होने पर
+     संदेश स्क्रीन पर कभी नहीं दिखता था, इसीलिए ऐप चुपचाप काम करता लगता था)। रंग-रूप वही। */
+  .toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom));right:12px;left:auto;max-width:min(420px,calc(100vw - 24px));background:var(--navy);color:white;padding:11px 16px;border-radius:8px;font-size:0.85rem;line-height:1.45;box-shadow:0 4px 12px rgba(0,0,0,0.2);z-index:99998;opacity:0;transition:opacity 0.25s;pointer-events:none;}
+  .toast.show{opacity:1;}
+  .toast.toast-err{background:#b3261e;}
+  .toast.toast-warn{background:#8a5300;}
   /* v7.54 — काग़ज़ी अभिलेख टिक: फ़ोन पर आसान निशाना (44px), और अपनी पंक्ति का चिह्न */
   #data-tab .progPaperLbl{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:44px;min-height:44px;padding:2px 0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;}
   #data-tab .progPaperLbl input[type="checkbox"]{width:24px;height:24px;min-width:24px;min-height:24px;margin:0;accent-color:#1b5e20;cursor:pointer;}
@@ -1986,19 +1990,45 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
   // --- Toast ---
   var toastTimer=null;
   try { window.showToast = showToast; } catch (e) {}
-  function showToast(msg){
+  // v110 — संदेश हमेशा body पर लगे, ताकि हर टैब (Tour Diary / Inspection / SO / Data)
+  // पर दिखे। तीन प्रकार: सामान्य (सफल), error (लाल), warn (भूरा)। सफल = ~2.5 सेकंड,
+  // त्रुटि = ~4.2 सेकंड (पढ़ने का वक़्त)। गणना/सहेजने के तरीक़े में कोई बदलाव नहीं।
+  function showToast(msg, opts){
+    opts = opts || {};
+    var kind = opts.type || '';
     var t=document.getElementById('dataToast');
     if(!t){
       t=document.createElement('div');
       t.id='dataToast';
-      t.className='toast';
-      document.getElementById('data-tab').appendChild(t);
+      (document.body||document.documentElement).appendChild(t);
+    } else if(t.parentNode && t.parentNode.id==='data-tab' && document.body){
+      try{ document.body.appendChild(t); }catch(e){}
     }
+    t.className='toast'+(kind==='error'?' toast-err':(kind==='warn'?' toast-warn':''));
+    // तय नियंत्रणों के ऊपर रहे — SO IR का नीचे का बार और PWA बटन न छिपें
+    try{
+      var _off = 16;
+      var _visH = function(el){ try{ if(!el) return 0; var r=el.getBoundingClientRect(); var cs=getComputedStyle(el);
+        return (cs.display==='none'||cs.visibility==='hidden')?0:r.height; }catch(e){ return 0; } };
+      var _fb = document.querySelector('#so-ir-root .footer-bar');
+      var _fbh = _visH(_fb);
+      if(_fbh) _off = Math.max(_off, _fbh + 14);
+      var _pwa = document.getElementById('pwaInstallBtn');
+      var _pwah = _visH(_pwa);
+      if(_pwah) _off = Math.max(_off, _pwah + 30);
+      t.style.bottom = 'calc(' + _off + 'px + env(safe-area-inset-bottom))';
+    }catch(e){}
+    t.setAttribute('role', kind==='error'?'alert':'status');
+    t.setAttribute('aria-live', kind==='error'?'assertive':'polite');
     t.textContent=msg;
+    void t.offsetWidth;
     t.classList.add('show');
     if(toastTimer)clearTimeout(toastTimer);
-    toastTimer=setTimeout(function(){t.classList.remove('show');},2500);
+    var _ms = opts.duration || (kind==='error' ? 4200 : (kind==='warn' ? 3200 : 2500));
+    toastTimer=setTimeout(function(){t.classList.remove('show');},_ms);
   }
+  // छोटे सहायक — पूरे ऐप में एक ही तरीक़ा
+  window.showToastErr=function(m,d){ showToast(m,{type:'error',duration:d}); };
 
   // --- Collapsible card ---
   window.toggleDataCard=function(el){
@@ -4524,6 +4554,30 @@ function _calPlaceForCell(hasJ,awayDay,jByDate,ds){
   var j=hasJ?jByDate[ds]:(awayDay?jByDate[awayDay]:null);
   return j?journeyPlaceForDay(j,ds):'';
 }
+// v110 — किसी दिन पर टैप करने पर एक ही छोटी पंक्ति में पुष्टि + उस दिन का हाल।
+// केवल पढ़ने के लिए — कोई चयन/गणना/भंडारण नहीं बदलता।
+function _calDayLine(ds){
+  var p=String(ds||'').split('.');if(p.length!==3)return String(ds||'');
+  var dd=parseInt(p[0],10),mm=parseInt(p[1],10),yy=parseInt(p[2],10);
+  var WD=['रविवार','सोमवार','मंगलवार','बुधवार','गुरुवार','शुक्रवार','शनिवार'];
+  var wd='';
+  try{var dt=new Date(yy,mm-1,dd);if(!isNaN(dt.getTime()))wd=WD[dt.getDay()];}catch(e){}
+  var line=String(ds)+(wd?(' · '+wd):'');
+  var lv=null;try{lv=getLeaveForDate(ds);}catch(e){}
+  if(lv)return line+' · अवकाश: '+lv.label;
+  var jBy={},span={};
+  try{jBy=_calJourneyByDate();}catch(e){}
+  try{span=computeJourneySpan();}catch(e){}
+  var j=jBy[ds]||null,away='';
+  if(!j&&span[ds]){j=jBy[span[ds]]||null;away=' (बाहर)';}
+  if(j){
+    var pl='';
+    try{pl=journeyPlaceForDay(j,ds)||j.office||'';}catch(e){}
+    return line+' · जर्नी: '+(pl||'दर्ज')+away;
+  }
+  if(holidays[ds])return line+' · छुट्टी: '+holidays[ds];
+  return line+' · इस दिन कोई जर्नी नहीं';
+}
 function openJourneyDay(ds){
   var idx=-1;
   for(var i=0;i<journeys.length;i++){if(journeys[i].date===ds){idx=i;break;}}
@@ -4594,6 +4648,8 @@ function showDayChoice(idx,ds){
   document.getElementById('dcEdit').onclick=function(){box.style.display='none';loadJourneyForEdit(idx);};
   document.getElementById('dcDel').onclick=function(){box.style.display='none';askDeleteJourney(idx,ds);};
   box.style.display='flex';
+  // v110 — उस दिन पर क्या है, छोटी पुष्टि के रूप में
+  try{window.showToast(_calDayLine(ds));}catch(e){}
 }
 function journeySpanText(j){
   var lg=(j&&j.legs)||[];var last=null;
@@ -4609,8 +4665,7 @@ function askDeleteJourney(idx,ds){
   var span=journeySpanText(j);
   var extra=(span!==j.date)?('\n\nThis journey covers '+span+' — all its days will be removed.'):'';
   if(!confirm('DELETE the journey for '+ds+'?'+extra+'\n\nClick OK to delete, Cancel to keep it.'))return;
-  deleteJourney(idx);
-  alert('\u2705 '+ds+' की जर्नी हटा दी गई।');
+  deleteJourney(idx);   // पुष्टि deleteJourney() में ही होती है
 }
 function selectDate(ds){
   // v7.41 — अगर उस दिन जर्नी पहले से है तो सीधे Edit/Delete के बटन दिखाएँ
@@ -4618,9 +4673,11 @@ function selectDate(ds){
   var existingIdx=journeys.findIndex(function(j){return j.date===ds;});
   if(existingIdx>=0){showDayChoice(existingIdx,ds);return;}
   var lv=getLeaveForDate(ds);
-  if(lv){alert(ds+' is marked as '+lv.label+'. No journey can be planned on a leave day.\n\nRemove the leave first if you want to plan a journey on this date.');return;}
+  if(lv){window.showToastErr('⚠️ '+_calDayLine(ds)+' — इस दिन जर्नी नहीं बन सकती। पहले अवकाश हटाएँ।');return;}
   if(holidays[ds]){if(!confirm(ds+' छुट्टी है ('+holidays[ds]+') — सार्वजनिक अवकाश।\n\nयदि आपने राजकीय कार्य (official exigency) में यात्रा की है तो इस दिन की जर्नी दर्ज की जा सकती है।\n\nजर्नी दर्ज करें?'))return;}
   selectedDate=ds;renderCalendar();currentLegs=[];addLeg();showForm(ds);
+  // v110 — चयन की पुष्टि + उस दिन का हाल (छुट्टी/जर्नी/कुछ नहीं)
+  try{window.showToast(_calDayLine(ds));}catch(e){}
 }
 
 function showForm(ds){document.getElementById('journeyForm').style.display='block';document.getElementById('placeholderMsg').style.display='none';document.getElementById('jfTitle').textContent='Build journey for '+ds;renderLegs();}
@@ -5240,22 +5297,24 @@ function updateLegInfo(){
 // ============================================================
 function saveDayJourney(){
   var err=document.getElementById('jfError');
-  if(!selectedDate){err.textContent='Select a date.';err.classList.add('show');return;}
-  if(currentLegs.length===0){err.textContent='Add at least one leg.';err.classList.add('show');return;}
+  // v110 — जाँच वही है, केवल नतीजा अब टोस्ट में भी दिखता है (नीचे लाल पंक्ति भी बनी रहती है)
+  var jfErr=function(m){ try{err.textContent=m;err.classList.add('show');}catch(e){} try{window.showToastErr('⚠️ '+m);}catch(e){} };
+  if(!selectedDate){jfErr('Select a date.');return;}
+  if(currentLegs.length===0){jfErr('Add at least one leg.');return;}
   for(var _ai=0;_ai<currentLegs.length;_ai++){if(!currentLegs[_ai].isReturn&&currentLegs[_ai].to===HQ_NAME)currentLegs[_ai].isReturn=true;}
   var hasOutward=false;
   for(var i=0;i<currentLegs.length;i++){
     var l=currentLegs[i];
-    if(!l.to){err.textContent='Leg '+(i+1)+': select an office.';err.classList.add('show');return;}
+    if(!l.to){jfErr('Leg '+(i+1)+': select an office.');return;}
     var _isFM=(l.mode==='Bus'||l.mode==='Train'||l.mode==='Other');
     if(_isFM){
       // Bus / Train / Other → mileage नहीं, असली किराया ज़रूरी
-      if(l.fare===''||l.fare===undefined||l.fare===null||isNaN(parseFloat(l.fare))){err.textContent='Leg '+(i+1)+': enter the actual fare (₹).';err.classList.add('show');return;}
+      if(l.fare===''||l.fare===undefined||l.fare===null||isNaN(parseFloat(l.fare))){jfErr('Leg '+(i+1)+': enter the actual fare (₹).');return;}
     } else {
-      if(!l.dist&&l.dist!==0){err.textContent='Leg '+(i+1)+': enter distance.';err.classList.add('show');return;}
+      if(!l.dist&&l.dist!==0){jfErr('Leg '+(i+1)+': enter distance.');return;}
     }
-    if(!l.departure&&!l.arrival){err.textContent='Leg '+(i+1)+': enter departure or arrival time.';err.classList.add('show');return;}
-    if(!l.isReturn){hasOutward=true;if(!l.purposeType){err.textContent='Leg '+(i+1)+': select a purpose.';err.classList.add('show');return;}}
+    if(!l.departure&&!l.arrival){jfErr('Leg '+(i+1)+': enter departure or arrival time.');return;}
+    if(!l.isReturn){hasOutward=true;if(!l.purposeType){jfErr('Leg '+(i+1)+': select a purpose.');return;}}
   }
   // v7.53 — वक़्त की जाँच: अगला leg पिछले leg के पहुँचने से पहले नहीं निकल सकता
   // (आधी रात के बाद की यात्रा के लिए Day (+N) बढ़ाएँ)। index-7 से वापस लाया गया।
@@ -5263,7 +5322,7 @@ function saveDayJourney(){
   for(var _vi=0;_vi<currentLegs.length;_vi++){
     var _L=currentLegs[_vi],_o=parseInt(_L.returnDayOffset,10)||0;
     if(_L.departure&&_prevEnd!==null&&_o*1440+timeToMin(_L.departure)<_prevEnd){
-      err.textContent='Leg '+(_vi+1)+' departs ('+_L.departure+') before Leg '+_vi+' has arrived. Correct the times, or set Day (+N) if the journey continues past midnight.';err.classList.add('show');return;
+      jfErr('Leg '+(_vi+1)+' departs ('+_L.departure+') before Leg '+_vi+' has arrived. Correct the times, or set Day (+N) if the journey continues past midnight.');return;
     }
     if(_L.departure&&_L.arrival){var _dm=timeToMin(_L.arrival)-timeToMin(_L.departure);if(_dm<0)_dm+=1440;_prevEnd=_o*1440+timeToMin(_L.departure)+_dm;}
     else if(_L.arrival){_prevEnd=_o*1440+timeToMin(_L.arrival);}
@@ -5327,8 +5386,10 @@ function saveDayJourney(){
   journey.da=recalcJourneyDA(journey);
 
 
+  var _wasUpdate=false;
   var existingIdx=journeys.findIndex(function(j){return j.date===selectedDate;});
   if(existingIdx>=0){
+    _wasUpdate=true;
     var oldJ=journeys[existingIdx];
     var oldDesc=oldJ.office+(oldJ.purpose?' ('+oldJ.purpose.substring(0,60)+(oldJ.purpose.length>60?'...':'')+')':'');
     if(!confirm('WARNING: A journey already exists for '+selectedDate+':\n'+oldDesc+'\n\nAre you sure you want to REPLACE/MODIFY this existing journey?\n\nClick OK to save the modified journey, Cancel to keep the existing one.')){cancelForm();return;}
@@ -5337,6 +5398,10 @@ function saveDayJourney(){
   journeys.push(journey);journeys.sort(function(a,b){var x=_dk(a.date),y=_dk(b.date);return x<y?-1:(x>y?1:0);});
   autoSave();
   renderCalendar();renderJourneyList();updateSummary();generateWorkLog();cancelForm();
+  // v110 — सहेजने की पुष्टि: तारीख़ + दफ़्तर
+  try{
+    window.showToast((_wasUpdate?'✔ जर्नी बदली — ':'✔ जर्नी सहेजी — ')+journey.date+(journey.office?(' · '+journey.office):''));
+  }catch(e){}
 }
 
 // Build combined purpose for journey table (first outward leg only)
@@ -5364,7 +5429,12 @@ function buildWorkLogEntry(outwardPurposes){
   return parts.join(' and ');
 }
 
-function deleteJourney(idx){journeys.splice(idx,1);autoSave();renderCalendar();renderJourneyList();updateSummary();generateWorkLog();}
+function deleteJourney(idx){
+  var _delDate=(journeys[idx]&&journeys[idx].date)||'';
+  journeys.splice(idx,1);autoSave();renderCalendar();renderJourneyList();updateSummary();generateWorkLog();
+  // v110 — दोनों जगह से हटाने पर एक ही छोटी पुष्टि (सूची का ✕ सीधे इसी फ़ंक्शन को बुलाता है)
+  try{window.showToast('✔ जर्नी हटाई — '+(_delDate||'1 जर्नी'));}catch(e){}
+}
 function editJourney(idx){
   var j=journeys[idx];
   if(!j)return;
@@ -5594,7 +5664,10 @@ function generateWorkLogFromJourneys(){
   wlGrowAll();
 }
 
-function onMonthChange(){renderCalendar();renderJourneyList();generateWorkLog();updateSummary();renderLeaveList();autoSave();}
+function onMonthChange(){renderCalendar();renderJourneyList();generateWorkLog();updateSummary();renderLeaveList();autoSave();
+  // v110 — महीना/साल बदलने की छोटी पुष्टि (कैलेंडर व सूची ऊपर ही बदल जाते हैं)
+  try{window.showToast('✔ बिल महीना — '+document.getElementById('billMonth').value+' '+getYear());}catch(e){}
+}
 
 // ============================================================
 // LEAVE MANAGEMENT
@@ -5834,7 +5907,7 @@ function mkTable(rows,cw,tw){return new D.Table({width:{size:tw,type:'dxa'},colu
 async function generateTourDiary(){
   try{
     var ok=await loadDocx();
-    if(!ok){alert('⚠️ Word (docx) लाइब्रेरी लोड नहीं हो सकी — कृपया ऐप को दोबारा खोलें। (यह लाइब्रेरी ऐप में ही embedded है, इंटरनेट की ज़रूरत नहीं।)');return;}
+    if(!ok){window.showToastErr('⚠️ Word (docx) लाइब्रेरी लोड नहीं हो सकी — ऐप दोबारा खोलें। (लाइब्रेरी ऐप में ही embedded है, इंटरनेट की ज़रूरत नहीं।)');return;}
     if(!initDocx())return;
     var legs=buildLegs();var mi=getMonthIdx(),y=getYear(),dim=getDaysInMonth();
     var name=document.getElementById('officerName').value,desig=document.getElementById('officerDesignation').value,month=document.getElementById('billMonth').value;
@@ -5910,15 +5983,17 @@ async function generateTourDiary(){
     var doc=new D.Document({sections:[{properties:{page:{size:{width:12240,height:15840,orientation:'landscape'},margin:{top:720,bottom:720,left:720,right:720}}},children:ch}]});
     var _blobTD=await D.Packer.toBlob(doc);
     downloadBlob(_blobTD,'Tour_Diary_'+month+'_'+y+'.docx');
+    // v110 — बनने की पुष्टि (दस्तावेज़/गणना में कोई बदलाव नहीं)
+    try{window.showToast('✔ टूर डायरी बन गई — '+month+' '+y);}catch(_e){}
     // 🆕 डाउनलोड के बाद: लिंक + "Drive पर भेजें" बटन (ऑटो-भेजें चालू हो तो चुपचाप भी भेजें)
     try{ if(window.reportDriveAfterGenerate) window.reportDriveAfterGenerate('tour','Tour_Diary_'+month+'_'+y+'.docx',_blobTD,'tourTaDlLinks'); }catch(_e){}
-  }catch(e){console.error(e);alert('Error: '+e.message);}
+  }catch(e){console.error(e);try{window.showToastErr('⚠️ रिपोर्ट नहीं बन सकी: '+e.message+' — दोबारा कोशिश करें।');}catch(_e){}}
 }
 
 async function generateTABill(){
   try{
     var ok=await loadDocx();
-    if(!ok){alert('⚠️ Word (docx) लाइब्रेरी लोड नहीं हो सकी — कृपया ऐप को दोबारा खोलें। (यह लाइब्रेरी ऐप में ही embedded है, इंटरनेट की ज़रूरत नहीं।)');return;}
+    if(!ok){window.showToastErr('⚠️ Word (docx) लाइब्रेरी लोड नहीं हो सकी — ऐप दोबारा खोलें। (लाइब्रेरी ऐप में ही embedded है, इंटरनेट की ज़रूरत नहीं।)');return;}
     if(!initDocx())return;
     var mi=getMonthIdx(),y=getYear(),month=document.getElementById('billMonth').value;
     var name=document.getElementById('officerName').value,desig=document.getElementById('officerDesignation').value,pay=document.getElementById('officerPay').value,hq=document.getElementById('officerHQ').value;
@@ -5981,9 +6056,11 @@ async function generateTABill(){
     var doc=new D.Document({sections:[{properties:{page:{size:{width:12240,height:15840,orientation:'landscape'},margin:{top:720,bottom:720,left:720,right:720}}},children:s0},{properties:{page:{size:{width:12240,height:15840,orientation:'portrait'},margin:{top:1080,bottom:1080,left:1080,right:1080}}},children:s1}]});
     var _blobTA=await D.Packer.toBlob(doc);
     downloadBlob(_blobTA,'TA_Bill_'+month+'_'+y+'.docx');
+    // v110 — बनने की पुष्टि (दस्तावेज़/गणना में कोई बदलाव नहीं)
+    try{window.showToast('✔ TA बिल बन गया — '+month+' '+y);}catch(_e){}
     // 🆕 डाउनलोड के बाद: लिंक + "Drive पर भेजें" बटन (ऑटो-भेजें चालू हो तो चुपचाप भी भेजें)
     try{ if(window.reportDriveAfterGenerate) window.reportDriveAfterGenerate('ta','TA_Bill_'+month+'_'+y+'.docx',_blobTA,'tourTaDlLinks'); }catch(_e){}
-  }catch(e){console.error(e);alert('Error: '+e.message);}
+  }catch(e){console.error(e);try{window.showToastErr('⚠️ रिपोर्ट नहीं बन सकी: '+e.message+' — दोबारा कोशिश करें।');}catch(_e){}}
 }
 
 // ============================================================
@@ -5994,8 +6071,8 @@ function saveState(){
   document.querySelectorAll('.wl-work').forEach(function(i){data.workLog.push(i.value);});
   data.leaves=leaves;
   // v7.50 — सफलता/विफलता ईमानदारी से बताएँ (चुपचाप डेटा न गुमे)
-  if(__safeSet('ta_tour_data',JSON.stringify(data),{label:'TA / Tour डेटा'})){alert('Data saved!');}
-  else{alert('⚠️ डेटा सहेजा नहीं जा सका (स्टोरेज भरा या बंद हो सकता है)। आपका पिछला डेटा सुरक्षित है — कृपया बैकअप डाउनलोड करके जगह बनाएँ।');}
+  if(__safeSet('ta_tour_data',JSON.stringify(data),{label:'TA / Tour डेटा'})){try{window.showToast('✔ डेटा सहेजा गया');}catch(e){}}
+  else{window.showToastErr('⚠️ डेटा सहेजा नहीं जा सका (स्टोरेज भरा या बंद हो सकता है)। आपका पिछला डेटा सुरक्षित है — कृपया बैकअप डाउनलोड करके जगह बनाएँ।');}
 }
 function loadState(){
   var raw=localStorage.getItem('ta_tour_data');if(!raw){alert('No saved data.');return;}
@@ -6011,7 +6088,7 @@ function loadState(){
   if(d.workLog){var ins=document.querySelectorAll('.wl-work');d.workLog.forEach(function(v,i){if(ins[i])ins[i].value=v;});wlGrowAll();}
   if(d.hotel){document.getElementById('hasHotel').checked=d.hotel.hasHotel;document.getElementById('hotelFrom').value=d.hotel.from||'';document.getElementById('hotelTo').value=d.hotel.to||'';document.getElementById('hotelName').value=d.hotel.name||'';document.getElementById('hotelAmount').value=d.hotel.amount||0;toggleHotel();}
   if(d.advance){document.getElementById('hasAdvance').checked=d.advance.hasAdvance;document.getElementById('advanceAmount').value=d.advance.amount||0;toggleAdvance();}
-  updateSummary();alert('Data loaded!');
+  updateSummary();try{window.showToast('✔ डेटा लोड हो गया');}catch(e){}
 }
 
 // INIT
@@ -11492,6 +11569,8 @@ const MASTER_DATA = {
     else if (inspectionDateInput) { inspectionDateInput.value = iso; }
     window.inspCloseCal();
     if (!_tgt) inspRefreshCycleDependent();
+    // v110 — तिथि चुनी गई + उस दिन का हाल (दोनों कैलेंडर में एक ही संदेश)
+    try { if (window.showToast) window.showToast('✔ ' + (typeof _calDayLine === 'function' ? _calDayLine(ds) : ds)); } catch (e) {}
   };
   window.inspCloseCal = function () { var b = document.getElementById('inspCalModal'); if (b) b.style.display = 'none'; };
   // ITEM 4 (v?) — निरीक्षण तिथि बदलते ही निरीक्षण-चक्र वर्ष बदल सकता है; इसलिए
@@ -12816,10 +12895,17 @@ const MASTER_DATA = {
     if (!file) return;
     var sel = document.getElementById("acctPeriodSel");
     var period = (sel && sel.value) || "";
-    if (!period) { alert("Select a period (month / quarter) first."); input.value = ""; return; }
+    if (!period) { window.showToastErr("⚠️ पहले period चुनें (महीना / तिमाही) — फिर फ़ाइल चुनें।"); input.value = ""; return; }
     var reader = new FileReader();
     reader.onload = function (e) {
-      var fail = function (err) { alert("Upload failed: " + (err && err.message ? err.message : err)); input.value = ""; };
+      var fail = function (err) {
+        // v110 — सादी भाषा में कारण; तकनीकी ब्यौरा केवल console में
+        var raw = (err && err.message) ? String(err.message) : String(err);
+        try { console.warn("Monthly upload failed:", raw); } catch (e0) {}
+        var tail = (raw && raw.length <= 48) ? (" (" + raw + ")") : "";
+        window.showToastErr("⚠️ यह फ़ाइल मासिक रिपोर्ट (.xlsx) नहीं लगती — सही Product-Wise फ़ाइल चुनें।" + tail, 5200);
+        input.value = "";
+      };
       try {
         JSZip.loadAsync(e.target.result).then(function (zip) {
           var sheetName = null;
@@ -14563,7 +14649,7 @@ const MASTER_DATA = {
 generateBtn.addEventListener("click", async () => {
     const boId = boSelect.value;
     const bo = MASTER_DATA[boId];
-    if (!bo) { alert("कृपया शाखा डाकघर चुनें"); return; }
+    if (!bo) { window.showToastErr("⚠️ पहले शाखा डाकघर (BO) चुनें — फिर रिपोर्ट बनाएँ।"); return; }
 
     statusMsg.className = "status busy";
     statusMsg.textContent = "रिपोर्ट तैयार की जा रही है...";
@@ -14735,6 +14821,8 @@ generateBtn.addEventListener("click", async () => {
 
       statusMsg.className = "status ok";
       statusMsg.textContent = "✅ रिपोर्ट तैयार हो गई! डाउनलोड शुरू हो गया है।";
+      // v110 — छोटी पुष्टि (निर्माण/फ़ाइल में कोई बदलाव नहीं)
+      try { window.showToast("✔ BO IR तैयार — " + (bo.bo_name_hi || boId)); } catch (_e) {}
 
       // रिपोर्ट बन गई — यदि यह BO अभी "निरीक्षण पूर्ण" चिह्नित नहीं है, तो पूछकर चिह्नित कर दें
       // (पहले: रिपोर्ट बनाने से चिह्न नहीं लगता था, इसलिए तारीख़ कार्यक्रम में नहीं दिखती थी)
@@ -16102,7 +16190,7 @@ function bkRem(){let n=0,last=0;try{for(let i=0;i<localStorage.length;i++){const
  w.classList.toggle('wz-hide',!(n&&(d<0||d>=7)));w.innerHTML='💾 <b>'+(d<0?'अभी तक बैकअप नहीं लिया गया।':'पिछला बैकअप '+d+' दिन पहले लिया गया था।')+'</b> डेटा टैब से बैकअप डाउनलोड कर लें, ताकि ब्राउज़र डेटा साफ़ होने पर भी भरी हुई जानकारी सुरक्षित रहे।'}
 function bkExport(){const o={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(BKX(k))o[k]=localStorage.getItem(k)}}catch(e){}
  if(so)save();const bl=new Blob([JSON.stringify({app:'SO_IR',v:1,at:new Date().toISOString(),data:o})],{type:'application/json'}),a=document.createElement('a'),nm='SO_IR_backup_'+new Date().toISOString().slice(0,10)+'.json';
- a.href=URL.createObjectURL(bl);a.download=nm;a.textContent='⬇️ '+nm+' डाउनलोड करें';const dl=$('soDlLinks');dl.innerHTML='';dl.appendChild(a);dl.style.display='block';a.click();
+ a.href=URL.createObjectURL(bl);a.download=nm;a.textContent='⬇️ '+nm+' डाउनलोड करें';const dl=$('soDlLinks');dl.innerHTML='';dl.appendChild(a);dl.style.display='block';a.click();try{window.showToast('✔ SO बैकअप फ़ाइल बन गई — '+nm);}catch(_e){}
  try{__safeSet('soir_lastbk',Date.now())}catch(e){}bkRem();st('ok','💾 बैकअप फ़ाइल बन गई ('+Object.keys(o).length+' प्रविष्टियाँ)')}
 function bkImport(f){const r=new FileReader;r.onload=()=>{try{const j=JSON.parse(r.result);if(j.app!='SO_IR'||!j.data)throw Error('यह SO बैकअप फ़ाइल नहीं है');
  if(!confirm('बैकअप से डेटा बहाल करें? ('+Object.keys(j.data).length+' प्रविष्टियाँ — इसी नाम का मौजूदा ड्राफ्ट बदल जाएगा)'))return;
@@ -16174,7 +16262,7 @@ function vok(){return!!so&&!!T.verif&&T.verif.every(r=>String(r[1]||'').trim()!=
 function tab(v){if(v&&!so){alert('पहले उप डाकघर चुनें (Select the Sub Office first)');return}['ver','form','data','pv'].forEach((id,i)=>$(id).style.display=i==v?'':'none');['tV','tF','tD','tP'].forEach((id,i)=>$(id).className='so-tabbtn'+(i==v?' active':''));window.scrollTo(0,0);
  if(v==3)$('pv').innerHTML=blocks().map(x=>x.sig?'<p class="r">✍ [signature]</p>':x.el?'<table><tr>'+x.el.c.map(c=>`<th>${esc(c.replace(/^#/,''))}</th>`).join('')+'</tr>'+x.rows.map((r,k)=>{let j=0;return'<tr>'+x.el.c.map(c=>`<td>${c[0]=='#'?k+1:esc(r[j++]||'')}</td>`).join('')+'</tr>'}).join('')+'</table>':`<p class="${x.k||''}">${esc(x.p)||'&nbsp;'}</p>`).join('')}
 async function gen(){st('','');try{await gen0()}catch(e){console.error(e);st('err','❌ त्रुटि: '+e.message)}}
-async function gen0(){if(!so)return alert('पहले उप डाकघर चुनें (Select the Sub Office first)');if(!vok()){alert('Before completing the inspection, finish the mandatory opening verification: enter the physical balance of cash, stamps, IPOs, ATM kits, cheque books and passbooks.');tab(0);return}
+async function gen0(){if(!so)return window.showToastErr('⚠️ पहले उप डाकघर (SO) चुनें — फिर रिपोर्ट बनाएँ।');if(!vok()){alert('Before completing the inspection, finish the mandatory opening verification: enter the physical balance of cash, stamps, IPOs, ATM kits, cheque books and passbooks.');tab(0);return}
  const ids=[];ELS.forEach(e=>e.t=='p'&&[...e.x.matchAll(TG)].forEach(m=>ids.push(m[1].split('|')[0])));const un=ids.filter(i=>!U[i]).length;
  let bad=0;ELS.forEach(e=>{if(e.t=='tb'){const cs=e.c.filter(c=>c[0]!='#');T[e.id].forEach(r=>cs.forEach((c,j)=>{if(vr(c,r[j]))bad++}))}});Object.keys(S).forEach(k=>{if(vf(k,S[k]))bad++});
  if(bad&&!confirm(bad+' entr'+(bad>1?'ies look':'y looks')+' invalid (marked red) — generate anyway?'))return;
@@ -16187,7 +16275,7 @@ async function gen0(){if(!so)return alert('पहले उप डाकघर �
  z.file('word/document.xml',docXml(blocks()));z.file('word/footer1.xml',ftr('Annual Inspection Report — '+so.n+' SO'));if(SIG)z.file('word/media/signature.'+SIG.ext,SIG.b,{base64:true});
  const _soBlob=await z.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',compression:'DEFLATE'});
  const a=document.createElement('a');a.href=URL.createObjectURL(_soBlob);
- a.download=`SO_IR_${so.n.replace(/ /g,'_')}_${(S.doi||'').replace(/[.\/]/g,'-')}.docx`;a.textContent='⬇️ '+a.download+' डाउनलोड करें';const dl=$('soDlLinks');dl.innerHTML='';dl.appendChild(a);dl.style.display='block';a.click();try{if(window.reportDriveAfterGenerate)window.reportDriveAfterGenerate('so',a.download,_soBlob,{container:'soDlLinks',append:true});}catch(_e){}st('ok','✅ रिपोर्ट तैयार हो गई! डाउनलोड शुरू हो गया है।')}
+ a.download=`SO_IR_${so.n.replace(/ /g,'_')}_${(S.doi||'').replace(/[.\/]/g,'-')}.docx`;a.textContent='⬇️ '+a.download+' डाउनलोड करें';const dl=$('soDlLinks');dl.innerHTML='';dl.appendChild(a);dl.style.display='block';a.click();try{window.showToast('✔ SO IR तैयार — '+so.n+' SO');}catch(_e){}try{if(window.reportDriveAfterGenerate)window.reportDriveAfterGenerate('so',a.download,_soBlob,{container:'soDlLinks',append:true});}catch(_e){}st('ok','✅ रिपोर्ट तैयार हो गई! डाउनलोड शुरू हो गया है।')}
 try{SIG=JSON.parse(localStorage.getItem('soir_sig'));if(SIG)$('sgi').textContent='✔ signature saved'}catch(e){}
 $('sg').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader;r.onload=()=>{const im=new Image;im.onload=()=>{const u=r.result;SIG={b:u.split(',')[1],ext:/png/.test(u.slice(0,24))?'png':'jpg',w:im.width,h:im.height};$('sgi').textContent=__safeSet('soir_sig',JSON.stringify(SIG),{label:'हस्ताक्षर (SO IR)'})?'✔ signature saved':'⚠️ हस्ताक्षर सहेजा नहीं जा सका (स्टोरेज भरा) — इस रिपोर्ट में फिर भी उपयोग होगा'};im.src=r.result};r.readAsDataURL(f)};
 $('xl').onchange=async e=>{if(!so){alert('Select the Sub Office first');return}try{const g=applyWb(await readXlsx(await e.target.files[0].arrayBuffer())),k=Object.keys(g);if(k.length){render();save()}$('xli').textContent=k.length?'✅ Imported: '+k.map(x=>x+' '+g[x]).join(' · ')+' — review and edit below':'⚠️ No recognisable sheets (Pass Book, AOF, Finacle Transactions, VPP-COD, BO Balance, IPO Stock)'}catch(x){$('xli').textContent='❌ Could not read file: '+x.message}e.target.value=''};
@@ -16518,15 +16606,17 @@ function openCal(id){
   window.driveBackupSendNow = function(){
     saveFields();
     var c = getCfg();
-    if(!c.url){ setStatus('⚠️ पहले Web App URL और टोकन भरें।'); return; }
+    if(!c.url){ setStatus('⚠️ पहले Web App URL और टोकन भरें।'); window.showToastErr('⚠️ पहले Web App URL और टोकन भरें — फिर भेजें।'); return; }
     if(_busy){ setStatus('⏳ अभी भेजा जा रहा है…'); return; }
     setStatus('⏳ भेजा जा रहा है…');
     sendNow().then(function(r){
-      if(r.state === 'ok') setStatus('✅ Drive पर भेज दिया — ' + (r.file || ''));
+      if(r.state === 'ok'){ setStatus('✅ Drive पर भेज दिया — ' + (r.file || ''));
+        try{ window.showToast('✔ Drive पर भेज दिया — ' + (r.file || 'बैकअप')); }catch(e){} }
       else if(r.state === 'sent-unconfirmed') setStatus('🟡 भेज दिया, पर पुष्टि नहीं मिली — Drive पर पहुँचा या नहीं, यह पक्का नहीं। “अंतिम भेजा” का रिकॉर्ड अपडेट नहीं किया गया।');
       else if(r.state === 'no-url') setStatus('⚠️ पहले Web App URL भरें।');
       else if(r.state === 'busy') setStatus('⏳ अभी भेजा जा रहा है…');
-      else setStatus('❌ नहीं भेजा जा सका — ' + (r.error || '') + '। नेटवर्क/सेटअप जाँचें; ऐप ऑफ़लाइन भी ठीक चलता रहेगा।');
+      else { setStatus('❌ नहीं भेजा जा सका — ' + (r.error || '') + '। नेटवर्क/सेटअप जाँचें; ऐप ऑफ़लाइन भी ठीक चलता रहेगा।');
+        try{ window.showToastErr('⚠️ Drive पर नहीं भेजा जा सका — नेटवर्क/सेटअप जाँचें, फिर दोबारा भेजें।'); }catch(e){} }
       window.driveBackupRefreshUI();
     });
   };
