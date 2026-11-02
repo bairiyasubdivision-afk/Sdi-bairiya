@@ -60,12 +60,12 @@
   .btn-blue{background:#007bff;color:white;}.btn-sm{padding:5px 12px;font-size:0.82rem;}.btn-danger{background:#dc3545;color:white;}
   .btn:disabled{opacity:0.5;cursor:not-allowed;}
 
-  .cal-wrap{display:flex;gap:20px;flex-wrap:wrap;}
-  .cal-left{flex:0 0 380px;max-width:380px;min-width:280px;}
-  .cal-right{flex:1 1 400px;min-width:300px;}
+  .cal-wrap{display:flex;gap:20px;flex-wrap:wrap;min-width:0;max-width:100%;}
+  .cal-left{flex:0 0 380px;max-width:380px;min-width:0;}
+  .cal-right{flex:1 1 400px;min-width:0;}
   @media(max-width:768px){
-    .cal-left{flex:1 1 100%;max-width:100%;min-width:0;}
-    .cal-right{flex:1 1 100%;min-width:0;}
+    .cal-left{flex:1 1 100%;max-width:none;min-width:0;}
+    .cal-right{flex:1 1 100%;max-width:none;min-width:0;}
     .calendar{font-size:0.72rem;}
     .calendar th{padding:4px 1px;font-size:0.62rem;}
     .calendar td{height:62px;}
@@ -156,6 +156,21 @@
   .jl-edit{background:#1a73e8;color:white;border:none;border-radius:3px;width:22px;height:22px;cursor:pointer;font-size:0.8rem;display:inline-flex;align-items:center;justify-content:center;margin-right:2px;}
   .jl-edit:hover{background:#1557b0;}
 
+  /* v111 — असली scroll container जो page से छोटा हो सके (inline overflow-x:auto हटाया गया) */
+  .tbl-scroll{overflow-x:auto;max-width:100%;min-width:0;-webkit-overflow-scrolling:touch;}
+  .jl-table{width:100%;min-width:764px;table-layout:fixed;border-collapse:collapse;font-size:0.8rem;}
+  .jl-table th,.jl-table td{padding:6px 6px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;}
+  .jl-table th:nth-child(1),.jl-table td:nth-child(1){width:82px;}
+  .jl-table th:nth-child(2),.jl-table td:nth-child(2){width:138px;}
+  .jl-table th:nth-child(3),.jl-table td:nth-child(3){width:56px;}
+  .jl-table th:nth-child(4),.jl-table td:nth-child(4){width:62px;}
+  .jl-table th:nth-child(5),.jl-table td:nth-child(5){width:48px;}
+  .jl-table th:nth-child(6),.jl-table td:nth-child(6){width:54px;}
+  .jl-table th:nth-child(7),.jl-table td:nth-child(7){width:250px;white-space:normal!important;max-width:none!important;overflow-wrap:anywhere;word-break:break-word;}
+  .jl-table th:nth-child(8),.jl-table td:nth-child(8){width:74px;white-space:nowrap;overflow:visible;}
+  /* डेस्कटॉप पर पंक्ति-ऊँचाई पहले जैसी (एक पंक्ति + ellipsis) — फ़ोन पर ही wrap */
+  @media(min-width:901px){.jl-table th:nth-child(7),.jl-table td:nth-child(7){white-space:nowrap!important;}}
+
   /* v7.42 — Daily Work Log "Details of Work" अब पूरी तरह पठनीय (phone-friendly):
      पहले single-line input ~68px चौड़ा था और लंबा विवरण कट जाता था। अब textarea
      जो wrap होता है, स्तंभ चौड़ाई ठीक की गई (# = छोटा, Date = निश्चित, बाक़ी विवरण),
@@ -186,8 +201,11 @@
   .info-banner{background:#e7f3ff;border:1px solid #b8daff;border-radius:6px;padding:10px 15px;margin-bottom:15px;font-size:0.85rem;color:#004085;}
   .holiday-chip{background:#ffcccc;border:1px solid #dc3545;border-radius:12px;padding:2px 10px;font-size:0.75rem;color:#8b0000;}
   .holiday-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
-  @media(max-width:900px){.cal-left{flex:1 1 100%;max-width:none;}.cal-right{flex:1 1 100%;}.leg-fields{grid-template-columns:1fr 1fr;}}
-  @media(max-width:600px){.form-grid{grid-template-columns:1fr;}.cal-wrap{flex-direction:column;}.leg-fields{grid-template-columns:1fr;}}
+  /* v111 — cal-right पहले min-width:0 के बिना दोबारा declare हो रहा था, इसलिए Saved Journeys
+     table का min-content पूरे page को चौड़ा कर देता था। अब नीचे वाला (आख़िरी) media query
+     दोनों children पर flex:1 1 100%;max-width:none;min-width:0 फिर से लगाता है। */
+  @media(max-width:900px){.cal-wrap{min-width:0;max-width:100%;}.cal-left{flex:1 1 100%;max-width:none;min-width:0;}.cal-right{flex:1 1 100%;max-width:none;min-width:0;}.leg-fields{grid-template-columns:1fr 1fr;}}
+  @media(max-width:600px){.form-grid{grid-template-columns:1fr;}.cal-wrap{flex-direction:column;flex-wrap:nowrap;min-width:0;max-width:100%;}.cal-left,.cal-right{flex:1 1 100%;max-width:none;min-width:0;}.leg-fields{grid-template-columns:1fr;}}
 
 
   /* INSPECTION TOOL STYLES (scoped under #insp-root) */
@@ -530,7 +548,7 @@
   #data-tab td{padding:7px 10px;border:1px solid #e2e5ea;vertical-align:top;}
   #data-tab tr:nth-child(even) td{background:#fafbfc;}
   #data-tab tr:hover td{background:#f0f4f8;}
-  #data-tab .data-table-wrap{overflow-x:auto;max-height:500px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;}
+  #data-tab .data-table-wrap{overflow-x:auto;max-height:500px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;min-width:0;max-width:100%;}
   #data-tab .data-table-wrap thead{position:sticky;top:0;z-index:1;}
   #data-tab .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;}
   #data-tab .badge-working{background:#d4edda;color:#155724;}
@@ -832,7 +850,7 @@ input::placeholder,textarea::placeholder{color:#98a2b3;}
 /* --- v9.1: Master Data — सब सब-टैब एक साथ दिखें + पूरी टेबल एक साथ --- */
 #data-tab .sub-tabs{flex-wrap:wrap!important;overflow:visible!important;}
 #data-tab .sub-tab{flex:0 1 auto;}
-#data-tab .data-table-wrap{max-height:none!important;overflow-y:visible!important;overflow-x:auto;}
+#data-tab .data-table-wrap{max-height:none!important;overflow-y:visible!important;overflow-x:auto;min-width:0;max-width:100%;}
 @media(min-width:900px){ #data-tab .data-table-wrap thead{position:static;} }
 @media(max-width:899px){
   #data-tab .data-table-wrap thead{position:sticky;top:0;z-index:2;}
@@ -1039,7 +1057,6 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
 <div class="tab-content active" id="ta-tab">
   <div class="container">
 
-<div class="container">
   <div class="build-stamp">v7.55 · 01.11.2026 · डेटा: अप्रैल–अक्टूबर 2026</div>
   <div class="info-banner"><b>How to use</b>
     <ol>
@@ -1119,14 +1136,14 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
                कभी नहीं दिखती थीं। -->
           <div id="journeyListPanel">
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 10px;">
-            <input type="text" id="journeySearch" placeholder="Search journeys — date, office or purpose" oninput="renderJourneyList()" style="flex:1;min-width:220px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;">
-            <label style="font-size:0.85rem;display:flex;gap:6px;align-items:center;white-space:nowrap;"><input type="checkbox" id="journeyAllMonths" onchange="renderJourneyList()"> All months</label>
+            <input type="text" id="journeySearch" placeholder="Search journeys — date, office or purpose" oninput="renderJourneyList()" style="flex:1 1 140px;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;">
+            <label style="font-size:0.85rem;display:flex;gap:6px;align-items:center;white-space:normal;flex:0 1 auto;min-width:0;"><input type="checkbox" id="journeyAllMonths" onchange="renderJourneyList()"> All months</label>
           </div>
           <!-- v7.53 — अनुमानित departure की स्क्रीन पर साफ़ सूचना (फ़ोन पर tooltip नहीं दिखता) -->
           <div id="journeyDerivedNote" style="display:none;background:#eef7ee;border:1px solid #a5d6a7;border-radius:8px;padding:8px 10px;margin:0 0 10px;font-size:0.8rem;line-height:1.5;color:#1b5e20;"></div>
           <div class="card-body">
-            <div style="overflow-x:auto;">
-              <table style="width:100%;font-size:0.8rem;"><thead><tr><th>Date</th><th>Route</th><th>Dep</th><th>Ret HQ</th><th>Km</th><th>DA</th><th>Work Log Entry</th><th></th></tr></thead><tbody id="journeyListBody"></tbody></table>
+            <div class="tbl-scroll">
+              <table class="jl-table"><thead><tr><th>Date</th><th>Route</th><th>Dep</th><th>Ret HQ</th><th>Km</th><th>DA</th><th>Work Log Entry</th><th></th></tr></thead><tbody id="journeyListBody"></tbody></table>
             </div>
           </div>
           </div>
@@ -1160,7 +1177,7 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       <button class="btn btn-outline btn-sm" onclick="generateWorkLogFromJourneys()">Auto-generate from journeys</button>
       <span class="pill pill-info">Journey days = combined purpose | Non-journey = "Stayed at HQ and did office work" | Holidays = holiday name</span>
     </div>
-    <div style="overflow-x:auto;"><table class="wl-table"><thead><tr><th style="width:30px">#</th><th style="width:100px">Date</th><th>Details of Work</th></tr></thead><tbody id="workLogBody"></tbody></table></div>
+    <div class="tbl-scroll"><table class="wl-table"><thead><tr><th style="width:30px">#</th><th style="width:100px">Date</th><th>Details of Work</th></tr></thead><tbody id="workLogBody"></tbody></table></div>
     </div>
   </div>
 
@@ -1174,8 +1191,6 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
   </div>
   <!-- 🆕 बनी हुई Tour Diary / TA Bill यहाँ दिखती हैं — डाउनलोड + "Drive पर भेजें" -->
   <div id="tourTaDlLinks" style="display:none;margin-top:10px;"></div>
-</div>
-
 
   </div>
 </div>
