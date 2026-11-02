@@ -1108,17 +1108,23 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
         </div>
         <div id="placeholderMsg" style="color:#999;font-style:italic;padding:20px;text-align:center;">Click a date on the calendar to start planning a journey.</div>
         <div class="journey-list" id="journeyListWrap" style="display:none;">
-          <h4 class="card-title collapsible" onclick="toggleCard(this)" style="color:var(--navy);margin:10px 0 8px;font-size:0.95rem;border-bottom:2px solid var(--red);padding-bottom:6px;cursor:pointer;">Saved Journeys <span class="collapse-icon">▼</span></h4>
+          <h4 class="card-title collapsible" onclick="toggleJourneyList(this)" style="color:var(--navy);margin:10px 0 8px;font-size:0.95rem;border-bottom:2px solid var(--red);padding-bottom:6px;cursor:pointer;">Saved Journeys <span class="collapse-icon">▼</span></h4>
+          <!-- v7.56 — सूची अब एक ही पैनल में: toggleJourneyList पूरे ब्लॉक को खोलता/बंद करता है।
+               पहले हेडिंग का toggleCard सिर्फ़ search-row को टॉगल करता था और table वाला
+               .card-body हमेशा display:none रह जाता था — इसलिए सहेजी हुई जर्नी स्क्रीन पर
+               कभी नहीं दिखती थीं। -->
+          <div id="journeyListPanel">
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 10px;">
             <input type="text" id="journeySearch" placeholder="Search journeys — date, office or purpose" oninput="renderJourneyList()" style="flex:1;min-width:220px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;">
             <label style="font-size:0.85rem;display:flex;gap:6px;align-items:center;white-space:nowrap;"><input type="checkbox" id="journeyAllMonths" onchange="renderJourneyList()"> All months</label>
           </div>
           <!-- v7.53 — अनुमानित departure की स्क्रीन पर साफ़ सूचना (फ़ोन पर tooltip नहीं दिखता) -->
           <div id="journeyDerivedNote" style="display:none;background:#eef7ee;border:1px solid #a5d6a7;border-radius:8px;padding:8px 10px;margin:0 0 10px;font-size:0.8rem;line-height:1.5;color:#1b5e20;"></div>
-          <div class="card-body" style="display:none;">
+          <div class="card-body">
             <div style="overflow-x:auto;">
               <table style="width:100%;font-size:0.8rem;"><thead><tr><th>Date</th><th>Route</th><th>Dep</th><th>Ret HQ</th><th>Km</th><th>DA</th><th>Work Log Entry</th><th></th></tr></thead><tbody id="journeyListBody"></tbody></table>
             </div>
+          </div>
           </div>
         </div>
       </div>
@@ -5366,8 +5372,21 @@ function editJourney(idx){
   loadJourneyForEdit(idx);
 }
 
+// v7.56 — "Saved Journeys" का पूरा ब्लॉक एक साथ खुलता/बंद होता है।
+// पहले हेडिंग toggleCard(this) से सिर्फ़ search-row टॉगल करता था, इसलिए table वाला
+// .card-body (display:none) कभी नहीं दिखता था और सहेजी हुई जर्नी स्क्रीन पर ग़ायब रहती थीं।
+var _journeyPanelOpen=true;
+function toggleJourneyList(el){
+  _journeyPanelOpen=!_journeyPanelOpen;
+  var p=document.getElementById('journeyListPanel');
+  if(p)p.style.display=_journeyPanelOpen?'':'none';
+  if(el)el.classList.toggle('collapsed',!_journeyPanelOpen);
+}
+
 function renderJourneyList(){
   var wrap=document.getElementById('journeyListWrap'),body=document.getElementById('journeyListBody');
+  var _panel=document.getElementById('journeyListPanel');
+  if(_panel)_panel.style.display=_journeyPanelOpen?'':'none';
   var mi=getMonthIdx(),y=getYear();
   // Filter journeys to only show those for the selected month/year
   var monthJourneys=journeys.filter(function(j){
@@ -5421,7 +5440,7 @@ function renderJourneyList(){
   if(!monthJourneys.length){
     if(journeys.length){
       wrap.style.display='block';
-      body.innerHTML='<tr><td colspan="8" style="text-align:center;color:#999;padding:10px;">No journeys for this month. Journeys exist for other months.</td></tr>';
+      body.innerHTML='<tr><td colspan="8" style="text-align:center;color:#999;padding:10px;">No journeys for this month. Journeys exist for other months.<br><span style="font-size:0.85em;">Change <b>Bill Month</b> above, or tick <b>All months</b> to see every saved journey.</span></td></tr>';
     } else {
       wrap.style.display='none';
     }
