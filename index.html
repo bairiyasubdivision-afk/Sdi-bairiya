@@ -144,6 +144,7 @@
   .lf input:focus,.lf select:focus{outline:none;border-color:var(--red);}
   .lf input[readonly],.lf input.auto-calc{background:#e8f5e9;color:#1b5e20;font-weight:500;}
   .lf input[readonly].manual-dist{background:#fff3cd;color:#856404;}
+  .calc-tag{display:inline-block;background:#e8f5e9;color:#1b5e20;border:1px solid #b7d7b9;border-radius:3px;font-size:0.62rem;font-weight:700;letter-spacing:0.3px;padding:0 3px;margin-left:3px;text-transform:lowercase;vertical-align:middle;}
   .jf-info{color:#0066cc;font-size:0.78rem;margin-top:6px;padding:6px 8px;background:#e7f3ff;border-radius:4px;}
   .jf-error{color:#dc3545;font-size:0.78rem;margin-top:4px;display:none;}.jf-error.show{display:block;}
   .leg-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
@@ -1077,7 +1078,7 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     <div class="form-group"><label>Mileage Rate (Rs/Km)</label><input type="number" id="mileageRate" value="9.97" step="0.01" oninput="updateSummary()"></div>
     <div class="form-group"><label>DA Rate (Rs/day)</label><input type="number" id="daRate" value="1000" step="50" oninput="updateSummary()"></div>
     <div class="form-group"><label>DA Min Distance (Km)</label><input type="number" id="daMinDist" value="8" step="1" oninput="updateSummary()"></div>
-    <div class="form-group"><label>Assumed Speed Range (Km/h)</label>
+    <div class="form-group"><label>Bike Assumed Speed Range (Km/h)</label>
       <div style="display:flex;gap:6px;align-items:center;">
         <input type="number" id="speedMin" value="24" step="1" min="1" max="200" style="width:66px;" title="Lowest assumed speed (default 24 km/h)." oninput="onAssumedSpeedChange()">
         <span style="color:#666;">to</span>
@@ -1085,7 +1086,7 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
       </div>
     </div>
   </div>
-  <div style="font-size:0.78rem;color:#666;margin-top:8px;line-height:1.45;">Assumed speed is used only where a departure time was <b>not recorded</b>: departure = arrival − (leg distance ÷ assumed speed). The speed is picked <b>at random between 24 and 30 km/h</b> — one draw per journey — and then <b>kept</b> with that journey, so its calculated departure, DA and bill total never change on regeneration. Such a time is shown with a green <b>*</b> (calculated, not recorded). Recorded times are never altered.</div></div>
+  <div style="font-size:0.78rem;color:#666;margin-top:8px;line-height:1.45;">Speed is used to work out the time that was <b>not recorded</b>: departure = arrival − (distance ÷ speed), or arrival = departure + (distance ÷ speed). For <b>Bike (Motorcycle)</b> the speed is picked <b>at random between 24 and 30 km/h</b> — one draw per journey — and then <b>kept</b>. For <b>Train, Bus, Car and Other</b> the speed is the number you type on the leg itself (defaults: Train 50, Bus 40, Car 45, Other 40 km/h); your value is kept with the leg and used in every calculation and every document. A calculated time is shown with a green <b>*</b>. Recorded times are never altered.</div></div>
 
   <div class="card"><div class="card-title">Leaves Availed</div>
     <div style="font-size:0.82rem;color:#666;margin-bottom:10px;">Mark leave days — they will be highlighted on the main calendar below and block journey planning on those dates.</div>
@@ -4414,6 +4415,15 @@ function travelMinutes(distKm,speedKmph){return Math.round(distKm/speedKmph*60);
 // इसलिए calculated departure, DA और bill total दोबारा generate करने पर नहीं बदलते।
 // ============================================================
 var DEFAULT_SPEED_MIN=24,DEFAULT_SPEED_MAX=30;
+// v7.57 — गति अब mode पर निर्भर है:
+//   • Bike (Motorcycle) → 24–30 km/h के बीच random, एक बार निकालकर जर्नी पर रखी जाती है (जैसा पहले था)।
+//   • Train / Bus / Car / Other → अधिकारी की अपनी गति (editable), शुरुआत में sensible default।
+var BIKE_MODES={Motorcycle:1,Bike:1,Bicycle:1,Cycle:1,Scooter:1};
+var MODE_SPEED_DEFAULT={Train:50,Bus:40,Car:45,Other:40};
+var MOTOR_SPEED_DEFAULT=40;
+function isBikeMode(m){var k=String(m==null?'':m).trim();return !!BIKE_MODES[k];}
+function defaultSpeedForMode(m){var k=String(m==null?'':m).trim();var d=MODE_SPEED_DEFAULT[k];return (d>0)?d:MOTOR_SPEED_DEFAULT;}
+function modeSpeedIsCustom(m){return !isBikeMode(m);}
 function _speedNum(id,def){
   var el=document.getElementById(id);
   var v=el?parseFloat(el.value):NaN;
@@ -4443,10 +4453,17 @@ function keptSpeed(l){
 // इस leg की अनुमानित गति: एक ही बार निकालो, leg पर रख दो, फिर हमेशा वही
 var _speedKeepPending=false;
 function legSpeed(l){
+  if(!l)return randomSpeed();
+  // v7.57 — Bike के लिए 24–30 random; बाकी हर motorised mode के लिए अधिकारी की गति
+  if(modeSpeedIsCustom(l.mode)){
+    var v=parseFloat(l.speed);
+    if(!(v>0)||!l.speedManual){v=defaultSpeedForMode(l.mode);l.speed=v;}
+    return v;
+  }
   var k=keptSpeed(l);
   if(k)return k;
   var s=randomSpeed();
-  if(l){l.speed=s;_speedKeepPending=true;}
+  if(l){l.speed=s;l.speedManual=false;_speedKeepPending=true;}
   return s;
 }
 function flushKeptSpeeds(){
@@ -4459,6 +4476,19 @@ function derivedSpeedOf(v){
   var s=null;
   if(v&&v.legs){for(var i=0;i<v.legs.length;i++){if(v.legs[i].depDerivedSpeed){s=v.legs[i].depDerivedSpeed;break;}}}
   return s?fmtSpeed(s):'\u2014';
+}
+function derivedSpeedsModeText(list){
+  var u=[];
+  (list||[]).forEach(function(l){if(l.depDerived&&l.depDerivedSpeed){var s=fmtSpeed(l.depDerivedSpeed)+' km/h for '+(l.mode||'Bike');if(u.indexOf(s)<0)u.push(s);}});
+  return u.length?u.join(', '):'\u2014';
+}
+// v7.57 — बिल/डायरी का * वाला नोट: Bike-only जर्नी में पहले जैसा ही शब्द-दर-शब्द,
+// Train/Bus/Car की अपनी गति हो तो उसका साफ़ ज़िक्र।
+function derivedNoteText(list){
+  var anyCustom=false;
+  (list||[]).forEach(function(l){if(l.depDerived&&modeSpeedIsCustom(l.mode))anyCustom=true;});
+  if(!anyCustom)return '* Departure not recorded \u2014 calculated from leg distance \u00f7 assumed speed ('+derivedSpeedsText(list)+' km/h, picked at random between '+getSpeedRange().min+' and '+getSpeedRange().max+' km/h once per journey and kept), i.e. arrival \u2212 travel time.';
+  return '* Departure not recorded \u2014 calculated from leg distance \u00f7 the speed set for that mode ('+derivedSpeedsModeText(list)+'), i.e. arrival \u2212 travel time.';
 }
 function derivedSpeedsText(list){
   var u=[];
@@ -4736,7 +4766,16 @@ function loadJourneyForEdit(idx){
       purposeType:pt,
       customPurpose:cp,
       isReturn:l.isReturn,
-      speed:randomSpeed(),
+      // v7.57 — भंडार में सहेजी गई गति ही रहे (Bike: वही 24–30 draw; Train/Bus: अधिकारी की गति)
+      speed:(function(){
+        var v=parseFloat(l.speed);
+        if(isBikeMode(l.mode))return v>0?v:randomSpeed();
+        // v7.57 — पुरानी जर्नी में Train/Bus पर बची 24–30 वाली गति न लें; अधिकारी की गति या mode का default
+        if(l.speedManual&&v>0)return v;
+        return defaultSpeedForMode(l.mode);
+      })(),
+      speedManual:!!l.speedManual,
+      depDerived:!!l.depDerived,   // v7.57 — भंडार में जो समय 'गणना किया हुआ' था, वही रहे
       fromStore:true,          // v7.51 — भंडार से आया leg (दर्ज समय सुरक्षित)
       isCustom:isCustom,
       returnDayOffset:(function(){
@@ -4762,10 +4801,10 @@ function loadJourneyForEdit(idx){
       else if(_i0===null)_i0=_i;
     }
     if(_i0!==null&&currentLegs[_i0].departure&&!currentLegs[_i0].arrival&&currentLegs[_i0].dist){
-      currentLegs[_i0].arrival=minToTime(timeToMin(currentLegs[_i0].departure)+travelMinutes(currentLegs[_i0].dist,currentLegs[_i0].speed));
+      currentLegs[_i0].arrival=minToTime(timeToMin(currentLegs[_i0].departure)+travelMinutes(currentLegs[_i0].dist,legSpeed(currentLegs[_i0])));
     }
     if(_r0!==null&&currentLegs[_r0].arrival&&!currentLegs[_r0].departure&&currentLegs[_r0].dist){
-      currentLegs[_r0].departure=minToTime(timeToMin(currentLegs[_r0].arrival)-travelMinutes(currentLegs[_r0].dist,currentLegs[_r0].speed));
+      currentLegs[_r0].departure=minToTime(timeToMin(currentLegs[_r0].arrival)-travelMinutes(currentLegs[_r0].dist,legSpeed(currentLegs[_r0])));
     }
   })();
   showForm(j.date);
@@ -4777,9 +4816,9 @@ function loadJourneyForEdit(idx){
     if(_fo&&!_fo.departure&&_fo.arrival&&parseFloat(_fo.dist)>0){
       var _info=document.getElementById('jfInfo');
       if(_info){
-        var _ks=keptSpeed(_fo);
-        var _rs=getSpeedRange();
-        var _noteTxt=_ks?(minToTime(timeToMin(_fo.arrival)-travelMinutes(parseFloat(_fo.dist),_ks))+' at '+fmtSpeed(_ks)+' km/h, arrival − travel time'):('arrival − travel time, at an assumed speed picked at random between '+_rs.min+' and '+_rs.max+' km/h once and then kept for this journey');
+        var _ks=legSpeed(_fo);
+        var _spdTxt=modeSpeedIsCustom(_fo.mode)?((_fo.mode||'')+' speed you set'):('bike assumed speed, random '+getSpeedRange().min+'\u2013'+getSpeedRange().max+' km/h once per journey');
+        var _noteTxt=minToTime(timeToMin(_fo.arrival)-travelMinutes(parseFloat(_fo.dist),_ks))+' at '+fmtSpeed(_ks)+' km/h ('+_spdTxt+'), arrival \u2212 travel time';
         _info.textContent='Outward departure not recorded. Type the real departure to record it — if you leave it blank, the Tour Diary and TA Bill will show a calculated departure ('+_noteTxt+'), marked *.';
         _info.style.display='block';
       }
@@ -4867,14 +4906,21 @@ function renderLegs(){
     if(isRet){toHTML='<div class="lf"><label>To</label><input type="text" value="'+esc(leg.to)+'" readonly></div>'+dayCtl;}
     else if(leg.isCustom){toHTML='<div class="lf"><label>To (Custom Place)</label><input type="text" id="legTo_'+idx+'" value="'+esc(leg.to)+'" placeholder="Enter office/place name" onchange="onCustomOfficeChange('+idx+')"><button class="btn btn-sm btn-secondary" onclick="switchToDropdown('+idx+')" style="margin-left:4px;font-size:0.75rem;padding:2px 6px;" title="Switch back to list">&#8634;</button></div>'+dayCtl;}
     else{toHTML='<div class="lf"><label>To (Office)</label><select id="legTo_'+idx+'" onchange="onLegOfficeChange('+idx+')">'+buildOfficeDDL()+'</select></div>'+dayCtl;}
-    // Departure
-    var depReadonly=(leg.departure&&(leg.knownTime==='arr'||leg.depAutoCalc))?'auto-calc':'';
-    var depHTML='<div class="lf"><label>Departure</label><input type="time" id="legDep_'+idx+'" value="'+leg.departure+'" class="'+depReadonly+'" '+(depReadonly?'readonly':'')+' onchange="onLegTimeChange('+idx+',\'dep\')"></div>';
+    // Departure / Arrival — v7.57: दोनों खाने editable रहते हैं। जो खाना अधिकारी ने
+    // आख़िर में भरा वही leg चलाता है; दूसरा (गणना किया हुआ) हरे रंग + "calc" निशान से दिखता है।
+    var depCalc=!!leg.depAutoCalc;
+    var depHTML='<div class="lf"><label>Departure'+(depCalc?' <span class="calc-tag">calc</span>':'')+'</label><input type="time" id="legDep_'+idx+'" value="'+leg.departure+'" class="'+(depCalc?'auto-calc':'')+'" title="'+(depCalc?'Calculated: arrival \u2212 travel time. Type a real departure here and the arrival will be recalculated instead.':'Type the departure \u2014 the arrival is then calculated from distance \u00f7 speed.')+'" onchange="onLegTimeChange('+idx+',\'dep\')"></div>';
     // Arrival
-    var arrReadonly=leg.arrival&&leg.knownTime==='dep'?'auto-calc':'';
-    var arrHTML='<div class="lf"><label>Arrival</label><input type="time" id="legArr_'+idx+'" value="'+leg.arrival+'" class="'+arrReadonly+'" '+(arrReadonly?'readonly':'')+' onchange="onLegTimeChange('+idx+',\'arr\')">'+((leg.departure&&leg.arrival&&timeToMin(leg.arrival)<timeToMin(leg.departure))?'<span style="font-size:0.7rem;color:#b22222;font-weight:700;">+1 day (past midnight)</span>':'')+'</div>';
+    var arrCalc=!!leg.arrAutoCalc;
+    var arrHTML='<div class="lf"><label>Arrival'+(arrCalc?' <span class="calc-tag">calc</span>':'')+'</label><input type="time" id="legArr_'+idx+'" value="'+leg.arrival+'" class="'+(arrCalc?'auto-calc':'')+'" title="'+(arrCalc?'Calculated: departure + travel time. Type the real arrival here and the departure will be recalculated instead.':'Type the arrival \u2014 the departure is then back-calculated from distance \u00f7 speed.')+'" onchange="onLegTimeChange('+idx+',\'arr\')">'+((leg.departure&&leg.arrival&&timeToMin(leg.arrival)<timeToMin(leg.departure))?'<span style="font-size:0.7rem;color:#b22222;font-weight:700;">+1 day (past midnight)</span>':'')+'</div>';
     // Mode
     var modeHTML='<div class="lf"><label>Mode</label><select id="legMode_'+idx+'" onchange="onLegModeChange('+idx+')"><option'+(leg.mode==='Motorcycle'?' selected':'')+'>Motorcycle</option><option'+(leg.mode==='Bus'?' selected':'')+'>Bus</option><option'+(leg.mode==='Car'?' selected':'')+'>Car</option><option'+(leg.mode==='Train'?' selected':'')+'>Train</option><option'+(leg.mode==='Other'?' selected':'')+'>Other</option></select></div>';
+    // Speed — v7.57: Bike पर 24–30 random (read-only, जर्नी पर टिकी); Train/Bus/Car/Other पर
+    // अधिकारी की अपनी editable गति, शुरुआत में mode का default।
+    var _spv=legSpeed(leg);
+    var speedHTML=isBikeMode(leg.mode)
+      ? '<div class="lf" style="min-width:150px;"><label>Speed (km/h) \u2014 auto</label><input type="number" id="legSpeed_'+idx+'" value="'+fmtSpeed(_spv)+'" class="auto-calc" readonly title="Bike: assumed speed picked at random between '+getSpeedRange().min+' and '+getSpeedRange().max+' km/h once per journey and kept."></div>'
+      : '<div class="lf" style="min-width:150px;"><label>Speed (km/h) \u2014 '+esc(leg.mode)+'</label><input type="number" id="legSpeed_'+idx+'" value="'+fmtSpeed(_spv)+'" step="1" min="1" max="200" onchange="onLegSpeedChange('+idx+')" title="Average speed for '+esc(leg.mode)+' (default '+defaultSpeedForMode(leg.mode)+' km/h). Change it and the times are recalculated."></div>';
     // Distance
     var distClass=leg.distAutoCalc?'auto-calc':'manual-dist';
     var distLabel=leg.distAutoCalc?'Km (auto \u2014 you can edit)':'Km (enter manually)';
@@ -4890,7 +4936,7 @@ function renderLegs(){
     }
 
     var delBtn=idx>0?'<button class="btn btn-danger btn-sm" onclick="removeLeg('+idx+')" style="float:right;">X</button>':'';
-    div.innerHTML='<div class="leg-row-header"><span class="leg-num">Leg '+(idx+1)+'</span><span class="leg-type '+legTypeClass+'">'+legTypeLabel+'</span>'+delBtn+'</div><div class="leg-fields">'+fromHTML+toHTML+depHTML+arrHTML+modeHTML+distHTML+fareHTML+purposeHTML+'</div>';
+    div.innerHTML='<div class="leg-row-header"><span class="leg-num">Leg '+(idx+1)+'</span><span class="leg-type '+legTypeClass+'">'+legTypeLabel+'</span>'+delBtn+'</div><div class="leg-fields">'+fromHTML+toHTML+depHTML+arrHTML+modeHTML+speedHTML+distHTML+fareHTML+purposeHTML+'</div>';
     container.appendChild(div);
 
     // Set selected values
@@ -5055,15 +5101,47 @@ function addReturnOnlyLeg(){
 
 function onLegModeChange(idx){
   var mSel=document.getElementById('legMode_'+idx);
-  if(mSel)currentLegs[idx].mode=mSel.value;
-  if(currentLegs[idx].fare===undefined)currentLegs[idx].fare='';
-  renderLegs();           // Bus/Train/Other चुनने पर Fare का बॉक्स दिखे/छिपे
+  var leg=currentLegs[idx];
+  var oldMode=leg?leg.mode:'';
+  if(mSel&&leg)leg.mode=mSel.value;
+  if(leg){
+    if(leg.fare===undefined)leg.fare='';
+    // v7.57 — mode बदला → उस mode की गति: Bike पर ताज़ा 24–30 draw, बाकी पर उस mode का default
+    if(leg.mode!==oldMode){
+      leg.speedManual=false;
+      leg.speed=isBikeMode(leg.mode)?randomSpeed():defaultSpeedForMode(leg.mode);
+    } else { legSpeed(leg); }
+    markLegDirectionForRecalc(leg);
+  }
+  recalcTimesV2();        // नई गति से समय दोबारा (फ़ॉर्म भी फिर बनेगा — Fare का बॉक्स दिखे/छिपे)
   autoSave();
 }
 function onLegFareChange(idx){
   var el=document.getElementById('legFare_'+idx);
   currentLegs[idx].fare=el?el.value:'';
   updateLegInfo();autoSave();
+}
+// v7.57 — जब अधिकारी गति/mode/दूरी बदले तो यह leg किस सिरे से चलेगी, वह तय करो:
+// जो समय अधिकारी ने दर्ज किया है वही बचे, गणना किया हुआ समय नए हिसाब से बने।
+function markLegDirectionForRecalc(leg){
+  if(!leg)return;
+  if(leg.timeEdited)return;                       // अधिकारी पहले ही तय कर चुका
+  if(leg.depDerived||leg.depAutoCalc){leg.timeEdited='arr';return;}
+  if(leg.departure){leg.timeEdited='dep';return;}
+  if(leg.arrival){leg.timeEdited='arr';}
+}
+// v7.57 — Train/Bus/Car/Other की गति अधिकारी ख़ुद भरे; उसी से समय दोबारा निकलेंगे।
+function onLegSpeedChange(idx){
+  var el=document.getElementById('legSpeed_'+idx);
+  var leg=currentLegs[idx];if(!leg||!el)return;
+  var v=parseFloat(el.value);
+  if(!(v>0))v=defaultSpeedForMode(leg.mode);
+  if(v>200)v=200;
+  leg.speed=v;leg.speedManual=true;
+  if(el)el.value=fmtSpeed(v);
+  markLegDirectionForRecalc(leg);
+  recalcTimesV2();
+  autoSave();
 }
 
 function onLegDistInput(idx){
@@ -5080,6 +5158,7 @@ function onLegDistChange(idx){
   currentLegs[idx].dist=parseFloat(distEl.value)||0;
   currentLegs[idx].distAutoCalc=false;
   currentLegs[idx].distManual=true;
+  markLegDirectionForRecalc(currentLegs[idx]);
   autoCalcTimes(idx);
   // Only HQ-relative legs carry a distance that belongs to an office record:
   // the first outward leg (HQ -> office) or the return leg (office -> HQ).
@@ -5144,9 +5223,21 @@ function onLegPurposeChange(idx){
 }
 
 function onLegTimeChange(idx,which){
-  if(currentLegs[idx])currentLegs[idx].fromStore=false;   // v7.51 — अधिकारी ने छुआ
-  if(which==='dep'){currentLegs[idx].departure=document.getElementById('legDep_'+idx).value;currentLegs[idx].knownTime='dep';currentLegs[idx].depDerived=false;delete currentLegs[idx].depDerivedSpeed;}   // v7.53 — दर्ज समय अब अनुमानित नहीं
-  else{currentLegs[idx].arrival=document.getElementById('legArr_'+idx).value;currentLegs[idx].knownTime='arr';}
+  var leg=currentLegs[idx];if(!leg)return;
+  leg.fromStore=false;   // v7.51 — अधिकारी ने छुआ
+  var val='';
+  // v7.57 — जो खाना अधिकारी ने आख़िर में भरा, वही leg की दिशा तय करता है:
+  // departure भरा → arrival आगे निकलेगा; arrival भरा → departure पीछे निकलेगा।
+  if(which==='dep'){
+    val=document.getElementById('legDep_'+idx).value;
+    leg.departure=val;
+    leg.knownTime='dep';leg.depDerived=false;delete leg.depDerivedSpeed;   // v7.53 — दर्ज समय अब अनुमानित नहीं
+  }else{
+    val=document.getElementById('legArr_'+idx).value;
+    leg.arrival=val;
+    leg.knownTime='arr';
+  }
+  leg.timeEdited=val?which:'';
   autoCalcTimes(idx);
 }
 
@@ -5160,6 +5251,24 @@ function recalcTimesV2(){
   for(i=0;i<currentLegs.length;i++){
     leg=currentLegs[i];
     if(!leg.dist||leg.dist===0)continue;
+
+    // v7.57 — दोनों दिशाएँ: जो खाना अधिकारी ने आख़िर में भरा, वही चलता है।
+    if(leg.timeEdited==='arr'&&leg.arrival){
+      var _se=legSpeed(leg);
+      t=travelMinutes(leg.dist,_se);
+      leg.departure=minToTime(timeToMin(leg.arrival)-t);
+      leg.depAutoCalc=true;leg.depDerived=true;leg.depDerivedSpeed=_se;
+      leg.knownTime='arr';
+      continue;
+    }
+    if(leg.timeEdited==='dep'&&leg.departure){
+      var _sd=legSpeed(leg);
+      t=travelMinutes(leg.dist,_sd);
+      leg.arrival=minToTime(timeToMin(leg.departure)+t);
+      leg.arrAutoCalc=true;leg.knownTime='dep';
+      leg.depDerived=false;delete leg.depDerivedSpeed;
+      continue;
+    }
 
     if(i===0&&leg.departure){
       // First leg: user entered departure time
@@ -5193,9 +5302,10 @@ function recalcTimesV2(){
     var retLeg=currentLegs[retIdx];
     if(retLeg.arrival&&retLeg.dist){
       // Return arrival at HQ is user-entered
-      retLeg.knownTime='arr';
+      // v7.57 — अधिकारी ने return leg पर departure भरा था → वही दिशा चलेगी
+      if(retLeg.timeEdited!=='dep')retLeg.knownTime='arr';
       // v7.51 — भंडार से आया और छुआ न गया leg: दर्ज departure को मत बदलो
-      if(!(retLeg.fromStore&&retLeg.departure)){
+      if(retLeg.timeEdited!=='dep'&&!(retLeg.fromStore&&retLeg.departure)){
         t=travelMinutes(retLeg.dist,retLeg.speed);
         retLeg.departure=minToTime(timeToMin(retLeg.arrival)-t);
         retLeg.depAutoCalc=true;retLeg.depDerived=true;retLeg.depDerivedSpeed=(parseFloat(retLeg.speed)>0?retLeg.speed:null);   // v7.53
@@ -5232,6 +5342,8 @@ function recalcTimesV2(){
         leg=currentLegs[i];
         if(!leg.dist||leg.dist===0)continue;
         var nextLeg=currentLegs[i+1];
+        // v7.57 — अधिकारी ने इस leg का समय ख़ुद भरा है → मत छुओ
+        if(leg.timeEdited)continue;
         // v7.51 — departure दर्ज है → कुछ मत बदलो
         if(leg.departure)continue;
         // v7.51 — arrival दर्ज है → departure = arrival − (दूरी ÷ अनुमानित गति)
@@ -5302,7 +5414,13 @@ function autoCalcTimes(idx){
 function updateLegInfo(){
   var info=document.getElementById('jfInfo');var parts=[];
   currentLegs.forEach(function(leg,i){
-    if(leg.to&&leg.dist){var tt=travelMinutes(leg.dist,leg.speed);parts.push('Leg '+(i+1)+': '+leg.from+'->'+leg.to+' ('+leg.dist+'km, ~'+tt+'min @'+leg.speed.toFixed(1)+'kmph)');}
+    if(leg.to&&leg.dist){
+      var _sp=legSpeed(leg);
+      var tt=travelMinutes(leg.dist,_sp);
+      // v7.57 — किस गति से यह समय निकला, वह भी साफ़ लिखा जाए
+      var tag=isBikeMode(leg.mode)?('bike, assumed '+getSpeedRange().min+'\u2013'+getSpeedRange().max+' km/h'):((leg.mode||'')+', speed you set');
+      parts.push('Leg '+(i+1)+': '+leg.from+'->'+leg.to+' ('+leg.dist+'km, ~'+tt+'min @'+fmtSpeed(_sp)+'kmph, '+tag+')');
+    }
   });
   info.textContent=parts.join(' | ');
 }
@@ -5365,6 +5483,8 @@ function saveDayJourney(){
     if(purpose&&!l.isReturn&&_off===0)outwardPurposes.push({office:l.to,purpose:purpose,purposeType:l.purposeType});
 
     var _legOut={from:l.from,to:l.to,departure:depDT,arrival:arrDT,mode:l.mode,dist:oneWay,purpose:purpose,isReturn:l.isReturn,fare:(l.fare===undefined?'':l.fare)};
+    // v7.57 — हर leg की गति भी साथ सहेजी जाए (Bike की 24–30 draw, Train/Bus की अधिकारी की गति)
+    try{var _sv=legSpeed(l);if(_sv>0){_legOut.speed=fmtSpeed(_sv);if(l.speedManual)_legOut.speedManual=true;}}catch(e){}
     // v7.53 — फ़ॉर्म में गणना किया गया समय सहेजते समय भी 'अनुमानित' रहे (बिल में * छपे)
     if(l.depDerived){_legOut.depDerived=true;if(parseFloat(l.speed)>0)_legOut.depDerivedSpeed=l.speed;}
     journey.legs.push(_legOut);
@@ -5515,7 +5635,7 @@ function renderJourneyList(){
       var globalIdx=journeys.indexOf(j);
       var route=j.legs.map(function(l){return l.to;}).join(' -> ');
       var tr=document.createElement('tr');
-      var _jv=journeyView(j),_dm=_jv.depDerived?'<span style="color:#1b5e20;font-weight:700;" title="Departure not recorded \u2014 calculated as arrival \u2212 (distance \u00f7 '+derivedSpeedOf(_jv)+' km/h; this assumed speed was picked at random between 24 and 30 km/h and kept for this journey). Recorded times are never changed.">*</span>':'';
+      var _jv=journeyView(j),_dm=_jv.depDerived?'<span style="color:#1b5e20;font-weight:700;" title="Departure not recorded \u2014 calculated as arrival \u2212 (distance \u00f7 '+derivedSpeedOf(_jv)+' km/h; Bike speed is picked at random between 24 and 30 km/h, Train/Bus/Car use the speed you set on that leg, and it is kept for this journey). Recorded times are never changed.">*</span>':'';
       tr.innerHTML='<td>'+j.date+'</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(route)+'</td><td>'+_jv.depTime+_dm+'</td><td>'+_jv.retTime+'</td><td>'+j.dist+'</td><td>'+recalcJourneyDA(j).toFixed(1)+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(j.workLogEntry)+'">'+esc(j.workLogEntry)+'</td><td><button class="jl-edit" onclick="editJourney('+globalIdx+')" title="Edit/Modify this journey">&#9998;</button> <button class="jl-del" onclick="deleteJourney('+globalIdx+')" title="Delete this journey">&#10005;</button></td>';
       body.appendChild(tr);
     });
@@ -5537,7 +5657,7 @@ function renderJourneyList(){
     var globalIdx=journeys.indexOf(j);
     var route=j.legs.map(function(l){return l.to;}).join(' -> ');
     var tr=document.createElement('tr');
-    var _jv=journeyView(j),_dm=_jv.depDerived?'<span style="color:#1b5e20;font-weight:700;" title="Departure not recorded \u2014 calculated as arrival \u2212 (distance \u00f7 '+derivedSpeedOf(_jv)+' km/h; this assumed speed was picked at random between 24 and 30 km/h and kept for this journey). Recorded times are never changed.">*</span>':'';
+    var _jv=journeyView(j),_dm=_jv.depDerived?'<span style="color:#1b5e20;font-weight:700;" title="Departure not recorded \u2014 calculated as arrival \u2212 (distance \u00f7 '+derivedSpeedOf(_jv)+' km/h; Bike speed is picked at random between 24 and 30 km/h, Train/Bus/Car use the speed you set on that leg, and it is kept for this journey). Recorded times are never changed.">*</span>':'';
     tr.innerHTML='<td>'+j.date+'</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(route)+'</td><td>'+_jv.depTime+_dm+'</td><td>'+_jv.retTime+'</td><td>'+j.dist+'</td><td>'+recalcJourneyDA(j).toFixed(1)+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(j.workLogEntry)+'">'+esc(j.workLogEntry)+'</td><td><button class="jl-edit" onclick="editJourney('+globalIdx+')" title="Edit/Modify this journey">&#9998;</button> <button class="jl-del" onclick="deleteJourney('+globalIdx+')">X</button></td>';
     body.appendChild(tr);
   });
@@ -5988,12 +6108,12 @@ async function generateTourDiary(){
     ch.push(new D.Paragraph({children:[new D.TextRun({text:name+', '+desig,size:20,font:'Times New Roman'})],alignment:'center',spacing:{after:300}}));
     ch.push(mkPara('First Fortnight (1'+ordinal(1)+' '+month+' '+y+' to 15'+ordinal(15)+' '+month+' '+y+')',{bold:true,size:24,after:100}));
     ch.push(mkPara('Departure / Arrival',{bold:true,size:22,after:80}));ch.push(bJT(f1));
-    if(f1.some(function(l){return l.depDerived;}))ch.push(mkPara('* Departure not recorded — calculated from leg distance ÷ assumed speed ('+derivedSpeedsText(f1)+' km/h, picked at random between '+getSpeedRange().min+' and '+getSpeedRange().max+' km/h once per journey and kept), i.e. arrival − travel time.',{size:18,before:60}));
+    if(f1.some(function(l){return l.depDerived;}))ch.push(mkPara(derivedNoteText(f1),{size:18,before:60}));
     ch.push(mkPara('Details of Work',{bold:true,size:22,before:200,after:80}));ch.push(bWT(1));
     ch.push(new D.Paragraph({children:[new D.PageBreak()]}));
     ch.push(mkPara('Second Fortnight (16'+ordinal(16)+' '+month+' '+y+' to '+dim+ordinal(dim)+' '+month+' '+y+')',{bold:true,size:24,after:100}));
     ch.push(mkPara('Departure / Arrival',{bold:true,size:22,after:80}));ch.push(bJT(f2));
-    if(f2.some(function(l){return l.depDerived;}))ch.push(mkPara('* Departure not recorded — calculated from leg distance ÷ assumed speed ('+derivedSpeedsText(f2)+' km/h, picked at random between '+getSpeedRange().min+' and '+getSpeedRange().max+' km/h once per journey and kept), i.e. arrival − travel time.',{size:18,before:60}));
+    if(f2.some(function(l){return l.depDerived;}))ch.push(mkPara(derivedNoteText(f2),{size:18,before:60}));
     ch.push(mkPara('Details of Work',{bold:true,size:22,before:200,after:80}));ch.push(bWT(2));
     var doc=new D.Document({sections:[{properties:{page:{size:{width:12240,height:15840,orientation:'landscape'},margin:{top:720,bottom:720,left:720,right:720}}},children:ch}]});
     var _blobTD=await D.Packer.toBlob(doc);
