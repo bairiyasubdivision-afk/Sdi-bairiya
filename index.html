@@ -146,6 +146,13 @@
   .lf input[readonly].manual-dist{background:#fff3cd;color:#856404;}
   .calc-tag{display:inline-block;background:#e8f5e9;color:#1b5e20;border:1px solid #b7d7b9;border-radius:3px;font-size:0.62rem;font-weight:700;letter-spacing:0.3px;padding:0 3px;margin-left:3px;text-transform:lowercase;vertical-align:middle;}
   .jf-info{color:#0066cc;font-size:0.78rem;margin-top:6px;padding:6px 8px;background:#e7f3ff;border-radius:4px;}
+  /* v7.60 — प्रति-leg Km टिप्पणी (तालिका से मिला / हाथ से भरें) */
+  .leg-dist-note{font-size:0.7rem;line-height:1.35;margin-top:5px;padding:4px 7px;border-radius:4px;background:#f4f4f4;color:#555;}
+  .leg-dist-note.ok{background:#e8f5e9;color:#1b5e20;}
+  .leg-dist-note.warn{background:#fff3cd;color:#856404;}
+  .lf .dist-row{display:flex;gap:4px;align-items:center;}
+  .lf .dist-row input{flex:1 1 auto;min-width:0;}
+  .lf .dist-row button{flex:0 0 auto;}
   .jf-error{color:#dc3545;font-size:0.78rem;margin-top:4px;display:none;}.jf-error.show{display:block;}
   .leg-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
 
@@ -1063,7 +1070,7 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
     <ol>
       <li>Select the month &rarr; tap a date on the calendar.</li>
       <li>Enter the departure time &rarr; choose the office visited (arrival time is computed automatically from distance + speed).</li>
-      <li>Choose the purpose &rarr; to visit another office use <b>Add Stop</b> (enter the inter-office distance).</li>
+      <li>Choose the purpose &rarr; to visit another office use <b>Add Stop</b>. The Km fills itself from the office-distance table whenever both places are known; if a place is not in the table, type the Km (or press <b>&#8635;</b> to look it up again).</li>
       <li>Press <b>Plan Return to HQ</b> &rarr; then <b>Save Day's Journey</b>.</li>
       <li>The Work Log for a multi-office day is generated automatically.</li>
     </ol></div>
@@ -4105,6 +4112,86 @@ function officeTypeLabel(n){var o=allOffices.find(function(x){return x.name===n;
 function buildPurpose(pt,off,custom){if(pt==='custom'||!pt)return custom||'';var tpl=purposeTemplates[pt];if(!tpl)return custom||'';return tpl.replace('{office}',off).replace('{office_type}',officeTypeLabel(off)).trim();}
 function buildOfficeDDL(){var h='<option value="">-- Select --</option>';var g={"SO":"Sub Post Offices","BO":"Branch Offices","Office":"Other Offices","Other":"Other Locations"};var o=["SO","BO","Office","Other"];for(var i=0;i<o.length;i++){var t=o[i],os=allOffices.filter(function(x){return x.type===t;});if(!os.length)continue;os.sort(function(a,b){return a.name.localeCompare(b.name);});h+='<optgroup label="'+g[t]+'">';for(var j=0;j<os.length;j++){var nm=os[j].name;var hi=os[j].name_hi||'';h+='<option value="'+nm+'">'+nm+' ('+os[j].dist+' km)'+(hi?' — '+hi:'')+'</option>';}h+='</optgroup>';}h+='<option value="__custom">Custom...</option>';return h;}
 function getOfficeDist(n){if(n===HQ_NAME)return 0;for(var i=0;i<allOffices.length;i++)if(allOffices[i].name===n)return allOffices[i].dist;return null;}
+// ============================================================
+// v7.60 — OFFICE-DISTANCE TABLE → LEG KM (when BOTH ends are known)
+// ------------------------------------------------------------
+// तालिका में हर दफ़्तर की एक ही दूरी है — HQ (बैरिया) से, यानी तारा-आकार (star)
+// तालिका। इसलिए दो ज्ञात जगहों के बीच की दूरी = |HQ से A − HQ से B|; HQ से किसी
+// दफ़्तर तक यह नियम ठीक वही आँकड़ा देता है जो तालिका में लिखा है।
+// नाम मिलान: HQ का लंबा लेबल, हिंदी नाम, और वर्तनी/स्पेसिंग के सभी रूप।
+var HQ_DIST_ALIASES=[
+  'ballia east sub division (bairiya) hq','ballia east sub division bairiya hq',
+  'ballia east sub-division (bairiya) hq','sub division bairiya','ballia east sub division',
+  'bairiya hq','bairia hq','bairiya so','bairia so','bairiya','bairia',
+  'hq','head quarter','headquarters','मुख्यालय','बैरिया','बैरिया मुख्यालय'
+];
+var _DIST_TYPE_SUFFIX=/(so|bo|ho|office|headoffice|suboffice|branchoffice|subdivision)$/;
+function _distKeyRaw(x){return String(x==null?'':x).toLowerCase().replace(/\(.*?\)/g,' ').replace(/[^a-z0-9\u0900-\u097f]+/g,'');}
+function _distKeyBare(x){var k=_distKeyRaw(x);var p=k;try{p=k.replace(_DIST_TYPE_SUFFIX,'');}catch(e){p=k;}return p||k;}
+function _distKeyHi(x){return (typeof _nHi==='function')?_nHi(x):String(x||'').replace(/\s/g,'');}
+var _DIST_INDEX=null;
+function _buildDistIndex(){
+  var byRaw={},byBare={},byHi={};
+  function add(map,k,o){if(!k)return;if(!map[k])map[k]=[];if(map[k].indexOf(o)<0)map[k].push(o);}
+  for(var i=0;i<allOffices.length;i++){
+    var o=allOffices[i];
+    add(byRaw,_distKeyRaw(o.name),o);
+    add(byBare,_distKeyBare(o.name),o);
+    add(byHi,_distKeyHi(o.name_hi),o);
+  }
+  var hq={name:HQ_NAME,dist:0,type:'HQ',name_hi:'',isHQ:true};
+  for(var a=0;a<HQ_DIST_ALIASES.length;a++){
+    add(byRaw,_distKeyRaw(HQ_DIST_ALIASES[a]),hq);
+    add(byBare,_distKeyBare(HQ_DIST_ALIASES[a]),hq);
+  }
+  _DIST_INDEX={byRaw:byRaw,byBare:byBare,byHi:byHi,hq:hq,n:allOffices.length};
+  return _DIST_INDEX;
+}
+// एक ही कुंजी पर कई दफ़्तर मिलें तो तभी चुनें जब सबकी दूरी एक जैसी हो (अन्यथा छोड़ें)
+function _distPick(list){
+  if(!list||!list.length)return null;
+  if(list.length===1)return list[0];
+  var d=parseFloat(list[0].dist);
+  for(var i=1;i<list.length;i++){if(parseFloat(list[i].dist)!==d)return null;}
+  return list[0];
+}
+function resolvePlaceForDist(nm){
+  if(nm==null)return null;
+  var raw=String(nm).trim();
+  if(!raw)return null;
+  if(raw===HQ_NAME)return {name:HQ_NAME,dist:0,type:'HQ',isHQ:true};
+  var i;
+  for(i=0;i<allOffices.length;i++)if(allOffices[i].name===raw)return allOffices[i];
+  var ix=_DIST_INDEX;
+  if(!ix||ix.n!==allOffices.length)ix=_buildDistIndex();
+  var hit=_distPick(ix.byRaw[_distKeyRaw(raw)]);
+  if(hit)return hit;
+  hit=_distPick(ix.byBare[_distKeyBare(raw)]);
+  if(hit)return hit;
+  var hi=_distKeyHi(raw);
+  if(hi){var h2=_distPick(ix.byHi[hi]);if(h2)return h2;}
+  // वर्तनी-सहिष्णु अंतिम उपाय — सख़्त सीमा, और सबसे नज़दीकी नाम साफ़ जीतता हो तभी
+  var t=_distKeyBare(raw),best=null,bs=0,second=0;
+  for(i=0;i<allOffices.length;i++){
+    var sc=_sim(t,_distKeyBare(allOffices[i].name));
+    if(sc>bs){second=bs;bs=sc;best=allOffices[i];}else if(sc>second)second=sc;
+  }
+  if(bs>=0.85&&(bs-second)>=0.03)return best;
+  return null;
+}
+// दोनों सिरे ज्ञात? तो किमी; वरना कौन-सा सिरा अनजान है, वह भी लौटाएँ
+function lookupLegDistance(fromName,toName){
+  var a=resolvePlaceForDist(fromName),b=resolvePlaceForDist(toName);
+  var missing=[];
+  if(!a)missing.push((fromName!=null&&String(fromName).trim())?String(fromName).trim():'(From)');
+  if(!b)missing.push((toName!=null&&String(toName).trim())?String(toName).trim():'(To)');
+  if(missing.length)return {ok:false,missing:missing};
+  var km=Math.round(Math.abs(parseFloat(a.dist)-parseFloat(b.dist))*10)/10;
+  if(!(km>0))return {ok:false,missing:[],samePlace:true,km:0};
+  return {ok:true,km:km,fromOff:a,toOff:b};
+}
+window.resolvePlaceForDist=resolvePlaceForDist;
+window.lookupLegDistance=lookupLegDistance;
 // v7.22 — robust BO → office resolution (spelling-tolerant).
 // कारण: office list की वर्तनी Master Data से अलग होने पर match fail होता था
 // और ऑटो-जर्नी की दूरी 0 (₹0 fare) बन जाती थी। यह resolver उसे ठीक करता है।
@@ -4844,7 +4931,8 @@ function addReturnLeg(){
   var lastLeg=currentLegs[currentLegs.length-1];var fromName=lastLeg.to||HQ_NAME;
   // Distance for return = HQ dist of the office we're returning from
   // If office is known, auto-fill; otherwise leave blank for manual entry
-  var retDist=getOfficeDist(fromName);if(retDist!==null&&!(retDist>0))retDist=null;
+  var _retLook=lookupLegDistance(fromName,HQ_NAME);
+  var retDist=_retLook.ok?_retLook.km:null;
   currentLegs.push({from:fromName,to:HQ_NAME,departure:'',arrival:'',mode:'Motorcycle',fare:'',dist:(retDist!==null&&retDist>0)?retDist:'',distManual:false,purposeType:'',customPurpose:'',isReturn:true,speed:randomSpeed(),knownTime:'arr',distAutoCalc:retDist!==null,isCustom:false,returnDayOffset:0});
   renderLegs();document.getElementById('addReturnBtn').disabled=true;
   // Show info message
@@ -4880,9 +4968,8 @@ function syncReturnLegs(){
     var wantFrom=(prev&&prev.to)?prev.to:HQ_NAME;
     if(l.from!==wantFrom)l.from=wantFrom;
     if(!l.distManual){
-      var d=getOfficeDist(wantFrom);
-      if(d!==null&&d>0){l.dist=d;l.distAutoCalc=true;}
-      else{l.dist='';l.distAutoCalc=false;}
+      // v7.60 — वापसी-leg भी उसी तालिका-नियम से (दफ़्तर → HQ), वर्तनी-सहिष्णु
+      applyLegDistance(i,false);
     }
   }
 }
@@ -4923,8 +5010,10 @@ function renderLegs(){
       : '<div class="lf" style="min-width:150px;"><label>Speed (km/h) \u2014 '+esc(leg.mode)+'</label><input type="number" id="legSpeed_'+idx+'" value="'+fmtSpeed(_spv)+'" step="1" min="1" max="200" onchange="onLegSpeedChange('+idx+')" title="Average speed for '+esc(leg.mode)+' (default '+defaultSpeedForMode(leg.mode)+' km/h). Change it and the times are recalculated."></div>';
     // Distance
     var distClass=leg.distAutoCalc?'auto-calc':'manual-dist';
-    var distLabel=leg.distAutoCalc?'Km (auto \u2014 you can edit)':'Km (enter manually)';
-    var distHTML='<div class="lf"><label>'+distLabel+'</label><input type="number" id="legDist_'+idx+'" value="'+leg.dist+'" step="0.5" class="'+distClass+'" onchange="onLegDistChange('+idx+')" oninput="onLegDistInput('+idx+')"></div>';
+    var distVal=(leg.dist===''||leg.dist===null||leg.dist===undefined)?'':leg.dist;
+    var distHTML='<div class="lf" style="min-width:132px;"><label id="legDistLbl_'+idx+'">'+legDistLabelHTML(leg)+'</label>'
+      +'<div class="dist-row"><input type="number" id="legDist_'+idx+'" value="'+distVal+'" step="0.5" class="'+distClass+'" onchange="onLegDistChange('+idx+')" oninput="onLegDistInput('+idx+')" title="'+(leg.distAutoCalc?'Filled from the office-distance table. You can still edit it.':'Type the distance, or press \u21bb to look it up in the office-distance table.')+'">'
+      +'<button type="button" class="btn btn-sm btn-secondary" id="legDistBtn_'+idx+'" onclick="onLegDistLookup('+idx+')" style="font-size:0.85rem;padding:2px 7px;line-height:1.15;" title="Look up the distance between these two places in the office-distance table">&#8635;</button></div></div>';
     // Bus / Train / Other → mileage नहीं; असली किराया (fare) भरा जाएगा
     var fareMode=(leg.mode==='Bus'||leg.mode==='Train'||leg.mode==='Other');
     var fareHTML=fareMode?'<div class="lf"><label>Fare (₹) — actual</label><input type="number" id="legFare_'+idx+'" value="'+(leg.fare===undefined?'':leg.fare)+'" step="1" placeholder="असली किराया" onchange="onLegFareChange('+idx+')"></div>':'';
@@ -4936,7 +5025,7 @@ function renderLegs(){
     }
 
     var delBtn=idx>0?'<button class="btn btn-danger btn-sm" onclick="removeLeg('+idx+')" style="float:right;">X</button>':'';
-    div.innerHTML='<div class="leg-row-header"><span class="leg-num">Leg '+(idx+1)+'</span><span class="leg-type '+legTypeClass+'">'+legTypeLabel+'</span>'+delBtn+'</div><div class="leg-fields">'+fromHTML+toHTML+depHTML+arrHTML+modeHTML+speedHTML+distHTML+fareHTML+purposeHTML+'</div>';
+    div.innerHTML='<div class="leg-row-header"><span class="leg-num">Leg '+(idx+1)+'</span><span class="leg-type '+legTypeClass+'">'+legTypeLabel+'</span>'+delBtn+'</div><div class="leg-fields">'+fromHTML+toHTML+depHTML+arrHTML+modeHTML+speedHTML+distHTML+fareHTML+purposeHTML+'</div><div class="leg-dist-note" id="legDistNote_'+idx+'" style="display:none;"></div>';
     container.appendChild(div);
 
     // Set selected values
@@ -4946,12 +5035,102 @@ function renderLegs(){
     if(pSel&&leg.purposeType)pSel.value=leg.purposeType;
     var mSel=document.getElementById('legMode_'+idx);
     if(mSel)mSel.value=leg.mode;
+    syncLegDistDom(idx);
   });
   var _hs=document.getElementById('legStayHint');
   if(!_hs){_hs=document.createElement('div');_hs.id='legStayHint';_hs.className='jf-info';if(container.parentNode)container.parentNode.insertBefore(_hs,container.nextSibling);}
   if(currentLegs.length>0&&!currentLegs.some(function(l){return l.isReturn;})){_hs.textContent='Stopping overnight somewhere? Add that place with "+ Add Stop" and set its "Day (+N)"; then use "+ Plan Return to HQ" for the final leg and set its "Day (+N)" too.';_hs.style.display='block';}else{_hs.style.display='none';}
   updateLegInfo();
 }
+
+// v7.60 — Km लेबल/टिप्पणी और फ़ील्ड DOM एक जगह से तय हों
+function legDistLabelHTML(leg){
+  if(leg&&leg.distAutoCalc)return 'Km <span class="calc-tag">looked up</span>';
+  return 'Km (enter manually)';
+}
+function syncLegDistDom(idx){
+  var leg=currentLegs[idx];if(!leg)return;
+  var el=document.getElementById('legDist_'+idx);
+  if(el){
+    // टाइप करते वक़्त मान/कर्सर न छेड़ें
+    if(document.activeElement!==el)el.value=(leg.dist===''||leg.dist===null||leg.dist===undefined)?'':leg.dist;
+    el.readOnly=false;
+    el.className=leg.distAutoCalc?'auto-calc':'manual-dist';
+    el.title=leg.distAutoCalc?('Filled from the office-distance table ('+(leg.distNote||'')+'). You can still edit it.')
+                             :'Not filled from the table — type the distance, or press \u21bb to look it up again.';
+  }
+  var lab=document.getElementById('legDistLbl_'+idx);
+  if(lab)lab.innerHTML=legDistLabelHTML(leg);
+  var note=document.getElementById('legDistNote_'+idx);
+  if(note){
+    note.textContent=leg.distNote||'';
+    note.className='leg-dist-note'+(leg.distNoteKind?(' '+leg.distNoteKind):'');
+    note.style.display=leg.distNote?'block':'none';
+  }
+}
+// दोनों सिरे ज्ञात → Km अपने-आप; कोई सिरा अनजान → हाथ से भरने के लिए छोड़ें + साफ़ बताएँ।
+// अधिकारी ने ख़ुद जो Km लिखा है वह बिना पूछे कभी नहीं बदला जाता (force=true केवल ↻ से)।
+function applyLegDistance(idx,force){
+  var leg=currentLegs[idx];if(!leg)return false;
+  var toName=leg.to||'';
+  var fromName=leg.from||HQ_NAME;
+  var typed=(leg.distManual&&leg.dist!==''&&leg.dist!==null&&leg.dist!==undefined&&parseFloat(leg.dist)>0);
+  if(!toName){leg.distNote='';leg.distNoteKind='';syncLegDistDom(idx);return false;}
+  var r=lookupLegDistance(fromName,toName);
+  if(!r.ok){
+    leg.distLookedUp=false;
+    if(!typed){leg.dist='';leg.distAutoCalc=false;}
+    if(r.samePlace){
+      leg.distNote=typed?('From and To are the same point in the office-distance table (0 km) \u2014 your typed '+leg.dist+' km is kept.')
+                        :('From and To are the same place in the office-distance table (0 km) \u2014 enter the Km yourself.');
+    }else if(r.missing.length>1){
+      leg.distNote='"'+r.missing[0]+'" and "'+r.missing[1]+'" are not in the office-distance table \u2014 enter the Km manually.';
+    }else{
+      leg.distNote='"'+r.missing[0]+'" is not in the office-distance table \u2014 enter the Km manually.';
+    }
+    leg.distNoteKind='warn';
+    syncLegDistDom(idx);
+    return false;
+  }
+  if(typed&&!force&&parseFloat(leg.dist)!==r.km){
+    leg.distAutoCalc=false;leg.distLookedUp=false;
+    leg.distNote='Office table gives '+r.km+' km for '+r.fromOff.name+' \u2192 '+r.toOff.name+'. Your typed '+leg.dist+' km is kept \u2014 press \u21bb to use the table value.';
+    leg.distNoteKind='warn';
+    syncLegDistDom(idx);
+    return false;
+  }
+  leg.dist=r.km;
+  leg.distAutoCalc=true;
+  leg.distLookedUp=true;
+  leg.distManual=false;
+  leg.distNote='Looked up: '+r.km+' km ('+r.fromOff.name+' \u2192 '+r.toOff.name+').';
+  leg.distNoteKind='ok';
+  syncLegDistDom(idx);
+  return true;
+}
+// ↻ — अधिकारी का आदेश: अभी तालिका से दूरी निकालो (लिखा हुआ मान भी बदल सकता है)
+function onLegDistLookup(idx){
+  var leg=currentLegs[idx];if(!leg)return;
+  if(!leg.to){
+    leg.distNote='Choose the "To" place first \u2014 the table needs both ends.';
+    leg.distNoteKind='warn';syncLegDistDom(idx);
+    if(typeof showToastErr==='function')showToastErr('\u26a0\ufe0f Choose the "To" place first.');
+    return;
+  }
+  var before=leg.dist;
+  var ok=applyLegDistance(idx,true);
+  markLegDirectionForRecalc(leg);
+  autoCalcTimes(idx);
+  autoSave();
+  if(ok){
+    if(typeof showToast==='function')showToast('Km '+leg.dist+' filled from the office-distance table');
+  }else if(leg.distNote&&typeof showToastErr==='function'){
+    showToastErr('\u26a0\ufe0f '+(leg.distNote));
+  }
+  return ok;
+}
+window.applyLegDistance=applyLegDistance;
+window.onLegDistLookup=onLegDistLookup;
 
 function onLegOfficeChange(idx){
   var sel=document.getElementById('legTo_'+idx);
@@ -4969,17 +5148,9 @@ function onLegOfficeChange(idx){
     return;
   }
   currentLegs[idx].to=sel.value;
-  // Auto-fill distance: if first leg, use HQ-to-office
-  if(idx===0){
-    var d=getOfficeDist(sel.value);
-    if(d!==null&&d>0){currentLegs[idx].dist=d;currentLegs[idx].distAutoCalc=true;}
-    else{currentLegs[idx].dist='';currentLegs[idx].distAutoCalc=false;}
-  } else {
-    // For intermediate legs, distance is unknown
-    currentLegs[idx].dist='';currentLegs[idx].distAutoCalc=false;
-  }
-  // If this is a return leg being changed, auto-fill distance from HQ data
-  if(currentLegs[idx].isReturn){var rd=getOfficeDist(currentLegs[idx].from);if(rd!==null&&rd>0){currentLegs[idx].dist=rd;currentLegs[idx].distAutoCalc=true;}else{currentLegs[idx].dist='';currentLegs[idx].distAutoCalc=false;}}
+  // v7.60 — दोनों सिरे तालिका में ज्ञात हों तो Km अपने-आप; वरना हाथ से भरने के लिए छोड़ें।
+  // पहली leg (HQ→दफ़्तर), बीच की leg (BO→BO) और वापसी-leg — तीनों पर एक ही नियम।
+  applyLegDistance(idx,false);
   // Update "from" of next leg
   if(idx+1<currentLegs.length&&!currentLegs[idx+1].isReturn){currentLegs[idx+1].from=sel.value;}
   renderLegs();
@@ -4992,34 +5163,14 @@ function onCustomOfficeChange(idx){
   var name=inp.value.trim();
   currentLegs[idx].to=name;
   currentLegs[idx].isCustom=true;
-  // Check if this custom name matches a known office
-  var knownDist=getOfficeDist(name);
-  if(knownDist!==null){
-    // It's actually a known office! Auto-fill distance
-    currentLegs[idx].dist=knownDist;
-    currentLegs[idx].distAutoCalc=true;
-  } else {
-    // Unknown place - user must enter distance manually
-    currentLegs[idx].dist='';
-    currentLegs[idx].distAutoCalc=false;
-  }
-  // For return legs, check if the "from" office is known
-  if(currentLegs[idx].isReturn){
-    var rd=getOfficeDist(currentLegs[idx].from);
-    if(rd!==null){
-      currentLegs[idx].dist=rd;
-      currentLegs[idx].distAutoCalc=true;
-    }
-  }
+  // v7.60 — लिखा हुआ नाम तालिका के किसी भी नाम/वर्तनी से मिले तो Km अपने-आप;
+  // न मिले तो साफ़ बताएँ कि हाथ से भरना है। (लिखा हुआ Km बिना पूछे नहीं बदलता।)
+  applyLegDistance(idx,false);
   // Update "from" of next leg
   if(idx+1<currentLegs.length&&!currentLegs[idx+1].isReturn){currentLegs[idx+1].from=name;}
   // Don't call renderLegs() — it would lose focus on the text input
   // Just update distance field if needed
-  var distEl=document.getElementById('legDist_'+idx);
-  if(distEl){
-    distEl.value=currentLegs[idx].dist||'';
-    distEl.readOnly=currentLegs[idx].distAutoCalc;
-  }
+  syncLegDistDom(idx);
   autoCalcTimes(idx);
   autoSave();
 }
@@ -5090,7 +5241,7 @@ function addReturnOnlyLeg(){
     }
   }
   if(!fromName)fromName=''; // leave blank for manual entry
-  var retDist=fromName?getOfficeDist(fromName):null;
+  var retDist=fromName?(function(){var _r=lookupLegDistance(fromName,HQ_NAME);return _r.ok?_r.km:null;})():null;
   currentLegs.push({from:fromName,to:HQ_NAME,departure:'',arrival:'',mode:'Motorcycle',dist:(retDist!==null&&retDist>0)?retDist:'',distManual:false,purposeType:'',customPurpose:'',isReturn:true,speed:randomSpeed(),knownTime:'arr',distAutoCalc:(retDist!==null&&retDist>0),isCustom:!fromName,returnDayOffset:0});
   renderLegs();
   document.getElementById('addReturnBtn').disabled=true;
@@ -5147,10 +5298,42 @@ function onLegSpeedChange(idx){
 function onLegDistInput(idx){
   var el=document.getElementById('legDist_'+idx);
   if(!el)return;
-  currentLegs[idx].dist=parseFloat(el.value)||0;
-  currentLegs[idx].distAutoCalc=false;
-  currentLegs[idx].distManual=true;
+  var leg=currentLegs[idx];if(!leg)return;
+  if(el.value===''||el.value===null){
+    // खाली किया → फिर से तालिका से भरा जा सके
+    leg.dist='';leg.distAutoCalc=false;leg.distLookedUp=false;leg.distManual=false;leg.distNote='';leg.distNoteKind='';
+  }else{
+    leg.dist=parseFloat(el.value)||0;
+    leg.distAutoCalc=false;
+    leg.distLookedUp=false;
+    leg.distManual=true;          // अधिकारी का लिखा मान — बिना पूछे नहीं बदलेगा
+  }
+  refreshTypedDistNote(idx);
 }
+// अधिकारी ने ख़ुद जो Km लिखा है उसके साथ साफ़ बताएँ (बदला नहीं जाता)
+function refreshTypedDistNote(idx){
+  var leg=currentLegs[idx];if(!leg)return;
+  var toName=leg.to||'';var fromName=leg.from||HQ_NAME;
+  if(!toName||!(parseFloat(leg.dist)>0)){leg.distNote='';leg.distNoteKind='';syncLegDistDom(idx);return;}
+  var r=lookupLegDistance(fromName,toName);
+  if(!r.ok){
+    if(r.samePlace){
+      leg.distNote='Both ends are the same point in the office-distance table (0 km) \u2014 your typed '+leg.dist+' km is used.';
+    }else if(r.missing.length>1){
+      leg.distNote='"'+r.missing[0]+'" and "'+r.missing[1]+'" are not in the office-distance table \u2014 your typed '+leg.dist+' km is used.';
+    }else{
+      leg.distNote='"'+r.missing[0]+'" is not in the office-distance table \u2014 your typed '+leg.dist+' km is used.';
+    }
+    leg.distNoteKind='warn';
+  }else if(parseFloat(leg.dist)!==r.km){
+    leg.distNote='Office table gives '+r.km+' km for this leg. Your typed '+leg.dist+' km is kept \u2014 press \u21bb to use the table value.';
+    leg.distNoteKind='warn';
+  }else{
+    leg.distNote='';leg.distNoteKind='';
+  }
+  syncLegDistDom(idx);
+}
+window.refreshTypedDistNote=refreshTypedDistNote;
 function onLegDistChange(idx){
   var distEl=document.getElementById('legDist_'+idx);
   if(!distEl)return;
