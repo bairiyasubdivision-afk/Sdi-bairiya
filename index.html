@@ -1544,7 +1544,7 @@ input.dup-acct{border-color:#d92d20!important;background:#fff5f5!important;box-s
 <div id="dupWarn" class="dup-warn wz-hide"></div>
 <div id="soSampleBar" class="wz-hide" style="margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#fff8e1;border:1px solid #ffe082;font-size:.85rem;line-height:1.6">🧪 <b>यह नमूना डेटा है — अपने अनुसार बदलें।</b> यह केवल एक उदाहरण भरा हुआ रिपोर्ट है, वास्तविक आँकड़े नहीं। <button type="button" onclick="SO_IR.clearSample()" style="margin-left:6px;padding:4px 10px;font-size:.8rem;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:8px;font-weight:700;cursor:pointer">🧹 नमूना हटाएँ / खाली करें</button></div>
 <div id="bkRem" class="wz-hide" style="margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#fff4e5;border:1px solid #ffcc80;font-size:.85rem;line-height:1.6"></div>
-<div id="ver"><div class="c"><b>Mandatory opening verification</b><div class="note">Verify first, before anything else: cash, stamps, IPOs, ATM kits, cheque books and passbooks. You can fill the other tabs meanwhile, but the report cannot be generated until the physical balance of all six is entered.</div></div><div id="vt"></div></div><div id="form" style="display:none"></div><div id="data" style="display:none"><div class="c"><label>📥 Import Excel workbook (.xlsx) — fills Pass Book, AOF, Finacle, VPP-COD, BO Balance, IPO, RD Loan tables<input type="file" id="xl" accept=".xlsx"></label><div class="note" id="xli"></div><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button data-rec="save">💾 Save office record</button><button data-rec="load">📂 Load record</button><button data-rec="sync">🔄 Re-sync BO list</button></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button onclick="SO_IR.bkExport()">💾 बैकअप डाउनलोड (JSON)</button></div><label>📂 बैकअप से पुनर्स्थापित करें (.json)<input type="file" id="bk" accept=".json,application/json"></label></div><div id="dt"></div></div><div id="pv" class="c" style="display:none"></div>
+<div id="ver"><div class="c"><b>Mandatory opening verification</b><div class="note">Verify first, before anything else: cash, stamps, IPOs, ATM kits, cheque books and passbooks. You can fill the other tabs meanwhile, but the report cannot be generated until the physical balance of all six is entered.</div></div><div id="vt"></div></div><div id="form" style="display:none"></div><div id="data" style="display:none"><div class="c"><label>📥 Import Excel workbook (.xlsx) — fills Pass Book, AOF, Finacle, VPP-COD, BO Balance, IPO, RD Loan tables<input type="file" id="xl" accept=".xlsx"></label><div class="note" id="xli"></div><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button type="button" onclick="SO_IR.dlBlank()">📥 Download the blank Excel form</button><button type="button" onclick="SO_IR.expEntered()">📤 Export what has been entered</button></div><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button data-rec="save">💾 Save office record</button><button data-rec="load">📂 Load record</button><button data-rec="sync">🔄 Re-sync BO list</button></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button onclick="SO_IR.bkExport()">💾 बैकअप डाउनलोड (JSON)</button></div><label>📂 बैकअप से पुनर्स्थापित करें (.json)<input type="file" id="bk" accept=".json,application/json"></label></div><div id="dt"></div></div><div id="pv" class="c" style="display:none"></div>
 </main>
 <div class="footer-bar"><div class="inner"><button class="btn btn-primary" style="flex-shrink:0;font-size:0.85rem;padding:8px 16px;" onclick="SO_IR.gen()">📄 रिपोर्ट बनाएं (Generate)</button><button class="btn btn-secondary" type="button" style="flex-shrink:0;padding:6px 10px;font-size:0.82rem;" onclick="SO_IR.clr()">🗑️ Clear</button><span id="sv" class="note" style="margin:0"></span><div class="status" id="soStatusMsg"></div></div><div id="soDlLinks"></div></div>
   </div>
@@ -16609,7 +16609,270 @@ function openCal(id){
   if(typeof window.inspOpenCal==='function'){ window.inspOpenCal(el); }
   else{ alert('कैलेंडर उपलब्ध नहीं'); }
 }
-  window.SO_IR={tab:tab,gen:gen,clr:clr,bkExport:bkExport,pick:pick,openCal:openCal,clearSample:clearSample};
+/* ============================================================
+   SO निरीक्षण — Excel डेटा-संग्रह फ़ॉर्म (JSZip — ऐप में पहले से लोडेड)
+   1) dlBlank()     — खाली 8-शीट फ़ॉर्म बनाकर डाउनलोड
+   2) expEntered()  — फ़ॉर्म में भरा डेटा उसी 8-शीट ढाँचे में export
+   दोनों फ़ाइलें मौजूदा 📥 Import (readXlsx/applyWb) से ही आयात होती हैं —
+   वही शीट नाम व क्रम, वही हेडर पंक्तियाँ, वही कॉलम क्रम।
+   ============================================================ */
+var SOX_SAMPLE = 'नमूना / SAMPLE (आयात नहीं होता)', SOX_MINROWS = 5;
+var SOX_SC = ['SB', 'RD', 'TD', 'MIS', 'PPF', 'SCSS'];
+
+function soxEsc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function soxCol(i) { var s = '', n = i + 1; while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = (n - m - 1) / 26; } return s; }
+function soxSerial(v) { var m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(String(v == null ? '' : v).trim()); if (!m) return null; var t = Date.UTC(+m[1], +m[2] - 1, +m[3]); return isNaN(t) ? null : Math.round(t / 864e5) + 25569; }
+function soxIso(v) { v = String(v == null ? '' : v).trim(); if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; var m = /^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2,4})$/.exec(v); return m ? ((m[3].length == 2 ? '20' + m[3] : m[3]) + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0')) : ''; }
+function soxNum(v) { var t = String(v == null ? '' : v).replace(/[,\s\u20b9]/g, ''); return /^-?\d+(\.\d+)?$/.test(t) ? +t : null; }
+/* cell helpers — s: 0 general, 1 header, 2 date(dd-mm-yyyy), 3 amount(#,##0.00), 4 text(@), 5 bold */
+function soxC(v, s) { return { t: 's', v: String(v == null ? '' : v), s: s || 0 }; }
+function soxH(v) { return { t: 's', v: String(v == null ? '' : v), s: 1 }; }
+function soxX(s) { return { t: 'x', s: s || 0 }; }
+function soxAmt(v, s) { var n = soxNum(v); if (n != null) return { t: 'n', v: n, s: s || 3 }; var t = String(v == null ? '' : v).trim(); return t ? { t: 's', v: t, s: 0 } : { t: 'x', s: s || 3 }; }
+function soxDate(v, s) { var n = soxSerial(soxIso(v)); if (n != null) return { t: 'd', v: n, s: s || 2 }; var t = String(v == null ? '' : v).trim(); return t ? { t: 's', v: t, s: 0 } : { t: 'x', s: s || 2 }; }
+function soxTxt(v, s) { var t = String(v == null ? '' : v).trim(); return t ? { t: 's', v: t, s: s || 4 } : { t: 'x', s: s || 4 }; }
+function soxSl(i) { return { t: 'n', v: i, s: 0 }; }
+
+function soxSheetXml(rows, widths) {
+  var o = ['<?xml version="1.0" encoding="UTF-8" standalone="yes"?>', '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'], i, j;
+  if (widths && widths.length) {
+    var cl = '';
+    for (i = 0; i < widths.length; i++) cl += '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + widths[i] + '" customWidth="1"/>';
+    o.push('<cols>' + cl + '</cols>');
+  }
+  o.push('<sheetData>');
+  for (i = 0; i < rows.length; i++) {
+    var r = rows[i] || [], c = '';
+    for (j = 0; j < r.length; j++) {
+      var x = r[j]; if (!x) continue;
+      var ref = soxCol(j) + (i + 1), st = x.s ? ' s="' + x.s + '"' : '';
+      if (x.t === 's') c += '<c r="' + ref + '" t="inlineStr"' + st + '><is><t xml:space="preserve">' + soxEsc(x.v) + '</t></is></c>';
+      else if (x.t === 'x') c += '<c r="' + ref + '"' + st + '/>';
+      else c += '<c r="' + ref + '"' + st + '><v>' + x.v + '</v></c>';
+    }
+    o.push('<row r="' + (i + 1) + '">' + c + '</row>');
+  }
+  o.push('</sheetData></worksheet>');
+  return o.join('');
+}
+
+var SOX_STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+  + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+  + '<numFmts count="2"><numFmt numFmtId="164" formatCode="dd-mm-yyyy"/><numFmt numFmtId="165" formatCode="#,##0.00"/></numFmts>'
+  + '<fonts count="2"><font><sz val="11"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="11"/><name val="Calibri"/><family val="2"/></font></fonts>'
+  + '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>'
+  + '<fill><patternFill patternType="solid"><fgColor rgb="FFE8EEF7"/><bgColor indexed="64"/></patternFill></fill></fills>'
+  + '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
+  + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+  + '<cellXfs count="6">'
+  + '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+  + '<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
+  + '<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
+  + '<xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
+  + '<xf numFmtId="49" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
+  + '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
+  + '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+
+function soxWorkbook(specs) {
+  var CT = ['<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+    + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+    + '<Default Extension="xml" ContentType="application/xml"/>'
+    + '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+    + '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'];
+  var WB = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>';
+  var WR = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">';
+  var zip = new JSZip(), xl = zip.folder('xl'), wsf = xl.folder('worksheets');
+  specs.forEach(function (sp, i) {
+    var n = i + 1;
+    CT.push('<Override PartName="/xl/worksheets/sheet' + n + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>');
+    WB += '<sheet name="' + soxEsc(sp.name) + '" sheetId="' + n + '" r:id="rId' + n + '"/>';
+    WR += '<Relationship Id="rId' + n + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + n + '.xml"/>';
+    wsf.file('sheet' + n + '.xml', soxSheetXml(sp.rows, sp.widths));
+  });
+  CT.push('</Types>'); WB += '</sheets></workbook>';
+  WR += '<Relationship Id="rId' + (specs.length + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>';
+  zip.file('[Content_Types].xml', CT.join(''));
+  zip.folder('_rels').file('.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+  xl.file('workbook.xml', WB);
+  xl.file('styles.xml', SOX_STYLES);
+  xl.folder('_rels').file('workbook.xml.rels', WR);
+  return zip;
+}
+
+/* ---------- sheet builders (identical layout for blank form & export) ---------- */
+function soxHowTo(extra) {
+  var L = ['SO निरीक्षण — Excel भरने का तरीका', '',
+    'हर पंक्ति में एक प्रविष्टि भरें।',
+    'यह फ़ॉर्म खाली है — अपना डेटा सीधे भरें। हेडर पंक्ति न बदलें, न हटाएँ।',
+    'हर शीट में अपनी प्रविष्टियाँ भरें; खाली पंक्तियाँ छोड़ दें।', '',
+    'तारीख़: dd-mm-yyyy (जैसे 05-10-2026)',
+    'रकम: सिर्फ़ अंक (जैसे 12500.50)',
+    '₹ चिह्न या कॉमा न लिखें।',
+    'खाता संख्या: 6 से 16 अंक।', '',
+    'शीट और उनका काम:',
+    '• Pass Book — पासबुक व शेष जाँच',
+    '• AOF — AOF टेस्ट चेक',
+    '• Finacle Transactions — योजनावार',
+    '   जमा/निकासी (तारीख़ के हिसाब से)',
+    '• VPP-COD — VPP और COD लेखे',
+    '• BO Balance — SO बही vs BO बही',
+    '• RD Loan — RD ऋण खाते (प्रश्न 52)',
+    '• IPO Stock — IPO स्टॉक', '',
+    'जिस तालिका का डेटा न हो — उसकी',
+    'पंक्तियाँ खाली छोड़ दें या शीट हटा दें।',
+    'खाली शीट से कोई गलती नहीं होती।', '',
+    'हेडर पंक्ति, कॉलम क्रम और शीट का नाम',
+    'न बदलें।',
+    "AOF में '— खाली छोड़ें —' कॉलम खाली रखें",
+    'और हर पंक्ति में Scheme भरें।',
+    "VPP-COD में 'VPP'/'COD' शीर्ष-पंक्ति और",
+    'बीच की खाली पंक्ति न हटाएँ।',
+    'BO Balance में SO के सभी BO लिखें।',
+    "अंत का 'नमूना / SAMPLE' कॉलम आयात",
+    'में नहीं जाता — खाली छोड़ सकते हैं।', '',
+    'भरने के बाद:',
+    'ऐप → 🏤 SO IR → उप डाकघर चुनें →',
+    "'डेटा' टैब → 📥 Import Excel workbook",
+    '→ यही फ़ाइल चुनें। तालिकाएँ भर जाएँगी।', '',
+    'ध्यान: शुरू के छह आंकड़े (नकद, स्टाम्प,',
+    'IPO, ATM किट, चेक बुक, पासबुक) ऐप के',
+    "'① सत्यापन' टैब में ही भरें — Excel से",
+    'नहीं आते।',
+    'सारा डेटा आपके ब्राउज़र में ही रहता है।'];
+  if (extra && extra.length) { L.push(''); L = L.concat(extra); }
+  return L.map(function (t, i) { return i === 0 ? [soxH(t)] : (t ? [soxC(t, 0)] : []); });
+}
+
+function soxPassBook(d) {
+  var rows = [[soxH('Scheme'), soxH('#Sr. No.'), soxH('Account No.'), soxH('DLT'), soxH('Deposit'), soxH('Withdrawal'), soxH('Balance'), soxH(SOX_SAMPLE)]], k;
+  d = d || [];
+  if (!d.length) { for (k = 0; k < SOX_MINROWS; k++) rows.push([soxX(4), soxX(0), soxX(4), soxX(2), soxX(3), soxX(3), soxX(3), soxX(0)]); }
+  else d.forEach(function (r, i) { rows.push([soxTxt(r[0], 4), soxSl(i + 1), soxTxt(r[1], 4), soxDate(r[2], 2), soxAmt(r[3]), soxAmt(r[4]), soxAmt(r[5]), soxX(0)]); });
+  return rows;
+}
+
+function soxAof(d) {
+  var rows = [[soxH('Scheme'), soxH('#Sr No'), soxH('— खाली छोड़ें —'), soxH('Date'), soxH('Account No.'), soxH('Name of Account Holder'), soxH('Name of Nominee'), soxH('Initial Deposit (Rs.)'), soxH(SOX_SAMPLE)],
+    [soxX(4), soxX(0), soxX(4), soxC('dd-mm-yyyy', 0), soxX(4), soxX(4), soxX(4), soxC('अंकों में', 0), soxX(0)]], k;
+  d = d || [];
+  if (!d.length) { for (k = 0; k < SOX_MINROWS; k++) rows.push([soxX(4), soxX(0), soxX(4), soxX(2), soxX(4), soxX(4), soxX(4), soxX(3), soxX(0)]); }
+  else d.forEach(function (r, i) { rows.push([soxTxt(r[0], 4), soxSl(i + 1), soxX(4), soxDate(r[1], 2), soxTxt(r[2], 4), soxTxt(r[3], 4), soxTxt(r[4], 4), soxAmt(r[5]), soxX(0)]); });
+  return rows;
+}
+
+function soxFinacle(d) {
+  var h1 = [soxH('Date')], h2 = [soxX(0)], k, j;
+  SOX_SC.forEach(function (s) { h1.push(soxH(s), soxH(s)); h2.push(soxC('Receipt', 0), soxC('Payment', 0)); });
+  h1.push(soxH(SOX_SAMPLE)); h2.push(soxX(0));
+  var rows = [h1, h2];
+  d = d || [];
+  if (!d.length) { for (k = 0; k < SOX_MINROWS; k++) { var e = [soxX(2)]; for (j = 0; j < 12; j++) e.push(soxX(3)); e.push(soxX(0)); rows.push(e); } }
+  else d.forEach(function (r) { var o = [soxDate(r[0], 2)]; for (j = 1; j <= 12; j++) o.push(soxAmt(r[j])); o.push(soxX(0)); rows.push(o); });
+  return rows;
+}
+
+function soxVppCod(vpp, cod) {
+  var hdr = function () { return [soxH('#Sl No'), soxH('Article No.'), soxH('Date of receipt'), soxH('Date of payment'), soxH('Amount'), soxH(SOX_SAMPLE)]; };
+  var blk = function () { return [soxX(0), soxX(4), soxX(2), soxX(2), soxX(3), soxX(0)]; };
+  var rows = [[soxH('VPP articles since DLI')], hdr()], k;
+  vpp = vpp || []; cod = cod || [];
+  if (!vpp.length) { for (k = 0; k < SOX_MINROWS; k++) rows.push(blk()); }
+  else vpp.forEach(function (r, i) { rows.push([soxSl(i + 1), soxTxt(r[0], 4), soxDate(r[1], 2), soxDate(r[2], 2), soxAmt(r[3]), soxX(0)]); });
+  rows.push([]);                                     /* खाली विभाजक पंक्ति — ज़रूरी */
+  rows.push([soxH('COD articles since DLI')]); rows.push(hdr());
+  if (!cod.length) { for (k = 0; k < SOX_MINROWS; k++) rows.push(blk()); }
+  else cod.forEach(function (r, i) { rows.push([soxSl(i + 1), soxTxt(r[0], 4), soxDate(r[1], 2), soxDate(r[2], 2), soxAmt(r[3]), soxX(0)]); });
+  return rows;
+}
+
+function soxBobal(d) {
+  var rows = [[soxH('#Sl. No.'), soxH('Name of BO'), soxH('Balance as per SO records'), soxH('Balance as per BO records'), soxH('Remarks / Difference'), soxH(SOX_SAMPLE)]], k;
+  d = d || [];
+  if (!d.length) { for (k = 0; k < SOX_MINROWS; k++) rows.push([soxX(0), soxX(4), soxX(3), soxX(3), soxX(4), soxX(0)]); }
+  else d.forEach(function (r, i) { rows.push([soxSl(i + 1), soxTxt(r[0], 4), soxAmt(r[1]), soxAmt(r[2]), soxTxt(r[3], 4), soxX(0)]); });
+  return rows;
+}
+
+function soxRdLoan(d) {
+  var rows = [[soxH('Account No.'), soxH('Date of disbursement'), soxH('Loan amount (Rs.)'), soxH('Loan passbook collected? (Y/N)'), soxH('Remarks'), soxH(SOX_SAMPLE)]], k;
+  d = d || [];
+  if (!d.length) { for (k = 0; k < SOX_MINROWS; k++) rows.push([soxX(4), soxX(2), soxX(3), soxX(4), soxX(4), soxX(0)]); }
+  else d.forEach(function (r) { rows.push([soxTxt(r[0], 4), soxDate(r[1], 2), soxAmt(r[2]), soxTxt(r[3], 4), soxTxt(r[4], 4), soxX(0)]); });
+  return rows;
+}
+
+function soxIpo(d) {
+  var rows = [[soxH('Denomination'), soxH('From'), soxH('To'), soxH('No. of IPOs'), soxH(SOX_SAMPLE)]], k;
+  d = d || [];
+  if (!d.length) { for (k = 0; k < SOX_MINROWS; k++) rows.push([soxX(0), soxX(4), soxX(4), soxX(0), soxX(0)]); }
+  else d.forEach(function (r) { rows.push([soxAmt(r[0], 0), soxTxt(r[1], 4), soxTxt(r[2], 4), soxAmt(r[3], 0), soxX(0)]); });
+  return rows;
+}
+
+function soxSpecs(d, extra) {
+  d = d || {};
+  return [
+    { name: 'पढ़ें (How to use)', rows: soxHowTo(extra), widths: [64] },
+    { name: 'Pass Book', rows: soxPassBook(d.pb), widths: [10, 9, 20, 13, 13, 13, 14, 26] },
+    { name: 'AOF', rows: soxAof(d.aof), widths: [10, 8, 14, 13, 20, 26, 26, 16, 26] },
+    { name: 'Finacle Transactions', rows: soxFinacle(d.dly), widths: [13, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 26] },
+    { name: 'VPP-COD', rows: soxVppCod(d.vpp, d.cod), widths: [8, 20, 15, 15, 13, 26] },
+    { name: 'BO Balance', rows: soxBobal(d.bobal), widths: [8, 24, 22, 22, 26, 26] },
+    { name: 'RD Loan', rows: soxRdLoan(d.rdloan), widths: [20, 17, 16, 20, 26, 26] },
+    { name: 'IPO Stock', rows: soxIpo(d.ipo), widths: [12, 10, 10, 12, 26] }
+  ];
+}
+
+function soxSave(name, specs, done) {
+  if (typeof JSZip === 'undefined') { alert('JSZip उपलब्ध नहीं — डाउनलोड असम्भव।'); return; }
+  soxWorkbook(specs).generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }).then(function (b) {
+    var url = URL.createObjectURL(b), a = document.createElement('a');
+    a.href = url; a.download = name; a.textContent = '⬇️ ' + name + ' डाउनलोड करें';
+    var dl = $('soDlLinks'); if (dl) { dl.innerHTML = ''; dl.appendChild(a); dl.style.display = 'block'; }
+    a.click(); setTimeout(function () { try { URL.revokeObjectURL(url); } catch (e) { } }, 8000);
+    try { window.showToast('✔ Excel तैयार — ' + name); } catch (e) { }
+    if (done) done(name);
+  }).catch(function (e) { st('err', '❌ Excel नहीं बन सका: ' + (e && e.message ? e.message : e)); });
+}
+
+function soxStamp() {
+  var v = (S && S.doi) ? String(S.doi).trim() : '';
+  var m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(v);
+  if (m) return m[3].padStart(2, '0') + '-' + m[2].padStart(2, '0') + '-' + m[1];
+  var d = new Date();
+  return String(d.getDate()).padStart(2, '0') + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + d.getFullYear();
+}
+
+function soxData() {
+  var t = T || {};
+  var cl = function (a) { return (a || []).filter(function (r) { return r && r.some(function (x) { return String(x == null ? '' : x).trim(); }); }); };
+  var has = function (r) { return String(r[0] == null ? '' : r[0]).trim() !== ''; };
+  return {
+    pb: cl(t.pb), aof: cl(t.aof), dly: cl(t.dly),
+    vpp: cl(t.vpp).filter(has), cod: cl(t.cod).filter(has),
+    bobal: cl(t.bobal).filter(has), rdloan: cl(t.rdloan), ipo: cl(t.ipo)
+  };
+}
+
+function soxDlBlank() {
+  var specs = soxSpecs(null, null);
+  soxSave('SO_Inspection_Data_blank.xlsx', specs, function (nm) {
+    st('ok', '📥 खाली Excel फ़ॉर्म तैयार — ' + nm + ' (8 शीट: How to use, Pass Book, AOF, Finacle Transactions, VPP-COD, BO Balance, RD Loan, IPO Stock)');
+  });
+}
+
+function soxExpEntered() {
+  if (!so) { alert('पहले उप डाकघर चुनें'); return; }
+  var d = soxData(), n = { pb: d.pb.length, aof: d.aof.length, dly: d.dly.length, vpp: d.vpp.length, cod: d.cod.length, bobal: d.bobal.length, rdloan: d.rdloan.length, ipo: d.ipo.length };
+  var nm = 'SO_Inspection_Data_' + String(so.n || 'SO').replace(/[^\w\-]+/g, '_') + '_' + soxStamp() + '.xlsx';
+  var extra = ['', 'यह फ़ाइल ' + so.n + ' SO के निरीक्षण का रिकॉर्ड है (' + soxStamp() + ')।'];
+  soxSave(nm, soxSpecs(d, extra), function (f) {
+    st('ok', '📤 Export तैयार — ' + f + ' · Pass Book ' + n.pb + ' · AOF ' + n.aof + ' · Finacle ' + n.dly + ' · VPP ' + n.vpp + ' · COD ' + n.cod + ' · BO ' + n.bobal + ' · RD Loan ' + n.rdloan + ' · IPO ' + n.ipo);
+  });
+}
+
+  window.SO_IR={tab:tab,gen:gen,clr:clr,bkExport:bkExport,pick:pick,openCal:openCal,clearSample:clearSample,dlBlank:soxDlBlank,expEntered:soxExpEntered,soxSpecs:soxSpecs};
 })();
 </script>
 <script>
